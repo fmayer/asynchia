@@ -20,12 +20,10 @@
 import errno
 import socket
 
-# TODO
-import asyncore
-
 
 connection_lost = (errno.ECONNRESET, errno.ENOTCONN,
                    errno.ESHUTDOWN, errno.ECONNABORTED)
+
 
 class SocketMap:
     def __init__(self, notifier=None):
@@ -102,7 +100,20 @@ class Handler:
             self.set_socket(sock)
     
     def set_socket(self, sock):
-        pass
+        self.socket_map.del_handler(self)
+        
+        sock.setblocking(0)
+        try:
+            self.addr = sock.getpeername()
+            self.connected = True
+        except socket.error, err:
+            if err.args[0] == errno.ENOTCONN:
+                self.connected = False
+            else:
+                raise
+        
+        self.socket = sock
+        self.socket_map.add_handler(self)
     
     def readable(self):
         return True
