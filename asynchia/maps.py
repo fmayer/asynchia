@@ -16,3 +16,38 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import select
+
+import asynchia
+
+
+class SelectSocketMap(asynchia.SocketMap):
+    def __init__(self, notifier=None):
+        asynchia.SocketMap.__init__(self, notifier)
+        self.socket_list = []
+    
+    def add_handler(self, handler):
+        self.socket_list.append(handler)
+    
+    def del_handler(self, handler):
+        self.socket_list.remove(handler)
+    
+    def poll(self, timeout):
+        read_list = (obj for obj in self.socket_list if obj.readable())
+        write_list = (obj for obj in self.socket_list
+                      if obj.writeable() or not obj.connected)
+        
+        read, write, expt = select.select(read_list,
+                                          write_list,
+                                          self.socket_list)
+        
+        for obj in read:
+            self.notifier.read_obj(obj)
+        for obj in write:
+            self.notifier.write_obj(obj)
+        for obj in expt:
+            self.notifier.except_obj(obj)
+    
+    def run(self):
+        while True:
+            self.poll(None)

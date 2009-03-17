@@ -95,12 +95,13 @@ class Handler:
     def __init__(self, socket_map, sock):
         self.connected = False
         self.socket_map = socket_map
-        self.socket = sock
+        self.socket = None
         if sock is not None:
             self.set_socket(sock)
     
     def set_socket(self, sock):
-        self.socket_map.del_handler(self)
+        if self.socket:
+            self.socket_map.del_handler(self)
         
         sock.setblocking(0)
         try:
@@ -118,7 +119,7 @@ class Handler:
     def readable(self):
         return True
 
-    def writable(self):
+    def writeable(self):
         return True
     
     def fileno(self):
@@ -136,6 +137,9 @@ class Handler:
     def handle_except(self, err):
         pass
     
+    def handle_connect(self):
+        pass
+    
 
 
 class AcceptHandler(Handler):
@@ -149,8 +153,6 @@ class AcceptHandler(Handler):
 
     def listen(self, num):
         self.accepting = True
-        if os.name == 'nt' and num > 5:
-            num = 5
         return self.socket.listen(num)
 
     def bind(self, addr):
@@ -212,4 +214,3 @@ class IOHandler(Handler):
             self.handle_connect()
         else:
             raise socket.error(err, errorcode[err])
-
