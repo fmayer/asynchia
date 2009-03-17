@@ -1,4 +1,4 @@
-# -*- coding: us-ascii *-*
+# -*- coding: us-ascii -*-
 
 # asynchia - asynchronous networking library
 # Copyright (C) 2009 Florian Mayer
