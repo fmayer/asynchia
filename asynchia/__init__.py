@@ -219,7 +219,10 @@ class AcceptHandler(Handler):
             self.socket.getsockopt(socket.SOL_SOCKET,
                                    socket.SO_REUSEADDR) | 1
         )
-
+    
+    def writeable(self):
+        """ We do not need to write to accepting sockets. """
+        return False
 
 
 class IOHandler(Handler):
