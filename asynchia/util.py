@@ -18,7 +18,6 @@
 
 """ Facilities for parsing IP addresses. """
 
-
 def parse_ipv4(string, default_port=-1):
     """ Return (host, port) from IPv4 IP. """
     h = string.split(':')

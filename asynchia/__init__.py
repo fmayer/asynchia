@@ -145,7 +145,7 @@ class Handler:
     def readable(self):
         """ Indicate whether the handler is interested in reading data. """
         return True
-
+    
     def writeable(self):
         """ Indicate whether the handler is interested in writing data. """
         return True
@@ -191,11 +191,11 @@ class AcceptHandler(Handler):
     def handle_accept(self, sock, addr):
         """ Accept connection from addr at sock. """
         pass
-
+    
     def listen(self, num):
         """ Listen for a maximum of num connections. """
         return self.socket.listen(num)
-
+    
     def bind(self, addr):
         """ Bind to address. """
         self.addr = addr
