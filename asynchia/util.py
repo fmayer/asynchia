@@ -16,3 +16,46 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+""" Facilities for parsing IP addresses. """
+
+
+def parse_ipv4(string, default_port=-1):
+    """ Return (host, port) from IPv4 IP. """
+    h = string.split(':')
+    if len(h) == 1:
+        return string, default_port
+    elif len(h) == 2:
+        return h[0], int(h[1])
+    else:
+        raise ValueError("Cannot interpret %r as IPv4 address!" % string)
+
+
+def parse_ipv6(string, default_port=-1):
+    """ Return (host, port) from IPv6 IP. """
+    if '[' in string and ']' in string:
+        h = string.split(']:')
+        if len(h) == 1:
+            return string[1: -1], default_port
+        else:
+            return h[0][1:], int(h[1])
+    elif not '[' in string and not ']' in string:
+        return string, default_port
+    else:
+        raise ValueError("Cannot interpret %r as IPv6 address!" % string)
+
+
+def parse_ip(string, default_port=-1):
+    """ Return (host, port) from input string. This tries to automatically
+    determine whether the address is IPv4 or IPv6.
+    
+    If no port is found default_port, which defaults to -1 is used.
+    
+    >>> parse_ip('127.0.0.1:1234')
+    ('127.0.0.1', 1234)
+    >>> parse_ip('[2001:0db8:85a3:08d3:1319:8a2e:0370:7344]:443')
+    ('2001:0db8:85a3:08d3:1319:8a2e:0370:7344', 443)
+    """
+    if string.count(':') > 1:
+        return parse_ipv6(string, default_port)
+    else:
+        return parse_ipv4(string, default_port)

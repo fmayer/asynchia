@@ -16,30 +16,39 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Socket-maps are there to decide which sockets have I/O to be done
+and call the appropriate handle functions at the Handlers.
+"""
+
 import select
 
 import asynchia
 
 
 class SelectSocketMap(asynchia.SocketMap):
+    """ Decide which sockets have I/O to do using select.select. """
     def __init__(self, notifier=None):
         asynchia.SocketMap.__init__(self, notifier)
         self.socket_list = []
     
     def add_handler(self, handler):
+        """ See SocketMap.add_handler. """
         self.socket_list.append(handler)
     
     def del_handler(self, handler):
+        """ See SocketMap.del_handler. """
         self.socket_list.remove(handler)
     
     def poll(self, timeout):
+        """ Poll for I/O. """
         read_list = (obj for obj in self.socket_list if obj.readable())
         write_list = (obj for obj in self.socket_list
                       if obj.writeable() or not obj.connected)
         
         read, write, expt = select.select(read_list,
                                           write_list,
-                                          self.socket_list)
+                                          self.socket_list, timeout)
         
         for obj in read:
             self.notifier.read_obj(obj)
@@ -49,5 +58,53 @@ class SelectSocketMap(asynchia.SocketMap):
             self.notifier.except_obj(obj)
     
     def run(self):
+        """ Periodically poll for I/O. """
+        while True:
+            self.poll(None)
+
+
+class PollSocketMap(asynchia.SocketMap):
+    """ Decide which sockets have I/O to do using select.poll. """
+    def __init__(self, notifier=None):
+        asynchia.SocketMap.__init__(self, notifier)
+        self.socket_list = {}
+    
+    def add_handler(self, handler):
+        """ See SocketMap.add_handler. """
+        fileno = handler.fileno()
+        if fileno in self.socket_list:
+            raise ValueError
+        self.socket_list[fileno] = handler
+    
+    def del_handler(self, handler):
+        """ See SocketMap.del_handler. """
+        fileno = handler.fileno()
+        del self.socket_list[fileno]
+    
+    def poll(self, timeout):
+        """ Poll for I/O. """
+        poller = select.poll()
+        for fileno, obj in self.socket_list.iteritems():
+            flags = select.POLLERR | select.POLLHUP | select.POLLNVAL
+            if obj.readable():
+                flags |= select.POLLIN | select.POLLPRI
+            if obj.writable():
+                flags |= select.POLLOUT
+            poller.register(fileno, flags)
+        
+        active = poller.poll(timeout)
+        for fileno, flags in active:
+            obj = self.socket_list[fileno]
+            if flags & (select.POLLIN | select.POLLPRI):
+                self.notifier.read_obj(obj)
+            if flags & select.POLLOUT:
+                self.notifier.write_obj(obj)
+            if flags & (select.POLLERR | select.POLLNVAL):
+                self.notifier.except_obj(obj)
+            if flags & select.POLLHUP:
+                self.notifier.close_obj(obj)
+    
+    def run(self):
+        """ Periodically poll for I/O. """
         while True:
             self.poll(None)
