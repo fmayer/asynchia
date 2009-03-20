@@ -83,7 +83,8 @@ class PollSocketMap(asynchia.SocketMap):
         """ See SocketMap.add_handler. """
         fileno = handler.fileno()
         if fileno in self.socket_list:
-            raise ValueError("Socket with fileno %d already in socket map!")
+            raise ValueError("Socket with fileno %d already "
+                             "in socket map!" % fileno)
         self.socket_list[fileno] = handler
     
     def del_handler(self, handler):
