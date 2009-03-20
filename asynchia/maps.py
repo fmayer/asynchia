@@ -19,6 +19,10 @@
 """
 Socket-maps are there to decide which sockets have I/O to be done
 and call the appropriate handle functions at the Handlers.
+
+If select.poll is available, you will have PollSocketMap avaiable and
+also assigned to DefaultSocketMap, which otherwise defaults to
+SelectSocketMap.
 """
 
 import select
@@ -34,6 +38,8 @@ class SelectSocketMap(asynchia.SocketMap):
     
     def add_handler(self, handler):
         """ See SocketMap.add_handler. """
+        if handler in self.socket_list:
+            raise ValueError("Handler %r already in socket map!" % handler)
         self.socket_list.append(handler)
     
     def del_handler(self, handler):
@@ -64,7 +70,11 @@ class SelectSocketMap(asynchia.SocketMap):
 
 
 class PollSocketMap(asynchia.SocketMap):
-    """ Decide which sockets have I/O to do using select.poll. """
+    """ Decide which sockets have I/O to do using select.poll. 
+    
+    Do not refer to this class without explicitely checking for its existance
+    first, it may not exist on some platforms (it is know not to on Windows).
+    """
     def __init__(self, notifier=None):
         asynchia.SocketMap.__init__(self, notifier)
         self.socket_list = {}
@@ -73,7 +83,7 @@ class PollSocketMap(asynchia.SocketMap):
         """ See SocketMap.add_handler. """
         fileno = handler.fileno()
         if fileno in self.socket_list:
-            raise ValueError
+            raise ValueError("Socket with fileno %d already in socket map!")
         self.socket_list[fileno] = handler
     
     def del_handler(self, handler):
@@ -108,3 +118,12 @@ class PollSocketMap(asynchia.SocketMap):
         """ Periodically poll for I/O. """
         while True:
             self.poll(None)
+
+
+if not hasattr(select, 'poll'):
+    del PollSocketMap
+    DefaultSocketMap = SelectSocketMap
+else:
+    # Usually it's a better idea to use select.poll
+    # than to use select.select.
+    DefaultSocketMap = PollSocketMap
