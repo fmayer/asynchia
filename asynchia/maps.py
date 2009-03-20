@@ -98,7 +98,7 @@ class PollSocketMap(asynchia.SocketMap):
             flags = select.POLLERR | select.POLLHUP | select.POLLNVAL
             if obj.readable():
                 flags |= select.POLLIN | select.POLLPRI
-            if obj.writable():
+            if obj.writeable():
                 flags |= select.POLLOUT
             poller.register(fileno, flags)
         
