@@ -49,7 +49,7 @@ class EchoAcceptor(asynchia.AcceptHandler):
 
 if __name__ == '__main__':
     # This should show "Foo" in your console.
-    m = asynchia.maps.SelectSocketMap()
+    m = asynchia.maps.DefaultSocketMap()
     a = EchoAcceptor(m, socket.socket())
     a.reuse_addr()
     a.bind(('', 25000))
