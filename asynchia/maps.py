@@ -62,11 +62,7 @@ class SelectSocketMap(asynchia.SocketMap):
     
     def del_writer(self, handler):
         """ See SocketMap.del_writer. """
-        try:
-            self.writers.remove(handler)
-        except:
-            print handler
-            raise
+        self.writers.remove(handler)
     
     def add_reader(self, handler):
         """ See SocketMap.add_reader. """
