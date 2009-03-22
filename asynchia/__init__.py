@@ -210,7 +210,7 @@ class Handler(object):
             return
         
         self._writeable = value
-        # If we are waiting for the connect write-event connected,
+        # If we are waiting for the connect write-event,
         # the handler is
         #   a) Already in the writers list if we want to add it to it.
         #   b) Needs to remain in the writers list if we wanted to
