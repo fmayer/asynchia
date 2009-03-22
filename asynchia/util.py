@@ -20,11 +20,11 @@
 
 def parse_ipv4(string, default_port=-1):
     """ Return (host, port) from IPv4 IP. """
-    h = string.split(':')
-    if len(h) == 1:
+    split = string.split(':')
+    if len(split) == 1:
         return string, default_port
-    elif len(h) == 2:
-        return h[0], int(h[1])
+    elif len(split) == 2:
+        return split[0], int(split[1])
     else:
         raise ValueError("Cannot interpret %r as IPv4 address!" % string)
 
@@ -32,11 +32,11 @@ def parse_ipv4(string, default_port=-1):
 def parse_ipv6(string, default_port=-1):
     """ Return (host, port) from IPv6 IP. """
     if '[' in string and ']' in string:
-        h = string.split(']:')
-        if len(h) == 1:
+        split = string.split(']:')
+        if len(split) == 1:
             return string[1: -1], default_port
         else:
-            return h[0][1:], int(h[1])
+            return split[0][1:], int(split[1])
     elif not '[' in string and not ']' in string:
         return string, default_port
     else:
