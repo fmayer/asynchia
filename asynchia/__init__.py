@@ -164,7 +164,7 @@ class Handler(object):
             # If we had a socket before, we are still in the SocketMap.
             # Remove us out of it.
             self.socket_map.del_handler(self)
-                
+        
         sock.setblocking(0)
         try:
             self.addr = sock.getpeername()
