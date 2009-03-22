@@ -34,6 +34,8 @@ class SelectSocketMap(asynchia.SocketMap):
     """ Decide which sockets have I/O to do using select.select. """
     def __init__(self, notifier=None):
         asynchia.SocketMap.__init__(self, notifier)
+        self.readers = []
+        self.writers = []
         self.socket_list = []
     
     def add_handler(self, handler):
@@ -41,21 +43,44 @@ class SelectSocketMap(asynchia.SocketMap):
         if handler in self.socket_list:
             raise ValueError("Handler %r already in socket map!" % handler)
         self.socket_list.append(handler)
+        if handler.readable:
+            self.add_reader(handler)
+        if handler.writeable:
+            self.add_writer(handler)
     
     def del_handler(self, handler):
         """ See SocketMap.del_handler. """
         self.socket_list.remove(handler)
+        if handler.readable:
+            self.del_reader(handler)
+        if handler.writeable:
+            self.del_writer(handler)
+    
+    def add_writer(self, handler):
+        """ See SocketMap.add_writer. """
+        self.writers.append(handler)
+    
+    def del_writer(self, handler):
+        """ See SocketMap.del_writer. """
+        try:
+            self.writers.remove(handler)
+        except:
+            print handler
+            raise
+    
+    def add_reader(self, handler):
+        """ See SocketMap.add_reader. """
+        self.readers.append(handler)
+    
+    def del_reader(self, handler):
+        """ See SocketMap.del_reader. """
+        self.readers.remove(handler)
     
     def poll(self, timeout):
         """ Poll for I/O. """
-        read_list = (obj for obj in self.socket_list if obj.readable())
-        write_list = (obj for obj in self.socket_list
-                      if obj.writeable() or not obj.connected)
-        
-        read, write, expt = select.select(read_list,
-                                          write_list,
+        read, write, expt = select.select(self.readers,
+                                          self.writers,
                                           self.socket_list, timeout)
-        
         for obj in read:
             self.notifier.read_obj(obj)
         for obj in write:
@@ -97,9 +122,9 @@ class PollSocketMap(asynchia.SocketMap):
         poller = select.poll()
         for fileno, obj in self.socket_list.iteritems():
             flags = select.POLLERR | select.POLLHUP | select.POLLNVAL
-            if obj.readable():
+            if obj.readable:
                 flags |= select.POLLIN | select.POLLPRI
-            if obj.writeable():
+            if obj.writeable or obj.awaiting_connect:
                 flags |= select.POLLOUT
             poller.register(fileno, flags)
         
@@ -119,6 +144,21 @@ class PollSocketMap(asynchia.SocketMap):
         """ Periodically poll for I/O. """
         while True:
             self.poll(None)
+    
+    # We don't care about these, we just check for read/writeable
+    # in PollSocketMap.poll. These are more important for GUI socket-
+    # maps.
+    def add_writer(self, handler):
+        """ No-op. Not needed when using select.poll. """
+    
+    def del_writer(self, handler):
+        """ No-op. Not needed when using select.poll. """
+    
+    def add_reader(self, handler):
+        """ No-op. Not needed when using select.poll. """
+    
+    def del_reader(self, handler):
+        """ No-op. Not needed when using select.poll. """
 
 
 if not hasattr(select, 'poll'):
