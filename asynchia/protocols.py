@@ -21,34 +21,36 @@
 import asynchia
 
 
-class BufferedWriteHandler(asynchia.IOHandler):
+class BufferedSendHandler(asynchia.IOHandler):
     """ Buffer the data that's sent if it couldn't be sent as
     one piece. """
     def __init__(self, socket_map, sock):
         asynchia.IOHandler.__init__(self, socket_map, sock)
         self.write_buffer = ''
     
-    def buffered_write(self, data):
+    def sendall(self, data):
         """ Write data, if necessary, over multiple send calls. """
         self.write_buffer += data
-    
-    def writeable(self):
-        """ If there's data in the buffer, we want to write. """
-        return bool(self.write_buffer)
+        if data and not self.writeable:
+            self.set_writeable(True)
     
     def handle_write(self):
         """ Do not override. """
         sent = self.send(self.write_buffer)
         self.write_buffer = self.write_buffer[sent:]
+        if not self.write_buffer and self.writeable:
+            self.set_writeable(False)
 
 
-class LineHandler(BufferedWriteHandler):
+class LineHandler(BufferedSendHandler):
     """ Use this for line-based protocols. """
     delimiter = None
     buffer_size = 4096
     def __init__(self, socket_map, sock):
-        BufferedWriteHandler.__init__(self, socket_map, sock)
+        BufferedSendHandler.__init__(self, socket_map, sock)
         self.read_buffer = ''
+        if not self.readable:
+            self.set_readable(True)
     
     def split_buffer(self):
         """ Split buffer into the different lines. """
@@ -67,6 +69,10 @@ class LineHandler(BufferedWriteHandler):
         got lines in it. """
         self.read_buffer += self.recv(self.buffer_size)
         self.parse_buffer()
+    
+    def send_line(self, line):
+        """ Send line. """
+        self.sendall(line + self.delimiter)
     
     def line_received(self, line):
         """ Override. """

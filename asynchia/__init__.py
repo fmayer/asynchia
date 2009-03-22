@@ -45,6 +45,26 @@ class SocketMap:
         handle_read, handle_write, handle_close and handle_connect methods
         called upon new I/O events. """
         raise NotImplementedError
+    
+    def add_reader(self, obj):
+        """ Add handler as a reader.
+        This indicates he wishes to read data. """
+        raise NotImplementedError
+    
+    def del_reader(self, obj):
+        """ Delete handler as a reader.
+        This indicates he no longer wants to read data until added again """
+        raise NotImplementedError
+    
+    def add_writer(self, obj):
+        """ Add handler as a writer.
+        This indicates he wishes to send data. """
+        raise NotImplementedError
+    
+    def del_writer(self, obj):
+        """ Delete handler as a writer.
+        This indicates he no longer wants to send data until added again """
+        raise NotImplementedError
 
 
 class Notifier:
@@ -54,11 +74,7 @@ class Notifier:
         """ Call handle_read of the object. If any error occurs within it,
         call handle_error of the object. If it is the first read event call
         the handle_connect method. """
-        if not obj.connected:
-            obj.connected = True
-            obj.handle_connect()
-        
-        if not obj.readable():
+        if not obj.readable:
             # This shouldn't be happening!
             return
         try:
@@ -71,12 +87,13 @@ class Notifier:
         """ Call handle_write of the object. If any error occurs within it,
         call handle_error of the object. If it is the first write event call
         the handle_connect method. """
-        if not obj.connected:
+        if obj.awaiting_connect:
+            obj.stop_awaiting_connect()
             obj.connected = True
             obj.handle_connect()
         
-        if not obj.writeable():
-            # This shouldn't be happening!
+        if not obj.writeable:
+            # This should only be happening if the object was just connected.
             return
         try:
             obj.handle_write()
@@ -107,15 +124,32 @@ class Notifier:
             obj.handle_error()        
 
 
-class Handler:
+class Handler(object):
     """ Handle a socket object. Call this objects handle_* methods upon I/O """
     def __init__(self, socket_map, sock):
-        self.addr = None
+        # Make no assumptions on what we want to do with the handler.
+        # The user will need to explicitely make it read- or writeable.
+        self._readable = False
+        self._writeable = False
+        
+        self.awaiting_connect = False
+        
         self.connected = False
+             
+        self.addr = None
         self.socket_map = socket_map
         self.socket = None
-        if sock is not None:
-            self.set_socket(sock)
+        self.set_socket(sock)
+    
+    def close(self):
+        """ Close the socket. """
+        self.socket_map.del_handler(self)
+        self.connected = False
+        try:
+            self.socket.close()
+        except socket.error, err:
+            if err.args[0] not in (errno.ENOTCONN, errno.EBADF):
+                raise
     
     def set_socket(self, sock):
         """ Set socket as the socket of the handler.
@@ -127,14 +161,17 @@ class Handler:
         If the Handler already had a socket, remove it out of the SocketMap
         and add it with its new socket. """
         if self.socket:
+            # If we had a socket before, we are still in the SocketMap.
+            # Remove us out of it.
             self.socket_map.del_handler(self)
-        
+                
         sock.setblocking(0)
         try:
             self.addr = sock.getpeername()
             self.connected = True
         except socket.error, err:
             if err.args[0] == errno.ENOTCONN:
+                self.await_connect()
                 self.connected = False
             else:
                 raise
@@ -142,19 +179,81 @@ class Handler:
         self.socket = sock
         self.socket_map.add_handler(self)
     
-    def readable(self):
-        """ Indicate whether the handler is interested in reading data. """
-        return True
+    def get_readable(self):
+        """ Check whether handler wants to read data. """
+        return self._readable
     
-    def writeable(self):
-        """ Indicate whether the handler is interested in writing data. """
-        return True
+    def set_readable(self, value):
+        """ Set whether handler wants to read data. """
+        # FIXME: Is this wise?
+        if self._readable == value:
+            # The state hasn't changed. Calling the SocketMap's handlers
+            # again might confuse it.
+            return
+        
+        self._readable = value
+        if value:
+            self.socket_map.add_reader(self)
+        else:
+            self.socket_map.del_reader(self)
+    
+    def get_writeable(self):
+        """ Check whether handler wants to write data. """
+        return self._writeable
+    
+    def set_writeable(self, value):
+        """ Set whether handler wants to write data. """
+        # FIXME: Is this wise?
+        if self._writeable == value:
+            # The state hasn't changed. Calling the SocketMap's handlers
+            # again might confuse it.
+            return
+        
+        self._writeable = value
+        # If we are waiting for the connect write-event connected,
+        # the handler is
+        #   a) Already in the writers list if we want to add it to it.
+        #   b) Needs to remain in the writers list if we wanted to
+        #      remove it.
+        if not self.awaiting_connect:
+            if value:
+                self.socket_map.add_writer(self)
+            else:
+                self.socket_map.del_writer(self)
+        
+    # FIXME: These properties are a bit very magic.
+    # Remove the properties and use the getters and setters directly?
+    readable = property(get_readable, set_readable)
+    writeable = property(get_writeable, set_writeable)
+    
+    def await_connect(self):
+        """ Add handler to its socket-map's writers if necessary.
+        
+        At the next write-event from the socket-map handle_connect will
+        be called. """
+        # If we are already writeable, the handler is already in the
+        # socket-map's writers.
+        if not self.writeable:
+            self.socket_map.add_writer(self)
+        self.awaiting_connect = True
+    
+    def stop_awaiting_connect(self):
+        """ Remove handler from its socket-map's writers if necessary.
+       
+        At the next write-event from the socket-map handle_connect will
+        not be called. """
+        # If we are writeable, the handler needs to remain in the
+        # socket-map's writers.
+        if not self.writeable:
+            self.socket_map.del_writer(self)
+        self.awaiting_connect = False
     
     def fileno(self):
         """ Return fileno of underlying socket object.
         Needed for select.select. """
         return self.socket.fileno()
     
+    # Dummy handlers.
     def handle_read(self):
         """ Handle read I/O at socket. """
         pass
@@ -182,6 +281,13 @@ class Handler:
 
 class AcceptHandler(Handler):
     """ Handle socket that accepts connections. """
+    def __init__(self, socket_map, sock):
+        Handler.__init__(self, socket_map, sock)
+        if self.writeable:
+            self.set_writeable(False)
+        if not self.readable:
+            self.set_readable(True)
+    
     def handle_read(self):
         """ Do not override. """
         sock, addr = self.accept()
@@ -219,10 +325,6 @@ class AcceptHandler(Handler):
             self.socket.getsockopt(socket.SOL_SOCKET,
                                    socket.SO_REUSEADDR) | 1
         )
-    
-    def writeable(self):
-        """ We do not need to write to accepting sockets. """
-        return False
 
 
 class IOHandler(Handler):
@@ -256,12 +358,14 @@ class IOHandler(Handler):
     
     def connect(self, address):
         """ Connect to (host, port). """
-        self.connected = False
         err = self.socket.connect_ex(address)
         if err in (errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK):
+            self.connected = False
+            self.await_connect()
             return
         if err in (0, errno.EISCONN):
             self.addr = address
+            self.connected = True
             self.handle_connect()
         else:
-            raise socket.error(err, errno.errorcode[err])
+            self.handle_except(err)

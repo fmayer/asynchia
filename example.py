@@ -31,9 +31,17 @@ import asynchia.protocols
 class EchoClient(asynchia.IOHandler):
     def handle_connect(self):
         self.send("Foo\n")
+    
+    def handle_error(self):
+        traceback.print_exc()
 
 
 class Echo(asynchia.IOHandler):
+    def __init__(self, socket_map, sock):
+        asynchia.IOHandler.__init__(self, socket_map, sock)
+        if not self.readable:
+            self.set_readable(True)
+        
     def handle_read(self):
         read = self.recv(4096)
         sys.stdout.write(read)
@@ -45,6 +53,9 @@ class Echo(asynchia.IOHandler):
 class EchoAcceptor(asynchia.AcceptHandler):
     def handle_accept(self, sock, addr):
         Echo(self.socket_map, sock)
+    
+    def handle_error(self):
+        traceback.print_exc()
 
 
 if __name__ == '__main__':
