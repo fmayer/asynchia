@@ -160,6 +160,7 @@ class Handler(object):
         
         If the Handler already had a socket, remove it out of the SocketMap
         and add it with its new socket. """
+        await = False
         if self.socket:
             # If we had a socket before, we are still in the SocketMap.
             # Remove us out of it.
@@ -171,13 +172,15 @@ class Handler(object):
             self.connected = True
         except socket.error, err:
             if err.args[0] == errno.ENOTCONN:
-                self.await_connect()
+                await = True
                 self.connected = False
             else:
                 raise
         
         self.socket = sock
         self.socket_map.add_handler(self)
+        if await:
+            self.await_connect()
     
     def get_readable(self):
         """ Check whether handler wants to read data. """
