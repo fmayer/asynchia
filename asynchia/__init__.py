@@ -168,6 +168,7 @@ class Handler(object):
         
         sock.setblocking(0)
         try:
+            # FIXME: Should we call self.handle_connect here?
             self.addr = sock.getpeername()
             self.connected = True
         except socket.error, err:
