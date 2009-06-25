@@ -373,11 +373,11 @@ class IOHandler(Handler):
             self.handle_except(err)
 
 
-class Server(asynchia.AcceptHandler):
+class Server(AcceptHandler):
     """ Automatically create an instance of handlercls for every
     connection. """
     def __init__(self, socket_map, sock, handlercls):
-        asynchia.AcceptHandler.__init__(self, socket_map, sock)
+        AcceptHandler.__init__(self, socket_map, sock)
         self.handlercls = handlercls
     
     def handle_accept(self, sock, addr):
