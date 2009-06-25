@@ -178,6 +178,8 @@ class EPollSocketMap(asynchia.SocketMap):
     
     def poll(self, timeout):
         """ Poll for I/O. """
+        # While select.poll is alright with None, select.epoll expects
+        # -1 for no timeout,
         if timeout is None:
             timeout = -1
         
