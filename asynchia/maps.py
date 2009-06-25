@@ -118,6 +118,7 @@ class PollSocketMap(asynchia.SocketMap):
         """ See SocketMap.del_handler. """
         fileno = handler.fileno()
         del self.socket_list[fileno]
+        self.poller.unregister(fileno)
     
     def poll(self, timeout):
         """ Poll for I/O. """
@@ -183,6 +184,7 @@ class EPollSocketMap(asynchia.SocketMap):
         """ See SocketMap.del_handler. """
         fileno = handler.fileno()
         del self.socket_list[fileno]
+        self.poller.unregister(fileno)
     
     def poll(self, timeout):
         """ Poll for I/O. """
