@@ -138,7 +138,6 @@ class Handler(object):
         
         self.connected = False
              
-        self.addr = None
         self.socket_map = socket_map
         self.socket = None
         self.set_socket(sock)
@@ -170,7 +169,6 @@ class Handler(object):
         
         sock.setblocking(0)
         try:
-            self.addr = sock.getpeername()
             self.connected = True
             # To provide consistency. If an async socket that already had
             # .connect called on it, we couldn't tell whether handle_connect
@@ -312,7 +310,6 @@ class AcceptHandler(Handler):
     
     def bind(self, addr):
         """ Bind to address. """
-        self.addr = addr
         return self.socket.bind(addr)
     
     def accept(self):
@@ -372,7 +369,6 @@ class IOHandler(Handler):
             self.await_connect()
             return
         if err in (0, errno.EISCONN):
-            self.addr = address
             self.connected = True
             self.handle_connect()
         else:
