@@ -227,9 +227,7 @@ class Handler(object):
                 self.socket_map.add_writer(self)
             else:
                 self.socket_map.del_writer(self)
-        
-    # FIXME: These properties are a bit very magic.
-    # Remove the properties and use the getters and setters directly?
+    
     readable = property(get_readable, set_readable)
     writeable = property(get_writeable, set_writeable)
     
