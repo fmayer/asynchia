@@ -1,0 +1,11 @@
+syntax: glob
+
+*.pyc
+*.pyo
+.hgignore
+*.egg-info
+build
+dist
+
+# My IDE
+*.wpr
