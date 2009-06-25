@@ -20,9 +20,13 @@
 Socket-maps are there to decide which sockets have I/O to be done
 and call the appropriate handle functions at the Handlers.
 
-If select.poll is available, you will have PollSocketMap avaiable and
+If select.poll is available, you will have PollSocketMap available and
 also assigned to DefaultSocketMap, which otherwise defaults to
 SelectSocketMap.
+
+If select.epoll is available, you will have EPollSocketMap available and
+also assigned to DefaultSocketMap, which otherwise defaults to either
+PollSocketMap or SelectSocketMap.
 """
 
 import select
@@ -135,6 +139,7 @@ class PollSocketMap(asynchia.SocketMap):
             self.poll(None)
     
     def handler_changed(self, handler):
+        """ Update flags for handler. """
         self.poller.modify(handler.fileno(), self.create_flags(handler))
     
     # We just update the flags of the object, doesn't matter what has
@@ -143,6 +148,9 @@ class PollSocketMap(asynchia.SocketMap):
     
     @staticmethod
     def create_flags(handler):
+        """ Generate appropriate flags for handler. These flags will
+        represent the current state of the handler (if it is readable,
+        the flags say so too). """
         flags = select.POLLERR | select.POLLHUP | select.POLLNVAL
         if handler.readable:
             flags |= select.POLLIN | select.POLLPRI
@@ -201,6 +209,7 @@ class EPollSocketMap(asynchia.SocketMap):
             self.poll(None)
     
     def handler_changed(self, handler):
+        """ Update flags for handler. """
         self.poller.modify(handler.fileno(), self.create_flags(handler))
     
     # We just update the flags of the object, doesn't matter what has
@@ -209,6 +218,9 @@ class EPollSocketMap(asynchia.SocketMap):
     
     @staticmethod
     def create_flags(handler):
+        """ Generate appropriate flags for handler. These flags will
+        represent the current state of the handler (if it is readable,
+        the flags say so too). """
         flags = select.EPOLLERR | select.EPOLLHUP
         if handler.readable:
             flags |= select.EPOLLIN | select.EPOLLPRI
