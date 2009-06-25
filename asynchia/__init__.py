@@ -21,6 +21,8 @@
 import errno
 import socket
 
+import traceback
+
 
 connection_lost = (errno.ECONNRESET, errno.ENOTCONN,
                    errno.ESHUTDOWN, errno.ECONNABORTED)
@@ -268,7 +270,8 @@ class Handler(object):
     
     def handle_error(self):
         """ Handle error in handler. """
-        pass
+        # This is the sanest default.
+        traceback.print_exc()
     
     def handle_except(self, err):
         """ Handle exception state at error. """
@@ -287,10 +290,6 @@ class AcceptHandler(Handler):
     """ Handle socket that accepts connections. """
     def __init__(self, socket_map, sock):
         Handler.__init__(self, socket_map, sock)
-        if self.writeable:
-            self.set_writeable(False)
-        if not self.readable:
-            self.set_readable(True)
     
     def handle_read(self):
         """ Do not override. """
@@ -304,6 +303,8 @@ class AcceptHandler(Handler):
     
     def listen(self, num):
         """ Listen for a maximum of num connections. """
+        if not self.readable:
+            self.set_readable(True)
         return self.socket.listen(num)
     
     def bind(self, addr):
@@ -373,3 +374,16 @@ class IOHandler(Handler):
             self.handle_connect()
         else:
             self.handle_except(err)
+
+
+class Server(AcceptHandler):
+    def __init__(self, socket_map, sock, handlercls):
+        AcceptHandler.__init__(self, socket_map, sock)
+        
+        self.handlercls = handlercls
+    
+    def handle_accept(self, sock, addr):
+        self.handlercls(self.socket_map, sock)
+    
+    def handle_error(self):
+        traceback.print_exc()
