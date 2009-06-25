@@ -94,11 +94,12 @@ class PollSocketMap(asynchia.SocketMap):
     """ Decide which sockets have I/O to do using select.poll. 
     
     Do not refer to this class without explicitely checking for its existance
-    first, it may not exist on some platforms (it is know not to on Windows).
+    first, it may not exist on some platforms (it is known not to on Windows).
     """
     def __init__(self, notifier=None):
         asynchia.SocketMap.__init__(self, notifier)
         self.socket_list = {}
+        self.poller = select.poll()
     
     def add_handler(self, handler):
         """ See SocketMap.add_handler. """
@@ -107,6 +108,7 @@ class PollSocketMap(asynchia.SocketMap):
             raise ValueError("Socket with fileno %d already "
                              "in socket map!" % fileno)
         self.socket_list[fileno] = handler
+        self.poller.register(fileno, self.create_flags(handler))
     
     def del_handler(self, handler):
         """ See SocketMap.del_handler. """
@@ -115,16 +117,7 @@ class PollSocketMap(asynchia.SocketMap):
     
     def poll(self, timeout):
         """ Poll for I/O. """
-        poller = select.poll()
-        for fileno, obj in self.socket_list.iteritems():
-            flags = select.POLLERR | select.POLLHUP | select.POLLNVAL
-            if obj.readable:
-                flags |= select.POLLIN | select.POLLPRI
-            if obj.writeable or obj.awaiting_connect:
-                flags |= select.POLLOUT
-            poller.register(fileno, flags)
-        
-        active = poller.poll(timeout)
+        active = self.poller.poll(timeout)
         for fileno, flags in active:
             obj = self.socket_list[fileno]
             if flags & (select.POLLIN | select.POLLPRI):
@@ -141,26 +134,95 @@ class PollSocketMap(asynchia.SocketMap):
         while True:
             self.poll(None)
     
-    # We don't care about these, we just check for read/writeable
-    # in PollSocketMap.poll. These are more important for GUI socket-
-    # maps.
-    def add_writer(self, handler):
-        """ No-op. Not needed when using select.poll. """
+    def handler_changed(self, handler):
+        self.poller.modify(handler.fileno(), self.create_flags(handler))
     
-    def del_writer(self, handler):
-        """ No-op. Not needed when using select.poll. """
+    # We just update the flags of the object, doesn't matter what has
+    # changed.
+    add_writer = del_writer = add_reader = del_reader = handler_changed
     
-    def add_reader(self, handler):
-        """ No-op. Not needed when using select.poll. """
-    
-    def del_reader(self, handler):
-        """ No-op. Not needed when using select.poll. """
+    @staticmethod
+    def create_flags(handler):
+        flags = select.POLLERR | select.POLLHUP | select.POLLNVAL
+        if handler.readable:
+            flags |= select.POLLIN | select.POLLPRI
+        if handler.writeable or handler.awaiting_connect:
+            flags |= select.POLLOUT
+        return flags
 
 
-if not hasattr(select, 'poll'):
-    del PollSocketMap
-    DefaultSocketMap = SelectSocketMap
-else:
-    # Usually it's a better idea to use select.poll
-    # than to use select.select.
+class EPollSocketMap(asynchia.SocketMap):
+    """ Decide which sockets have I/O to do using select.epoll. 
+    
+    Do not refer to this class without explicitely checking for its existance
+    first, it may not exist on some platforms (it is known not to on Windows).
+    """
+    def __init__(self, notifier=None):
+        asynchia.SocketMap.__init__(self, notifier)
+        self.socket_list = {}
+        self.poller = select.epoll()
+    
+    def add_handler(self, handler):
+        """ See SocketMap.add_handler. """
+        fileno = handler.fileno()
+        if fileno in self.socket_list:
+            raise ValueError("Socket with fileno %d already "
+                             "in socket map!" % fileno)
+        self.socket_list[fileno] = handler
+        self.poller.register(fileno, self.create_flags(handler))
+    
+    def del_handler(self, handler):
+        """ See SocketMap.del_handler. """
+        fileno = handler.fileno()
+        del self.socket_list[fileno]
+    
+    def poll(self, timeout):
+        """ Poll for I/O. """
+        if timeout is None:
+            timeout = -1
+        
+        active = self.poller.poll(timeout)
+        for fileno, flags in active:
+            obj = self.socket_list[fileno]
+            if flags & (select.EPOLLIN | select.EPOLLPRI):
+                self.notifier.read_obj(obj)
+            if flags & select.EPOLLOUT:
+                self.notifier.write_obj(obj)
+            if flags & select.EPOLLERR:
+                self.notifier.except_obj(obj)
+            if flags & select.EPOLLHUP:
+                self.notifier.close_obj(obj)
+    
+    def run(self):
+        """ Periodically poll for I/O. """
+        while True:
+            self.poll(None)
+    
+    def handler_changed(self, handler):
+        self.poller.modify(handler.fileno(), self.create_flags(handler))
+    
+    # We just update the flags of the object, doesn't matter what has
+    # changed.
+    add_writer = del_writer = add_reader = del_reader = handler_changed
+    
+    @staticmethod
+    def create_flags(handler):
+        flags = select.EPOLLERR | select.EPOLLHUP
+        if handler.readable:
+            flags |= select.EPOLLIN | select.EPOLLPRI
+        if handler.writeable or handler.awaiting_connect:
+            flags |= select.EPOLLOUT
+        return flags
+
+
+DefaultSocketMap = SelectSocketMap
+
+if hasattr(select, 'poll'):
     DefaultSocketMap = PollSocketMap
+else:
+    del PollSocketMap
+
+if hasattr(select, 'epoll'):
+    DefaultSocketMap = EPollSocketMap
+else:
+    del EPollSocketMap
