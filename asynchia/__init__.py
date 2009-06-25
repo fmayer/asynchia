@@ -373,13 +373,27 @@ class IOHandler(Handler):
             self.handle_except(err)
 
 
-class Server(AcceptHandler):
-    """ Instantiate handlercls for every incoming connection. """
+class Server(asynchia.AcceptHandler):
+    """ Automatically create an instance of handlercls for every
+    connection. """
     def __init__(self, socket_map, sock, handlercls):
-        AcceptHandler.__init__(self, socket_map, sock)
-        
+        asynchia.AcceptHandler.__init__(self, socket_map, sock)
         self.handlercls = handlercls
     
     def handle_accept(self, sock, addr):
-        """ Accept the connection and instatiate handlercls. """
-        return self.handlercls(self.socket_map, sock)
+        """ Instantiate the handler class. """
+        handler = self.handlercls(self.socket_map, sock)
+        self.new_connection(handler, addr)
+        return handler
+    
+    def new_connection(self, handler, addr):
+        """ Called after a new handler has been created. """
+    
+    def serve_forever(self, addr, num):
+        """ Serve a maximum of num connections at a time at addr. """
+        self.bind(addr)
+        self.listen(num)
+        try:
+            self.socket_map.run()
+        finally:
+            self.close()
