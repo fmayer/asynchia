@@ -319,6 +319,8 @@ class AcceptHandler(Handler):
             return conn, addr
         except socket.error, err:
             if err.args[0] == errno.EWOULDBLOCK:
+                # FIXME: This makes accept return None, which would break
+                # the API of it returning (conn, addr).
                 pass
             else:
                 raise
