@@ -169,17 +169,19 @@ class Handler(object):
         
         sock.setblocking(0)
         try:
-            self.connected = True
-            # To provide consistency. If an async socket that already had
-            # .connect called on it, we couldn't tell whether handle_connect
-            # will be called or not if we wouldn't call it here.
-            self.handle_connect()
+            sock.getpeername()
         except socket.error, err:
             if err.args[0] == errno.ENOTCONN:
                 await = True
                 self.connected = False
             else:
                 raise
+        else:
+            self.connected = True
+            # To provide consistency. If an async socket that already had
+            # .connect called on it, we couldn't tell whether handle_connect
+            # will be called or not if we wouldn't call it here.
+            self.handle_connect()
         
         self.socket = sock
         self.socket_map.add_handler(self)
