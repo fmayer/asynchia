@@ -55,13 +55,17 @@ class InterruptableSocketMap(asynchia.SocketMap):
         self.controlsender, self.controlreceiver = asynchia.util.socketpair()
     
     def start_interrupt(self, changeflags=False):
+        """ See SocketMap.start_interrupt. """
         self.controlsender.send('s')
         self.controlsender.recv(1)
     
     def end_interrupt(self, changeflags=False):
+        """ See SocketMap.end_interrupt. """
         self.controlsender.send('e')
     
     def do_interrupt(self):
+        """ Call this in the socket-map when you have found out that there is
+        data to read on the controlreceiver. """
         # Read the "s" that started the interrupt
         self.controlreceiver.recv(1)
         # Send the "i" that signals the interrupt succeeded.

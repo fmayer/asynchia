@@ -69,9 +69,11 @@ class SocketMap:
         raise NotImplementedError
     
     def start_interrupt(self, changeflags=False):
+        """ Stop the socket-map until end_interrupt is called. """
         raise NotImplementedError
     
     def end_interrupt(self, changeflags=False):
+        """ Resume the socket-map. """
         raise NotImplementedError
 
 
