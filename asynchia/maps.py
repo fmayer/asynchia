@@ -57,7 +57,21 @@ class InterruptableSocketMap(asynchia.SocketMap):
         self.controlsender.send('s')
     
     def end_interrupt(self):
+        self.controlsender.recv(1)
         self.controlsender.send('e')
+    
+    def do_interrupt(self, stime):
+        # Read the "s" that started the interrupt
+        self.controlreceiver.recv(1)
+        # Send the "i" that signals the interrupt succeeded.
+        self.controlreceiver.send("i")
+        # Read the "e" that will end the interrupt.
+        self.controlreceiver.recv(1)
+        # <Necessary?>
+        t = time.time()
+        timeout = t - stime
+        stime = t
+        return stime, timeout
     
     start_changeflags = start_interrupt
     end_changeflags = end_interrupt
@@ -129,15 +143,10 @@ class SelectSocketMap(InterruptableSocketMap):
                 self.notifier.except_obj(obj)
             
             if interrupted:
-                # Read the "s" that started the interrupt
-                self.controlreceiver.read(1)
-                # Read the "e" that will end the interrupt.
-                self.controlreceiver.read(1)
-                # <Necessary?>
-                t = time.time()
-                timeout = timeout - t - stime
-                stime = t                
-            do = interrupted
+                stime, dtimeout = self.do_interrupt(stime)
+                timeout -= dtimeout
+                do = True
+                interrupted = False
             # </Necessary?>
     
     def run(self):
@@ -198,15 +207,10 @@ class PollSocketMap(InterruptableSocketMap):
                 if flags & select.POLLHUP:
                     self.notifier.close_obj(obj)
             if interrupted:
-                # Read the "s" that started the interrupt
-                self.controlreceiver.read(1)
-                # Read the "e" that will end the interrupt.
-                self.controlreceiver.read(1)
-                # <Necessary?>
-                t = time.time()
-                timeout = timeout - t - stime
-                stime = t                
-            do = interrupted
+                stime, dtimeout = self.do_interrupt(stime)
+                timeout -= dtimeout
+                do = True
+                interrupted = False 
             # </Necessary?>
     
     def run(self):
@@ -276,6 +280,7 @@ class EPollSocketMap(InterruptableSocketMap):
         do = True
         stime = time.time()
         while do:
+            do = False
             # </Necessary?>
             active = self.poller.poll(timeout)
             for fileno, flags in active:
@@ -292,15 +297,10 @@ class EPollSocketMap(InterruptableSocketMap):
                 if flags & select.EPOLLHUP:
                     self.notifier.close_obj(obj)
             if interrupted:
-                # Read the "s" that started the interrupt
-                self.controlreceiver.read(1)
-                # Read the "e" that will end the interrupt.
-                self.controlreceiver.read(1)
-                # <Necessary?>
-                t = time.time()
-                timeout = timeout - t - stime
-                stime = t                
-            do = interrupted
+                stime, dtimeout = self.do_interrupt(stime)
+                timeout -= dtimeout
+                do = True
+                interrupted = False
             # </Necessary?>
     
     def run(self):
