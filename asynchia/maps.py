@@ -35,6 +35,18 @@ import select
 import asynchia
 import asynchia.util
 
+
+# Fragile- and StrongSocketMap?
+# Fragile has 
+#     def start_interrupt(self):
+#         self.controlsender.send('s')
+#     def end_interrupt(self):
+#         self.controlsender.send('e')
+# Strong has
+#     def start_interrupt(self):
+#         pass
+#     def end_interrupt(self):
+#         self.controlsender.send('se')
 class InterruptableSocketMap(asynchia.SocketMap):
     def __init__(self, notifier):
         asynchia.SocketMap.__init__(self, notifier)
