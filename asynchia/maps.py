@@ -55,9 +55,9 @@ class InterruptableSocketMap(asynchia.SocketMap):
     
     def start_interrupt(self):
         self.controlsender.send('s')
+        self.controlsender.recv(1)
     
     def end_interrupt(self):
-        self.controlsender.recv(1)
         self.controlsender.send('e')
     
     def do_interrupt(self, stime):
