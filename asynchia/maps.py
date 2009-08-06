@@ -40,6 +40,7 @@ import asynchia.util
 # Fragile has 
 #     def start_interrupt(self):
 #         self.controlsender.send('s')
+#         self.controlsender.recv(1)
 #     def end_interrupt(self):
 #         self.controlsender.send('e')
 # Strong has
@@ -47,6 +48,7 @@ import asynchia.util
 #         pass
 #     def end_interrupt(self):
 #         self.controlsender.send('se')
+#         self.controlsender.recv(1)
 class InterruptableSocketMap(asynchia.SocketMap):
     def __init__(self, notifier):
         asynchia.SocketMap.__init__(self, notifier)
@@ -60,18 +62,13 @@ class InterruptableSocketMap(asynchia.SocketMap):
     def end_interrupt(self):
         self.controlsender.send('e')
     
-    def do_interrupt(self, stime):
+    def do_interrupt(self):
         # Read the "s" that started the interrupt
         self.controlreceiver.recv(1)
         # Send the "i" that signals the interrupt succeeded.
         self.controlreceiver.send("i")
         # Read the "e" that will end the interrupt.
         self.controlreceiver.recv(1)
-        # <Necessary?>
-        t = time.time()
-        timeout = t - stime
-        stime = t
-        return stime, timeout
     
     start_changeflags = start_interrupt
     end_changeflags = end_interrupt
@@ -124,30 +121,21 @@ class SelectSocketMap(InterruptableSocketMap):
     def poll(self, timeout):
         """ Poll for I/O. """
         interrupted = False
-        # <Necessary?>
-        do = True
-        stime = time.time()
-        while do:
-            # </Necessary?>
-            read, write, expt = select.select(self.readers,
-                                              self.writers,
-                                              self.socket_list, timeout)
-            for obj in read:
-                if obj is not self.controlreceiver:
-                    self.notifier.read_obj(obj)
-                else:
-                    interrupted = True
-            for obj in write:
-                self.notifier.write_obj(obj)
-            for obj in expt:
-                self.notifier.except_obj(obj)
-            
-            if interrupted:
-                stime, dtimeout = self.do_interrupt(stime)
-                timeout -= dtimeout
-                do = True
-                interrupted = False
-            # </Necessary?>
+        read, write, expt = select.select(self.readers,
+                                          self.writers,
+                                          self.socket_list, timeout)
+        for obj in read:
+            if obj is not self.controlreceiver:
+                self.notifier.read_obj(obj)
+            else:
+                interrupted = True
+        for obj in write:
+            self.notifier.write_obj(obj)
+        for obj in expt:
+            self.notifier.except_obj(obj)
+        
+        if interrupted:
+            self.do_interrupt()
     
     def run(self):
         """ Periodically poll for I/O. """
@@ -187,31 +175,22 @@ class PollSocketMap(InterruptableSocketMap):
     def poll(self, timeout):
         """ Poll for I/O. """
         interrupted = False
-        # <Necessary?>
-        do = True
-        stime = time.time()
-        while do:
-            # </Necessary?>
-            active = self.poller.poll(timeout)
-            for fileno, flags in active:
-                if fileno == self.controlfd:
-                    interrupted = True
-                    continue
-                obj = self.socket_list[fileno]
-                if flags & (select.POLLIN | select.POLLPRI):
-                    self.notifier.read_obj(obj)
-                if flags & select.POLLOUT:
-                    self.notifier.write_obj(obj)
-                if flags & (select.POLLERR | select.POLLNVAL):
-                    self.notifier.except_obj(obj)
-                if flags & select.POLLHUP:
-                    self.notifier.close_obj(obj)
-            if interrupted:
-                stime, dtimeout = self.do_interrupt(stime)
-                timeout -= dtimeout
-                do = True
-                interrupted = False 
-            # </Necessary?>
+        active = self.poller.poll(timeout)
+        for fileno, flags in active:
+            if fileno == self.controlfd:
+                interrupted = True
+                continue
+            obj = self.socket_list[fileno]
+            if flags & (select.POLLIN | select.POLLPRI):
+                self.notifier.read_obj(obj)
+            if flags & select.POLLOUT:
+                self.notifier.write_obj(obj)
+            if flags & (select.POLLERR | select.POLLNVAL):
+                self.notifier.except_obj(obj)
+            if flags & select.POLLHUP:
+                self.notifier.close_obj(obj)
+        if interrupted:
+            self.do_interrupt()
     
     def run(self):
         """ Periodically poll for I/O. """
@@ -276,32 +255,22 @@ class EPollSocketMap(InterruptableSocketMap):
             timeout = -1
         
         interrupted = False
-        # <Necessary?>
-        do = True
-        stime = time.time()
-        while do:
-            do = False
-            # </Necessary?>
-            active = self.poller.poll(timeout)
-            for fileno, flags in active:
-                if fileno == self.controlfd:
-                    interrupted = True
-                    continue
-                obj = self.socket_list[fileno]
-                if flags & (select.EPOLLIN | select.EPOLLPRI):
-                    self.notifier.read_obj(obj)
-                if flags & select.EPOLLOUT:
-                    self.notifier.write_obj(obj)
-                if flags & select.EPOLLERR:
-                    self.notifier.except_obj(obj)
-                if flags & select.EPOLLHUP:
-                    self.notifier.close_obj(obj)
-            if interrupted:
-                stime, dtimeout = self.do_interrupt(stime)
-                timeout -= dtimeout
-                do = True
-                interrupted = False
-            # </Necessary?>
+        active = self.poller.poll(timeout)
+        for fileno, flags in active:
+            if fileno == self.controlfd:
+                interrupted = True
+                continue
+            obj = self.socket_list[fileno]
+            if flags & (select.EPOLLIN | select.EPOLLPRI):
+                self.notifier.read_obj(obj)
+            if flags & select.EPOLLOUT:
+                self.notifier.write_obj(obj)
+            if flags & select.EPOLLERR:
+                self.notifier.except_obj(obj)
+            if flags & select.EPOLLHUP:
+                self.notifier.close_obj(obj)
+        if interrupted:
+            self.do_interrupt()
     
     def run(self):
         """ Periodically poll for I/O. """

@@ -20,8 +20,10 @@
 
 
 import sys
+import time
 import socket
 import traceback
+import threading
 
 import asynchia
 import asynchia.maps
@@ -60,5 +62,11 @@ if __name__ == '__main__':
     
     c = EchoClient(m, socket.socket())
     c.connect(('', 25000))
+    def in_thread():
+        time.sleep(1)
+        m.start_interrupt()
+        time.sleep(1)
+        m.end_interrupt()
+    threading.Thread(target=in_thread).start()
     
     m.run()
