@@ -49,6 +49,8 @@ import asynchia.util
 #         self.controlsender.send('se')
 #         self.controlsender.recv(1)
 class InterruptableSocketMap(asynchia.SocketMap):
+    """ Socket-map with an internal socket-pair that can be used to
+    interrupt it. """
     def __init__(self, notifier):
         asynchia.SocketMap.__init__(self, notifier)
         # IMPORTANT! These have to be blocking!
