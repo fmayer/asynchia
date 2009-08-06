@@ -29,7 +29,6 @@ also assigned to DefaultSocketMap, which otherwise defaults to either
 PollSocketMap or SelectSocketMap.
 """
 
-import time
 import select
 
 import asynchia
