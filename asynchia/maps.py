@@ -34,6 +34,18 @@ import select
 import asynchia
 import asynchia.util
 
+class InterruptContextManager(object):
+    """ Allow with socketmap.interrupt() """
+    def __init__(self, socket_map, changeflags):
+        self.socket_map = socket_map
+        self.changeflags = changeflags
+    
+    def __enter__(self):
+        self.socket_map.start_interrupt(self.changeflags)
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.socket_map.end_interrupt(self.changeflags)
+
 
 # Fragile- and StrongSocketMap?
 # Fragile has 
@@ -55,6 +67,11 @@ class InterruptableSocketMap(asynchia.SocketMap):
         asynchia.SocketMap.__init__(self, notifier)
         # IMPORTANT! These have to be blocking!
         self.controlsender, self.controlreceiver = asynchia.util.socketpair()
+    
+    def interrupt(self, changeflags=False):
+        """ Return context manager for the interruption of this
+        socket-map. """
+        return InterruptContextManager(self, changeflags)
     
     def start_interrupt(self, changeflags=False):
         """ See SocketMap.start_interrupt. """
