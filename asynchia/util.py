@@ -16,7 +16,32 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-""" Facilities for parsing IP addresses. """
+""" Auxiliary functions. """
+
+import socket
+
+def socketpair():
+    """ Return pair of connected sockets. Unlike socket.socketpair this
+    is platform independant. """
+    if hasattr(socket, 'socketpair'):
+        # Unix.
+        return socket.socketpair()
+    
+    try:
+        acceptor = socket.socket()
+        # Random port.
+        acceptor.bind(('', 0))
+        # We know we'll only get one connection.
+        acceptor.listen(1)
+
+        one = socket.socket()
+        one.connect(acceptor.getsockname())
+        
+        other = acceptor.accept()[0]
+    finally:
+        acceptor.close()
+    return one, other
+
 
 def parse_ipv4(string, default_port=-1):
     """ Return (host, port) from IPv4 IP. """
