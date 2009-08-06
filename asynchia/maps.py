@@ -29,18 +29,57 @@ also assigned to DefaultSocketMap, which otherwise defaults to either
 PollSocketMap or SelectSocketMap.
 """
 
+import time
 import select
 
 import asynchia
+import asynchia.util
 
 
-class SelectSocketMap(asynchia.SocketMap):
+# Fragile- and StrongSocketMap?
+# Fragile has 
+#     def start_interrupt(self):
+#         self.controlsender.send('s')
+#         self.controlsender.recv(1)
+#     def end_interrupt(self):
+#         self.controlsender.send('e')
+# Strong has
+#     def start_interrupt(self):
+#         pass
+#     def end_interrupt(self):
+#         self.controlsender.send('se')
+#         self.controlsender.recv(1)
+class InterruptableSocketMap(asynchia.SocketMap):
+    def __init__(self, notifier):
+        asynchia.SocketMap.__init__(self, notifier)
+        # IMPORTANT! These have to be blocking!
+        self.controlsender, self.controlreceiver = asynchia.util.socketpair()
+    
+    def start_interrupt(self, changeflags=False):
+        self.controlsender.send('s')
+        self.controlsender.recv(1)
+    
+    def end_interrupt(self, changeflags=False):
+        self.controlsender.send('e')
+    
+    def do_interrupt(self):
+        # Read the "s" that started the interrupt
+        self.controlreceiver.recv(1)
+        # Send the "i" that signals the interrupt succeeded.
+        self.controlreceiver.send("i")
+        # Read the "e" that will end the interrupt.
+        self.controlreceiver.recv(1)
+
+
+class SelectSocketMap(InterruptableSocketMap):
     """ Decide which sockets have I/O to do using select.select. """
     def __init__(self, notifier=None):
-        asynchia.SocketMap.__init__(self, notifier)
+        InterruptableSocketMap.__init__(self, notifier)
         self.readers = []
         self.writers = []
         self.socket_list = []
+        
+        self.readers.append(self.controlreceiver)
     
     def add_handler(self, handler):
         """ See SocketMap.add_handler. """
@@ -78,15 +117,22 @@ class SelectSocketMap(asynchia.SocketMap):
     
     def poll(self, timeout):
         """ Poll for I/O. """
+        interrupted = False
         read, write, expt = select.select(self.readers,
                                           self.writers,
                                           self.socket_list, timeout)
         for obj in read:
-            self.notifier.read_obj(obj)
+            if obj is not self.controlreceiver:
+                self.notifier.read_obj(obj)
+            else:
+                interrupted = True
         for obj in write:
             self.notifier.write_obj(obj)
         for obj in expt:
             self.notifier.except_obj(obj)
+        
+        if interrupted:
+            self.do_interrupt()
     
     def run(self):
         """ Periodically poll for I/O. """
@@ -94,16 +140,19 @@ class SelectSocketMap(asynchia.SocketMap):
             self.poll(None)
 
 
-class PollSocketMap(asynchia.SocketMap):
+class PollSocketMap(InterruptableSocketMap):
     """ Decide which sockets have I/O to do using select.poll. 
     
     Do not refer to this class without explicitely checking for its existance
     first, it may not exist on some platforms (it is known not to on Windows).
     """
     def __init__(self, notifier=None):
-        asynchia.SocketMap.__init__(self, notifier)
+        InterruptableSocketMap.__init__(self, notifier)
         self.socket_list = {}
         self.poller = select.poll()
+        
+        self.controlfd = self.controlreceiver.fileno()
+        self.poller.register(self.controlfd, select.POLLIN | select.POLLPRI)
     
     def add_handler(self, handler):
         """ See SocketMap.add_handler. """
@@ -122,8 +171,12 @@ class PollSocketMap(asynchia.SocketMap):
     
     def poll(self, timeout):
         """ Poll for I/O. """
+        interrupted = False
         active = self.poller.poll(timeout)
         for fileno, flags in active:
+            if fileno == self.controlfd:
+                interrupted = True
+                continue
             obj = self.socket_list[fileno]
             if flags & (select.POLLIN | select.POLLPRI):
                 self.notifier.read_obj(obj)
@@ -133,6 +186,8 @@ class PollSocketMap(asynchia.SocketMap):
                 self.notifier.except_obj(obj)
             if flags & select.POLLHUP:
                 self.notifier.close_obj(obj)
+        if interrupted:
+            self.do_interrupt()
     
     def run(self):
         """ Periodically poll for I/O. """
@@ -160,16 +215,19 @@ class PollSocketMap(asynchia.SocketMap):
         return flags
 
 
-class EPollSocketMap(asynchia.SocketMap):
+class EPollSocketMap(InterruptableSocketMap):
     """ Decide which sockets have I/O to do using select.epoll. 
     
     Do not refer to this class without explicitely checking for its existance
     first, it may not exist on some platforms (it is known not to on Windows).
     """
     def __init__(self, notifier=None):
-        asynchia.SocketMap.__init__(self, notifier)
+        InterruptableSocketMap.__init__(self, notifier)
         self.socket_list = {}
         self.poller = select.epoll()
+        
+        self.controlfd = self.controlreceiver.fileno()
+        self.poller.register(self.controlfd, select.EPOLLIN | select.EPOLLPRI)
     
     def add_handler(self, handler):
         """ See SocketMap.add_handler. """
@@ -193,8 +251,12 @@ class EPollSocketMap(asynchia.SocketMap):
         if timeout is None:
             timeout = -1
         
+        interrupted = False
         active = self.poller.poll(timeout)
         for fileno, flags in active:
+            if fileno == self.controlfd:
+                interrupted = True
+                continue
             obj = self.socket_list[fileno]
             if flags & (select.EPOLLIN | select.EPOLLPRI):
                 self.notifier.read_obj(obj)
@@ -204,6 +266,8 @@ class EPollSocketMap(asynchia.SocketMap):
                 self.notifier.except_obj(obj)
             if flags & select.EPOLLHUP:
                 self.notifier.close_obj(obj)
+        if interrupted:
+            self.do_interrupt()
     
     def run(self):
         """ Periodically poll for I/O. """
@@ -229,6 +293,15 @@ class EPollSocketMap(asynchia.SocketMap):
         if handler.writeable or handler.awaiting_connect:
             flags |= select.EPOLLOUT
         return flags
+    
+    # select.epoll does this for us. See http://tinyurl.com/nblkcm.
+    def start_interrupt(self, changeflags=False):
+        if not changeflags:
+            InterruptableSocketMap.start_interrupt(self, changeflags)
+    
+    def end_interrupt(self, changeflags=False):
+        if not changeflags:
+            InterruptableSocketMap.end_interrupt(self, changeflags)
 
 
 DefaultSocketMap = SelectSocketMap
