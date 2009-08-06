@@ -67,6 +67,12 @@ class SocketMap:
         """ Delete handler as a writer.
         This indicates he no longer wants to send data until added again """
         raise NotImplementedError
+    
+    def start_interrupt(self, changeflags=False):
+        raise NotImplementedError
+    
+    def end_interrupt(self, changeflags=False):
+        raise NotImplementedError
 
 
 class Notifier:

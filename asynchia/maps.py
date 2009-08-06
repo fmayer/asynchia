@@ -55,11 +55,11 @@ class InterruptableSocketMap(asynchia.SocketMap):
         # IMPORTANT! These have to be blocking!
         self.controlsender, self.controlreceiver = asynchia.util.socketpair()
     
-    def start_interrupt(self):
+    def start_interrupt(self, changeflags=False):
         self.controlsender.send('s')
         self.controlsender.recv(1)
     
-    def end_interrupt(self):
+    def end_interrupt(self, changeflags=False):
         self.controlsender.send('e')
     
     def do_interrupt(self):
@@ -69,9 +69,6 @@ class InterruptableSocketMap(asynchia.SocketMap):
         self.controlreceiver.send("i")
         # Read the "e" that will end the interrupt.
         self.controlreceiver.recv(1)
-    
-    start_changeflags = start_interrupt
-    end_changeflags = end_interrupt
 
 
 class SelectSocketMap(InterruptableSocketMap):
@@ -298,7 +295,13 @@ class EPollSocketMap(InterruptableSocketMap):
         return flags
     
     # select.epoll does this for us. See http://tinyurl.com/nblkcm.
-    start_changeflags = end_changeflags = lambda s: None
+    def start_interrupt(self, changeflags=False):
+        if not changeflags:
+            InterruptableSocketMap.start_interrupt(self, changeflags)
+    
+    def end_interrupt(self, changeflags=False):
+        if not changeflags:
+            InterruptableSocketMap.end_interrupt(self, changeflags)
 
 
 DefaultSocketMap = SelectSocketMap
