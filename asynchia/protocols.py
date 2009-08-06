@@ -40,6 +40,10 @@ class BufferedSendHandler(asynchia.IOHandler):
         self.write_buffer = self.write_buffer[sent:]
         if not self.write_buffer and self.writeable:
             self.set_writeable(False)
+            self.buffer_empty()
+    
+    def buffer_empty(self):
+        """ Callback that is called when the buffer becomes empty. """
 
 
 class LineHandler(BufferedSendHandler):
