@@ -344,7 +344,7 @@ class IOHandler(Handler):
             if err.args[0] == errno.EWOULDBLOCK:
                 return 0
             elif err.args[0] in connection_lost:
-                self.handle_close()
+                self.socket_map.notifier.close_obj(self)
                 return 0
             else:
                 raise
@@ -354,11 +354,11 @@ class IOHandler(Handler):
         try:
             data = self.socket.recv(buffer_size)
             if not data:
-                self.handle_close()
+                self.socket_map.notifier.close_obj(self)
             return data
         except socket.error, err:
             if err.args[0] in connection_lost:
-                self.handle_close()
+                self.socket_map.notifier.close_obj(self)
                 return ''
             else:
                 raise
