@@ -313,15 +313,15 @@ class AcceptHandler(Handler):
         return self.socket.bind(addr)
     
     def accept(self):
-        """ Accept incoming connection. """
+        """ Accept incoming connection. Return (conn, addr). If either of
+        them is None, no connection could be accepted. """
         try:
             conn, addr = self.socket.accept()
             return conn, addr
         except socket.error, err:
             if err.args[0] == errno.EWOULDBLOCK:
-                # FIXME: This makes accept return None, which would break
-                # the API of it returning (conn, addr).
-                pass
+                # Make the API of returning a tuple of two objects consistent.
+                return None, None
             else:
                 raise
     
