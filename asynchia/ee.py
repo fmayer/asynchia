@@ -213,6 +213,8 @@ class DelimitedCollector(Collector):
             self.size -= nrecv
             return nrecv
         else:
+            if not self.closed:
+                self.close()
             return -1
     
     def close(self):
@@ -237,7 +239,6 @@ class CollectorQueue(Collector):
         nrecv = self.collectors[0].add_data(prot, nbytes)
         if nrecv == -1:
             self.finish_collector(self.collectors.pop(0))
-            self.collectors[0].close()
             if self.collectors:
                 return 0
             else:
