@@ -12,6 +12,10 @@ class InputEOF(Exception):
     pass
 
 
+class CollectorFull(Exception):
+    pass
+
+
 class Input(object):
     # FIXME: Implicit __radd__ with str?
     def __init__(self):
@@ -158,7 +162,8 @@ class Collector(object):
         self.inited = self.closed = False
     
     def add_data(self, prot, nbytes):
-        raise NotImplementedError
+        if self.closed:
+            raise CollectorFull
     
     def close(self):
         self.closed = True
@@ -174,8 +179,8 @@ class StringCollector(Collector):
         self.string = ''
     
     def add_data(self, prot, nbytes):
-        if self.closed:
-            return -1
+        Collector.add_data(prot, nbytes)
+        
         received = prot.recv(nbytes)
         self.string += received
         return len(received)
@@ -188,12 +193,14 @@ class FileCollector(Collector):
         self.fd = fd
     
     def add_data(self, prot, nbytes):
+        Collector.add_data(prot, nbytes)
+        
         received = prot.recv(nbytes)
         try:
             self.fd.write(received)
         except ValueError:
             # I/O operation on closed file.
-            return -1
+            raise CollectorFull
         return len(received)
     
     def close(self):
@@ -208,6 +215,8 @@ class DelimitedCollector(Collector):
         self.size = size
     
     def add_data(self, prot, nbytes):
+        Collector.add_data(prot, nbytes)
+        
         if self.size > 0:
             nrecv = self.collector.add_data(prot, min(self.size, nbytes))
             self.size -= nrecv
@@ -215,7 +224,7 @@ class DelimitedCollector(Collector):
         else:
             if not self.closed:
                 self.close()
-            return -1
+            raise CollectorFull
     
     def close(self):
         Collector.close(self)
@@ -234,15 +243,20 @@ class CollectorQueue(Collector):
         self.collectors = collectors
     
     def add_data(self, prot, nbytes):
+        Collector.add_data(prot, nbytes)
+        
         if not self.collectors[0].inited:
             self.collectors[0].init()
-        nrecv = self.collectors[0].add_data(prot, nbytes)
-        if nrecv == -1:
+        try:
+            nrecv = self.collectors[0].add_data(prot, nbytes)
+        except CollectorFull:
             self.finish_collector(self.collectors.pop(0))
             if self.collectors:
                 return 0
             else:
-                return -1
+                if not self.closed:
+                    self.close()
+                raise CollectorFull
         return nrecv
     
     def finish_collector(self, coll):
@@ -299,7 +313,9 @@ class Protocol(asynchia.IOHandler):
         self.send_input(StringInput(string))
     
     def handle_read(self):
-        if self.collector.add_data(self, self.buffer_size) == -1:
+        try:
+            self.collector.add_data(self, self.buffer_size)
+        except CollectorFull:
             # We can safely assume it is readable here.
             self.set_readable(False)
     
