@@ -174,7 +174,7 @@ class StringCollector(Collector):
         self.string = ''
     
     def add_data(self, prot, nbytes):
-        if self.done:
+        if self.closed:
             return -1
         received = prot.recv(nbytes)
         self.string += received
@@ -214,10 +214,17 @@ class DelimitedCollector(Collector):
             return nrecv
         else:
             return -1
+    
+    def close(self):
+        Collector.close(self)
+        self.collector.close()
+    
+    def init(self):
+        Collector.init(self)
+        self.collector.init()
 
 
 class CollectorQueue(Collector):
-    # TODO: .close
     def __init__(self, collectors=None):
         CollectorQueue.__init__(self)
         if collectors is None:
@@ -239,6 +246,11 @@ class CollectorQueue(Collector):
     
     def finish_collector(self, coll):
         pass
+    
+    def close(self):
+        Collector.close(self)
+        if self.collectors and self.collectors[0].inited:
+            self.collectors[0].close()
 
     
 class Partitioner(CollectorQueue):
@@ -255,6 +267,11 @@ class Partitioner(CollectorQueue):
         if not self.collectors:
             self.collectors.append(self.default)
         nrecv = CollectorQueue.add_data(self, prot, nbytes)
+    
+    def close(self):
+        CollectorQueue.close(self)
+        if self.default is not None and self.default.inited:
+            self.default.close()
 
 
 class Protocol(asynchia.IOHandler):
