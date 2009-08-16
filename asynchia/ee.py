@@ -282,14 +282,14 @@ class Protocol(asynchia.IOHandler):
     
     def handle_read(self):
         if self.collector.add_data(self, self.buffer_size) == -1:
-            # We can savely assume it is readable here.
+            # We can safely assume it is readable here.
             self.set_readable(False)
     
     def handle_write(self):
         try:
             sent = self.queue.tick(self)
         except InputEOF:
-            # We can savely assume it is writeable here.
+            # We can safely assume it is writeable here.
             self.set_writeable(False)
     
     def has_data(self):
