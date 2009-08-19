@@ -179,7 +179,7 @@ class StringCollector(Collector):
         self.string = ''
     
     def add_data(self, prot, nbytes):
-        Collector.add_data(prot, nbytes)
+        Collector.add_data(self, prot, nbytes)
         
         received = prot.recv(nbytes)
         self.string += received
@@ -193,7 +193,7 @@ class FileCollector(Collector):
         self.fd = fd
     
     def add_data(self, prot, nbytes):
-        Collector.add_data(prot, nbytes)
+        Collector.add_data(self, prot, nbytes)
         
         received = prot.recv(nbytes)
         try:
@@ -215,7 +215,7 @@ class DelimitedCollector(Collector):
         self.size = size
     
     def add_data(self, prot, nbytes):
-        Collector.add_data(prot, nbytes)
+        Collector.add_data(self, prot, nbytes)
         
         if self.size > 0:
             nrecv = self.collector.add_data(prot, min(self.size, nbytes))
@@ -237,30 +237,33 @@ class DelimitedCollector(Collector):
 
 class CollectorQueue(Collector):
     def __init__(self, collectors=None):
-        CollectorQueue.__init__(self)
+        Collector.__init__(self)
         if collectors is None:
             collectors = []
         self.collectors = collectors
     
     def add_data(self, prot, nbytes):
-        Collector.add_data(prot, nbytes)
-        
-        if not self.collectors[0].inited:
-            self.collectors[0].init()
-        try:
-            nrecv = self.collectors[0].add_data(prot, nbytes)
-        except CollectorFull:
-            self.finish_collector(self.collectors.pop(0))
-            if self.collectors:
-                return 0
-            else:
-                if not self.closed:
-                    self.close()
-                raise CollectorFull
+        Collector.add_data(self, prot, nbytes)
+        while True:
+            if not self.collectors[0].inited:
+                self.collectors[0].init()
+            try:
+                nrecv = self.collectors[0].add_data(prot, nbytes)
+                break
+            except CollectorFull:
+                self.finish_collector(self.collectors.pop(0))
+                if not self.collectors:
+                    # Returning 
+                    if not self.full():
+                        raise CollectorFull
         return nrecv
     
     def finish_collector(self, coll):
         pass
+    
+    def full(self):
+        if not self.closed:
+            self.close()
     
     def close(self):
         Collector.close(self)
@@ -279,9 +282,11 @@ class Partitioner(CollectorQueue):
             self.rules.pop(0)
     
     def add_data(self, prot, nbytes):
-        if not self.collectors:
-            self.collectors.append(self.default)
         nrecv = CollectorQueue.add_data(self, prot, nbytes)
+    
+    def full(self):
+        self.collectors.append(self.default)
+        return True
     
     def close(self):
         CollectorQueue.close(self)
@@ -328,3 +333,39 @@ class Protocol(asynchia.IOHandler):
     
     def has_data(self):
         return bool(self.queue)
+
+
+class MockProtocol(object):
+    def __init__(self, outbuf='', inbuf=''):
+        self.outbuf = outbuf
+        self.inbuf = inbuf
+    
+    def recv(self, bufsize):
+        if not self.inbuf:
+            raise ValueError
+        i = min(bufsize, len(self.inbuf))
+        data = self.inbuf[:i]
+        self.inbuf = self.inbuf[i:]
+        return data
+    
+    def send(self, data):
+        self.outbuf += data
+        
+    
+if __name__ == '__main__':
+    a = DelimitedCollector(StringCollector(), 5)
+    b = DelimitedCollector(StringCollector(), 4)
+    c = DelimitedCollector(StringCollector(), 3)
+    
+    q = CollectorQueue([a, b, c])
+    
+    m = MockProtocol(inbuf='a' * 5 + 'b' * 4 + 'c' * 3)
+    while True:
+        try:
+            q.add_data(m, 5)
+        except (ValueError, CollectorFull):
+            # The MockProtocol is out of data or the CollectorQueue is full.
+            break
+    print a.collector.string
+    print b.collector.string
+    print c.collector.string
