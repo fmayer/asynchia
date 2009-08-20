@@ -336,7 +336,7 @@ class Protocol(asynchia.IOHandler):
 
 
 class MockProtocol(object):
-    def __init__(self, outbuf='', inbuf=''):
+    def __init__(self, inbuf='', outbuf=''):
         self.outbuf = outbuf
         self.inbuf = inbuf
     
