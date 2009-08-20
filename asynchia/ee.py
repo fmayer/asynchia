@@ -4,20 +4,30 @@ import os
 
 import asynchia
 
+# FIXME: Make up a nomenclature.
+
 class InputEOF(Exception):
+    """ Raised by Inputs to show that they do not have no
+    data to be sent anymore. """
     pass
 
 
 class CollectorFull(Exception):
+    """ Raised by collectors to show that they either do not need any
+    more data, or that they cannot store any data. """
     pass
 
 
 class Input(object):
+    """ Base-class for all Inputs. It implements __add__ to return an
+    InputQueue consisting of the two operants. """
     # FIXME: Implicit __radd__ with str?
     def __init__(self):
         pass
     
     def tick(self, sock):
+        """ Abstract method to be overridden. This should send the data
+        contained in the Input over sock. """
         raise NotImplementedError
     
     def close(self):
@@ -28,6 +38,10 @@ class Input(object):
 
 
 class InputQueue(Input):
+    """ An InputQueue calls the tick method an object until it raises
+    InputEOF, then it goes on with the next object in the queue. If no
+    object is in the queue anymore, InputQueue.tick raises InputEOF (like
+    any other Input that doesn't need data anymore). """
     def __init__(self, inputs=None):
         Input.__init__(self)
         if inputs is None:
@@ -65,6 +79,7 @@ class InputQueue(Input):
 
 
 class StringInput(Input):
+    """ Input that bufferedly sends a string. """
     def __init__(self, string):
         Input.__init__(self)
         
@@ -86,6 +101,9 @@ class StringInput(Input):
 
 
 class FileInput(Input):
+    """ Input that buffers at most buffer_size bytes read from the passed fd,
+    and sends them in a buffered way. This can be used to "directly" send data
+    contained in a file. """
     def __init__(self, fd, length=None, buffer_size=9096, closing=True):
         Input.__init__(self)
         if length is None:
@@ -136,6 +154,8 @@ class FileInput(Input):
 
 
 class AutoFileInput(FileInput):
+    """ Same as FileInput, only that it stores samples to guess how big
+    the buffer should be. """
     def __init__(self, fd, length=None, buffer_size=9096, closing=True,
                  samples=100):
         FileInput.__init__(self, fd, length, buffer_size, closing)
@@ -154,6 +174,8 @@ class AutoFileInput(FileInput):
 
 
 class Collector(object):
+    """ This is the base-class for all collectors. Collectors read up to
+    nbytes bytes of data from the protocol passed to them. """
     def __init__(self):
         self.inited = self.closed = False
     
@@ -169,6 +191,7 @@ class Collector(object):
 
 
 class StringCollector(Collector):
+    """ Store data received from the socket in a string. """
     def __init__(self):
         Collector.__init__(self)
         
@@ -183,6 +206,7 @@ class StringCollector(Collector):
 
 
 class FileCollector(Collector):
+    """ Write data received from the socket into a fd. """
     def __init__(self, fd=None):
         Collector.__init__(self)
         
@@ -205,6 +229,8 @@ class FileCollector(Collector):
 
 
 class DelimitedCollector(Collector):
+    """ Collect up to size bytes in collector and raise CollectorFull
+    afterwards. """
     def __init__(self, collector, size):
         Collector.__init__(self)
         self.collector = collector
@@ -232,6 +258,9 @@ class DelimitedCollector(Collector):
 
 
 class CollectorQueue(Collector):
+    """ Write data to the first collector until CollectorFull is raised,
+    afterwards repeat with next. When the CollectorQueue gets empty it
+    raises CollectorFull. """
     def __init__(self, collectors=None):
         Collector.__init__(self)
         if collectors is None:
