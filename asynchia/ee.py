@@ -4,10 +4,6 @@ import os
 
 import asynchia
 
-# TODO: Either make Inputs return -1 when they are out of data,
-# or make Collectors throw CollectorFull when they don't need
-# consequent data.
-
 class InputEOF(Exception):
     pass
 
