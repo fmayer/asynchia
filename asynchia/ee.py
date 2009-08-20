@@ -290,7 +290,7 @@ class Partitioner(CollectorQueue):
             self.default.close()
 
 
-class Protocol(asynchia.IOHandler):
+class Handler(asynchia.IOHandler):
     def __init__(self, collector=None, buffer_size=9046):
         self.queue = InputQueue()
         self.collector = collector
@@ -331,7 +331,7 @@ class Protocol(asynchia.IOHandler):
         return bool(self.queue)
 
 
-class MockProtocol(object):
+class MockHandler(object):
     def __init__(self, inbuf='', outbuf=''):
         self.outbuf = outbuf
         self.inbuf = inbuf
@@ -355,7 +355,7 @@ if __name__ == '__main__':
     
     q = CollectorQueue([a, b, c])
     
-    m = MockProtocol(inbuf='a' * 5 + 'b' * 4 + 'c' * 3)
+    m = MockHandler(inbuf='a' * 5 + 'b' * 4 + 'c' * 3)
     while True:
         try:
             q.add_data(m, 5)
