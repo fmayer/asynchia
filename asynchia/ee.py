@@ -188,6 +188,9 @@ class Collector(object):
     
     def init(self):
         self.inited = True
+    
+    def __add__(self, other):
+        return CollectorQueue([self, other])
 
 
 class StringCollector(Collector):
