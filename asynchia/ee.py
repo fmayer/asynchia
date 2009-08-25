@@ -357,7 +357,8 @@ class CollectorQueue(Collector):
 class Handler(asynchia.IOHandler):
     """ asynchia handler that adds all received data to a collector,
     and reads outgoing data from an Input. """
-    def __init__(self, socket_map, sock, collector=None, buffer_size=9046):
+    def __init__(self, socket_map, sock=None, collector=None,
+                 buffer_size=9046):
         asynchia.IOHandler.__init__(self, socket_map, sock)
         
         self.queue = InputQueue()
