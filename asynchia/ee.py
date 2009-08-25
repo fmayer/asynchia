@@ -23,15 +23,21 @@ class Input(object):
     InputQueue consisting of the two operants. """
     # FIXME: Implicit __radd__ with str?
     def __init__(self):
-        pass
+        self.closed = self.inited = False
     
     def tick(self, sock):
         """ Abstract method to be overridden. This should send the data
         contained in the Input over sock. """
-        raise NotImplementedError
+        if self.closed:
+            raise InputEOF
+        if not self.inited:
+            self.init()
+    
+    def init(self):
+        self.inited = True
     
     def close(self):
-        pass
+        self.closed = True
     
     def __add__(self, other):
         return InputQueue([self, other])
@@ -49,6 +55,7 @@ class InputQueue(Input):
         self.inputs = inputs
     
     def tick(self, sock):
+        Input.tick(self, sock)
         while True:
             if not self.inputs:
                 raise InputEOF
@@ -61,6 +68,7 @@ class InputQueue(Input):
         return sent
     
     def close(self):
+        Input.close(self)
         for inp in self.inputs:
             inp.close()
     
@@ -86,7 +94,8 @@ class StringInput(Input):
         self.buf = string
         self.length = len(self.buf)
     
-    def tick(self, sock):        
+    def tick(self, sock):
+        Input.tick(self, sock)
         if not self.buf:
             raise InputEOF
         
@@ -122,6 +131,7 @@ class FileInput(Input):
         self.eof = False
     
     def tick(self, sock):
+        Input.tick(self, sock)
         if not self.eof and len(self.buf) < self.buffer_size:
             read = self.fd.read(self.buffer_size - len(self.buf))
             if not read:
@@ -138,6 +148,7 @@ class FileInput(Input):
         return sent
     
     def close(self):
+        Input.close(self)
         if self.closing:
             self.fd.close()
     
@@ -182,6 +193,9 @@ class Collector(object):
     def add_data(self, prot, nbytes):
         if self.closed:
             raise CollectorFull
+        
+        if not self.inited:
+            self.init()
     
     def close(self):
         self.closed = True
@@ -273,8 +287,6 @@ class CollectorQueue(Collector):
     def add_data(self, prot, nbytes):
         Collector.add_data(self, prot, nbytes)
         while True:
-            if not self.collectors[0].inited:
-                self.collectors[0].init()
             try:
                 nrecv = self.collectors[0].add_data(prot, nbytes)
                 break
