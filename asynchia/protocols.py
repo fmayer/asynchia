@@ -24,7 +24,7 @@ import asynchia
 class BufferedSendHandler(asynchia.IOHandler):
     """ Buffer the data that's sent if it couldn't be sent as
     one piece. """
-    def __init__(self, socket_map, sock):
+    def __init__(self, socket_map, sock=None):
         asynchia.IOHandler.__init__(self, socket_map, sock)
         self.write_buffer = ''
     
@@ -50,7 +50,7 @@ class LineHandler(BufferedSendHandler):
     """ Use this for line-based protocols. """
     delimiter = None
     buffer_size = 4096
-    def __init__(self, socket_map, sock):
+    def __init__(self, socket_map, sock=None):
         BufferedSendHandler.__init__(self, socket_map, sock)
         self.read_buffer = ''
         if not self.readable:

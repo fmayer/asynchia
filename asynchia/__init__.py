@@ -26,6 +26,7 @@ import traceback
 
 connection_lost = (errno.ECONNRESET, errno.ENOTCONN,
                    errno.ESHUTDOWN, errno.ECONNABORTED)
+defaultsocket_factory = socket.socket
 
 
 class SocketMap:
@@ -128,9 +129,11 @@ class Notifier:
 
 class Handler(object):
     """ Handle a socket object. Call this objects handle_* methods upon I/O """
-    def __init__(self, socket_map, sock):
+    def __init__(self, socket_map, sock=None):
         # Make no assumptions on what we want to do with the handler.
         # The user will need to explicitely make it read- or writeable.
+        if sock is None:
+            sock = defaultsocket_factory()
         self._readable = False
         self._writeable = False
         
@@ -289,7 +292,7 @@ class Handler(object):
 
 class AcceptHandler(Handler):
     """ Handle socket that accepts connections. """
-    def __init__(self, socket_map, sock):
+    def __init__(self, socket_map, sock=None):
         Handler.__init__(self, socket_map, sock)
     
     def handle_read(self):
@@ -380,7 +383,7 @@ class IOHandler(Handler):
 class Server(AcceptHandler):
     """ Automatically create an instance of handlercls for every
     connection. """
-    def __init__(self, socket_map, sock, handlercls):
+    def __init__(self, socket_map, sock=None, handlercls=IOHandler):
         AcceptHandler.__init__(self, socket_map, sock)
         self.handlercls = handlercls
     
