@@ -34,9 +34,15 @@ class Input(object):
             self.init()
     
     def init(self):
+        """ Called before the first tick. """
         self.inited = True
     
     def close(self):
+        """ Called after the last tick.
+        
+        IMPORTANT NOTE: This may be called without the Input being initalised,
+        so you need to explicitely check whether it is when you want to clean
+        up resources allocated in init. """
         self.closed = True
     
     def __add__(self, other):
@@ -55,10 +61,13 @@ class InputQueue(Input):
         self.inputs = inputs
     
     def tick(self, sock):
+        """ Call tick method of the first object contained in the queue until
+        it raises InputEOF. """
         Input.tick(self, sock)
         while True:
             if not self.inputs:
-                raise InputEOF
+                if not self.eof():
+                    raise InputEOF
             inp = self.inputs[0]
             try:
                 sent = inp.tick(sock)
@@ -67,12 +76,19 @@ class InputQueue(Input):
                 self.inputs.pop(0)
         return sent
     
+    def eof(self):
+        """ Called when the last Input in the queue raises InputEOF.
+        
+        Return True to prevent InputQueue from raising InputEOF."""
+    
     def close(self):
+        """ Close all inputs contained in the queue. """
         Input.close(self)
         for inp in self.inputs:
             inp.close()
     
     def add(self, other):
+        """ Add input to queue. """
         self.inputs.append(other)
     
     def __iadd__(self, other):
@@ -95,6 +111,7 @@ class StringInput(Input):
         self.length = len(self.buf)
     
     def tick(self, sock):
+        """ Send as much of the string as possible. """
         Input.tick(self, sock)
         if not self.buf:
             raise InputEOF
@@ -131,6 +148,7 @@ class FileInput(Input):
         self.eof = False
     
     def tick(self, sock):
+        """ Send as much of the file as possible. """
         Input.tick(self, sock)
         if not self.eof and len(self.buf) < self.buffer_size:
             read = self.fd.read(self.buffer_size - len(self.buf))
@@ -148,6 +166,7 @@ class FileInput(Input):
         return sent
     
     def close(self):
+        """ If FileInput is closing, close the fd. """
         Input.close(self)
         if self.closing:
             self.fd.close()
@@ -175,6 +194,7 @@ class AutoFileInput(FileInput):
         self.sample = []
     
     def tick(self, sock):
+        """ See FileInput.tick. """
         sent = FileInput.tick(self, sock)
         if len(self.sample) == self.samples:
             # Replace oldest sample with new one.
@@ -191,6 +211,8 @@ class Collector(object):
         self.inited = self.closed = False
     
     def add_data(self, prot, nbytes):
+        """ Override to read at most nbytes from prot and store them in the
+        collector. """
         if self.closed:
             raise CollectorFull
         
@@ -198,9 +220,15 @@ class Collector(object):
             self.init()
     
     def close(self):
+        """ Called after the last data has been added.
+        
+        IMPORTANT NOTE: This may be called without the Collector being
+        initalised, so you need to explicitely check whether it is when you
+        want to clean up resources allocated in init. """
         self.closed = True
     
     def init(self):
+        """ Called before the first data is added to the collector. """
         self.inited = True
     
     def __add__(self, other):
@@ -215,6 +243,7 @@ class StringCollector(Collector):
         self.string = ''
     
     def add_data(self, prot, nbytes):
+        """ Write at most nbytes bytes from prot to string. """
         Collector.add_data(self, prot, nbytes)
         
         received = prot.recv(nbytes)
@@ -224,25 +253,29 @@ class StringCollector(Collector):
 
 class FileCollector(Collector):
     """ Write data received from the socket into a fd. """
-    def __init__(self, fd=None):
+    def __init__(self, fd=None, closing=True):
         Collector.__init__(self)
         
         self.fd = fd
+        self.closing = closing
     
     def add_data(self, prot, nbytes):
+        """ Write at most nbytes data from prot to fd. """
         Collector.add_data(self, prot, nbytes)
         
         received = prot.recv(nbytes)
         try:
             self.fd.write(received)
         except ValueError:
-            # I/O operation on closed file.
+            # I/O operation on closed file. This shouldn't be happening.
             raise CollectorFull
         return len(received)
     
     def close(self):
+        """ Close the fd if the FileCollector is closing. """
         Collector.close(self)
-        self.fd.close()
+        if self.closing:
+            self.fd.close()
 
 
 class DelimitedCollector(Collector):
@@ -254,6 +287,7 @@ class DelimitedCollector(Collector):
         self.size = size
     
     def add_data(self, prot, nbytes):
+        """ Add data until the received data exceeds size. """
         Collector.add_data(self, prot, nbytes)
         
         if self.size > 0:
@@ -266,10 +300,12 @@ class DelimitedCollector(Collector):
             raise CollectorFull
     
     def close(self):
+        """ Close wrapped collector. """
         Collector.close(self)
         self.collector.close()
     
     def init(self):
+        """ Initialise wrapped collector. """
         Collector.init(self)
         self.collector.init()
 
@@ -285,6 +321,7 @@ class CollectorQueue(Collector):
         self.collectors = collectors
     
     def add_data(self, prot, nbytes):
+        """ Add data to first collector until it is full. """
         Collector.add_data(self, prot, nbytes)
         while True:
             try:
@@ -299,43 +336,30 @@ class CollectorQueue(Collector):
         return nrecv
     
     def finish_collector(self, coll):
+        """ Called when a collector raises CollectorFull. """
         pass
     
     def full(self):
+        """ Called when the last collector in the queue raises
+        CollectorFull.
+        
+        Return True to prevent CollectorQueue from raising CollectorFull. """
         if not self.closed:
             self.close()
     
     def close(self):
+        """ Close collectors contained in the queue. """
         Collector.close(self)
-        if self.collectors and self.collectors[0].inited:
-            self.collectors[0].close()
-
-    
-class Partitioner(CollectorQueue):
-    def __init__(self, collectors=None, default=None):
-        CollectorQueue.__init__(self, collectors)
-        self.default = default
-    
-    def add_collector(self, collector, stopdefault=False):
-        self.collectors.append(collector)
-        if stopdefault and self.collectors[0] is self.default:
-            self.rules.pop(0)
-    
-    def add_data(self, prot, nbytes):
-        nrecv = CollectorQueue.add_data(self, prot, nbytes)
-    
-    def full(self):
-        self.collectors.append(self.default)
-        return True
-    
-    def close(self):
-        CollectorQueue.close(self)
-        if self.default is not None and self.default.inited:
-            self.default.close()
+        for collector in self.collectors:
+            collector.close()
 
 
 class Handler(asynchia.IOHandler):
-    def __init__(self, collector=None, buffer_size=9046):
+    """ asynchia handler that adds all received data to a collector,
+    and reads outgoing data from an Input. """
+    def __init__(self, socket_map, sock, collector=None, buffer_size=9046):
+        asynchia.IOHandler.__init__(self, socket_map, sock)
+        
         self.queue = InputQueue()
         self.collector = collector
         self.buffer_size = buffer_size
@@ -344,11 +368,13 @@ class Handler(asynchia.IOHandler):
             self.set_readable(True)
     
     def set_collector(self, collector):
+        """ Set the top-level collector to collector. """
         self.collector = collector
         if not self.readable:
             self.set_readable(True)
     
     def send_input(self, inp):
+        """ Add inp to the main input queue. """
         self.queue.add(inp)
         if not self.writeable:
             self.set_writeable(True)
@@ -358,6 +384,7 @@ class Handler(asynchia.IOHandler):
         self.send_input(StringInput(string))
     
     def handle_read(self):
+        """ Do the read call. """
         try:
             self.collector.add_data(self, self.buffer_size)
         except CollectorFull:
@@ -365,6 +392,7 @@ class Handler(asynchia.IOHandler):
             self.set_readable(False)
     
     def handle_write(self):
+        """ Do the write call. """
         try:
             sent = self.queue.tick(self)
         except InputEOF:
@@ -372,15 +400,21 @@ class Handler(asynchia.IOHandler):
             self.set_writeable(False)
     
     def has_data(self):
+        """ Tell whether the Handler has any data to be sent. """
         return bool(self.queue)
 
 
 class MockHandler(object):
+    """ This mocks a handler by writing everything that's passed
+    to its send method to outbuf, while reading data from inbuf
+    upon recv calls. """
     def __init__(self, inbuf='', outbuf=''):
         self.outbuf = outbuf
         self.inbuf = inbuf
     
     def recv(self, bufsize):
+        """ Return up to bufsize bytes from inbuf. Raise ValueError
+        when inbuf is empty. """
         if not self.inbuf:
             raise ValueError
         i = min(bufsize, len(self.inbuf))
@@ -389,6 +423,7 @@ class MockHandler(object):
         return data
     
     def send(self, data):
+        """ Write data to outbuf. """
         self.outbuf += data
         
     
