@@ -93,7 +93,10 @@ class Notifier:
         if obj.awaiting_connect:
             obj.stop_awaiting_connect()
             obj.connected = True
-            obj.handle_connect()
+            try:
+                obj.handle_connect()
+            except Exception:
+                obj.handle_error()
         
         if not obj.writeable:
             # This should only be happening if the object was just connected.
