@@ -107,9 +107,6 @@ class Notifier:
     def except_obj(obj):
         """ Call handle_except of the object. If any error occurs within it,
         call handle_error of the object.  """
-        if not obj.readable():
-            # This shouldn't be happening!
-            return
         try:
             obj.handle_except(
                 obj.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
