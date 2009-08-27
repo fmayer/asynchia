@@ -442,22 +442,4 @@ class MockHandler(object):
     def send(self, data):
         """ Write data to outbuf. """
         self.outbuf += data
-        
-    
-if __name__ == '__main__':
-    a = DelimitedCollector(StringCollector(), 5)
-    b = DelimitedCollector(StringCollector(), 4)
-    c = DelimitedCollector(StringCollector(), 3)
-    
-    q = CollectorQueue([a, b, c])
-    
-    m = MockHandler(inbuf='a' * 5 + 'b' * 4 + 'c' * 3)
-    while True:
-        try:
-            q.add_data(m, 5)
-        except (ValueError, CollectorFull):
-            # The MockProtocol is out of data or the CollectorQueue is full.
-            break
-    print a.collector.string
-    print b.collector.string
-    print c.collector.string
+        return len(data)
