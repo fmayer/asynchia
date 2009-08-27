@@ -76,6 +76,11 @@ class SocketMap:
     def end_interrupt(self, changeflags=False):
         """ Resume the socket-map. """
         raise NotImplementedError
+    
+    def interrupt(self, changeflags=False):
+        """ Return a context-manager that automatically resumes the
+        socket-map when the block is left. """
+        raise NotImplementedError
 
 
 class Notifier:

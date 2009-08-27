@@ -47,20 +47,7 @@ class InterruptContextManager(object):
         self.socket_map.end_interrupt(self.changeflags)
 
 
-# Fragile- and StrongSocketMap?
-# Fragile has 
-#     def start_interrupt(self):
-#         self.controlsender.send('s')
-#         self.controlsender.recv(1)
-#     def end_interrupt(self):
-#         self.controlsender.send('e')
-# Strong has
-#     def start_interrupt(self):
-#         pass
-#     def end_interrupt(self):
-#         self.controlsender.send('se')
-#         self.controlsender.recv(1)
-class InterruptableSocketMap(asynchia.SocketMap):
+class ControlSocketSocketMap(asynchia.SocketMap):
     """ Socket-map with an internal socket-pair that can be used to
     interrupt it. """
     def __init__(self, notifier):
@@ -73,15 +60,6 @@ class InterruptableSocketMap(asynchia.SocketMap):
         socket-map. """
         return InterruptContextManager(self, changeflags)
     
-    def start_interrupt(self, changeflags=False):
-        """ See SocketMap.start_interrupt. """
-        self.controlsender.send('s')
-        self.controlsender.recv(1)
-    
-    def end_interrupt(self, changeflags=False):
-        """ See SocketMap.end_interrupt. """
-        self.controlsender.send('e')
-    
     def do_interrupt(self):
         """ Call this in the socket-map when you have found out that there is
         data to read on the controlreceiver. """
@@ -93,7 +71,51 @@ class InterruptableSocketMap(asynchia.SocketMap):
         self.controlreceiver.recv(1)
 
 
-class SelectSocketMap(InterruptableSocketMap):
+class FragileSocketMap(ControlSocketSocketMap):
+    """ The socket-map has to be interrupted before internals are
+    changed. """
+    def start_interrupt(self, changeflags=False):
+        """ See SocketMap.start_interrupt. """
+        self.controlsender.send('s')
+        self.controlsender.recv(1)
+    
+    def end_interrupt(self, changeflags=False):
+        """ See SocketMap.end_interrupt. """
+        self.controlsender.send('e')
+
+
+class RobustSocketMap(ControlSocketSocketMap):
+    """ The socket-map has to be stopped and resumed after internals
+    are changed. """
+    def start_interrupt(self, changeflags=False):
+        """ See SocketMap.start_interrupt. """
+        if not changeflags:
+            FragileSocketMap.start_interrupt(self, changeflags)
+    
+    def end_interrupt(self, changeflags=False):
+        """ See SocketMap.end_interrupt. """
+        if not changeflags:
+            FragileSocketMap.end_interrupt(self, changeflags)
+        else:
+            self.controlsender.send('se')
+            self.controlsender.recv(1)
+
+
+class RockSolidSocketMap(ControlSocketSocketMap):
+    """ The socket-map automatically refreshes its internal while it's
+    "sleeping". """
+    def start_interrupt(self, changeflags=False):
+        """ See SocketMap.start_interrupt. """
+        if not changeflags:
+            FragileSocketMap.start_interrupt(self, changeflags)
+    
+    def end_interrupt(self, changeflags=False):
+        """ See SocketMap.end_interrupt. """
+        if not changeflags:
+            FragileSocketMap.end_interrupt(self, changeflags)
+
+
+class SelectSocketMap(RobustSocketMap):
     """ Decide which sockets have I/O to do using select.select. """
     def __init__(self, notifier=None):
         InterruptableSocketMap.__init__(self, notifier)
@@ -162,7 +184,7 @@ class SelectSocketMap(InterruptableSocketMap):
             self.poll(None)
 
 
-class PollSocketMap(InterruptableSocketMap):
+class PollSocketMap(RobustSocketMap):
     """ Decide which sockets have I/O to do using select.poll. 
     
     Do not refer to this class without explicitely checking for its existance
@@ -237,7 +259,7 @@ class PollSocketMap(InterruptableSocketMap):
         return flags
 
 
-class EPollSocketMap(InterruptableSocketMap):
+class EPollSocketMap(RockSolidSocketMap):
     """ Decide which sockets have I/O to do using select.epoll. 
     
     Do not refer to this class without explicitely checking for its existance
@@ -315,15 +337,6 @@ class EPollSocketMap(InterruptableSocketMap):
         if handler.writeable or handler.awaiting_connect:
             flags |= select.EPOLLOUT
         return flags
-    
-    # select.epoll does this for us. See http://tinyurl.com/nblkcm.
-    def start_interrupt(self, changeflags=False):
-        if not changeflags:
-            InterruptableSocketMap.start_interrupt(self, changeflags)
-    
-    def end_interrupt(self, changeflags=False):
-        if not changeflags:
-            InterruptableSocketMap.end_interrupt(self, changeflags)
 
 
 DefaultSocketMap = SelectSocketMap
