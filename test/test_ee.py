@@ -30,6 +30,7 @@ def until_done(c, fun):
         except (asynchia.ee.CollectorFull, asynchia.ee.InputEOF):
             break
 
+
 def test_stringinput():
     m = asynchia.ee.MockHandler()
     i = asynchia.ee.StringInput(string.ascii_letters)
