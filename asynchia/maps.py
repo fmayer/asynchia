@@ -118,7 +118,7 @@ class RockSolidSocketMap(ControlSocketSocketMap):
 class SelectSocketMap(RobustSocketMap):
     """ Decide which sockets have I/O to do using select.select. """
     def __init__(self, notifier=None):
-        InterruptableSocketMap.__init__(self, notifier)
+        RobustSocketMap.__init__(self, notifier)
         self.readers = []
         self.writers = []
         self.socket_list = []
@@ -191,7 +191,7 @@ class PollSocketMap(RobustSocketMap):
     first, it may not exist on some platforms (it is known not to on Windows).
     """
     def __init__(self, notifier=None):
-        InterruptableSocketMap.__init__(self, notifier)
+        RobustSocketMap.__init__(self, notifier)
         self.socket_list = {}
         self.poller = select.poll()
         
@@ -266,7 +266,7 @@ class EPollSocketMap(RockSolidSocketMap):
     first, it may not exist on some platforms (it is known not to on Windows).
     """
     def __init__(self, notifier=None):
-        InterruptableSocketMap.__init__(self, notifier)
+        RockSolidSocketMap.__init__(self, notifier)
         self.socket_list = {}
         self.poller = select.epoll()
         
