@@ -26,6 +26,7 @@ import traceback
 
 connection_lost = (errno.ECONNRESET, errno.ENOTCONN,
                    errno.ESHUTDOWN, errno.ECONNABORTED)
+defaultsocket_factory = socket.socket
 
 
 class SocketMap:
@@ -100,7 +101,10 @@ class Notifier:
         if obj.awaiting_connect:
             obj.stop_awaiting_connect()
             obj.connected = True
-            obj.handle_connect()
+            try:
+                obj.handle_connect()
+            except Exception:
+                obj.handle_error()
         
         if not obj.writeable:
             # This should only be happening if the object was just connected.
@@ -114,9 +118,6 @@ class Notifier:
     def except_obj(obj):
         """ Call handle_except of the object. If any error occurs within it,
         call handle_error of the object.  """
-        if not obj.readable():
-            # This shouldn't be happening!
-            return
         try:
             obj.handle_except(
                 obj.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
@@ -136,9 +137,11 @@ class Notifier:
 
 class Handler(object):
     """ Handle a socket object. Call this objects handle_* methods upon I/O """
-    def __init__(self, socket_map, sock):
+    def __init__(self, socket_map, sock=None):
         # Make no assumptions on what we want to do with the handler.
         # The user will need to explicitely make it read- or writeable.
+        if sock is None:
+            sock = defaultsocket_factory()
         self._readable = False
         self._writeable = False
         
@@ -297,7 +300,7 @@ class Handler(object):
 
 class AcceptHandler(Handler):
     """ Handle socket that accepts connections. """
-    def __init__(self, socket_map, sock):
+    def __init__(self, socket_map, sock=None):
         Handler.__init__(self, socket_map, sock)
     
     def handle_read(self):
@@ -321,15 +324,15 @@ class AcceptHandler(Handler):
         return self.socket.bind(addr)
     
     def accept(self):
-        """ Accept incoming connection. """
+        """ Accept incoming connection. Return (conn, addr). If either of
+        them is None, no connection could be accepted. """
         try:
             conn, addr = self.socket.accept()
             return conn, addr
         except socket.error, err:
             if err.args[0] == errno.EWOULDBLOCK:
-                # FIXME: This makes accept return None, which would break
-                # the API of it returning (conn, addr).
-                pass
+                # Make the API of returning a tuple of two objects consistent.
+                return None, None
             else:
                 raise
     
@@ -352,7 +355,7 @@ class IOHandler(Handler):
             if err.args[0] == errno.EWOULDBLOCK:
                 return 0
             elif err.args[0] in connection_lost:
-                self.handle_close()
+                self.socket_map.notifier.close_obj(self)
                 return 0
             else:
                 raise
@@ -362,11 +365,11 @@ class IOHandler(Handler):
         try:
             data = self.socket.recv(buffer_size)
             if not data:
-                self.handle_close()
+                self.socket_map.notifier.close_obj(self)
             return data
         except socket.error, err:
             if err.args[0] in connection_lost:
-                self.handle_close()
+                self.socket_map.notifier.close_obj(self)
                 return ''
             else:
                 raise
@@ -388,7 +391,7 @@ class IOHandler(Handler):
 class Server(AcceptHandler):
     """ Automatically create an instance of handlercls for every
     connection. """
-    def __init__(self, socket_map, sock, handlercls):
+    def __init__(self, socket_map, sock=None, handlercls=IOHandler):
         AcceptHandler.__init__(self, socket_map, sock)
         self.handlercls = handlercls
     

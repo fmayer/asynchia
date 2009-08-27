@@ -22,7 +22,8 @@ import socket
 
 def socketpair():
     """ Return pair of connected sockets. Unlike socket.socketpair this
-    is platform independant. """
+    is platform independant. However, if socket.socketpair is available,
+    it is used here as well. """
     if hasattr(socket, 'socketpair'):
         # Unix.
         return socket.socketpair()
