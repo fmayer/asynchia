@@ -90,12 +90,15 @@ class RobustSocketMap(ControlSocketSocketMap):
     def start_interrupt(self, changeflags=False):
         """ See SocketMap.start_interrupt. """
         if not changeflags:
-            FragileSocketMap.start_interrupt(self, changeflags)
+            # Same as FragileSocketMap.start_interrupt.
+            self.controlsender.send('s')
+            self.controlsender.recv(1)
     
     def end_interrupt(self, changeflags=False):
         """ See SocketMap.end_interrupt. """
         if not changeflags:
-            FragileSocketMap.end_interrupt(self, changeflags)
+            # Same as FragileSocketMap.end_interrupt.
+            self.controlsender.send('e')
         else:
             self.controlsender.send('se')
             self.controlsender.recv(1)
@@ -107,12 +110,15 @@ class RockSolidSocketMap(ControlSocketSocketMap):
     def start_interrupt(self, changeflags=False):
         """ See SocketMap.start_interrupt. """
         if not changeflags:
-            FragileSocketMap.start_interrupt(self, changeflags)
+            # Same as FragileSocketMap.start_interrupt.
+            self.controlsender.send('s')
+            self.controlsender.recv(1)
     
     def end_interrupt(self, changeflags=False):
         """ See SocketMap.end_interrupt. """
         if not changeflags:
-            FragileSocketMap.end_interrupt(self, changeflags)
+            # Same as FragileSocketMap.end_interrupt.
+            self.controlsender.send('e')
 
 
 class SelectSocketMap(RobustSocketMap):
