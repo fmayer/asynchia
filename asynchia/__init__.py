@@ -18,6 +18,7 @@
 
 """ asynchia is a minimalistic asynchronous networking library. """
 
+import os
 import errno
 import socket
 
@@ -106,10 +107,18 @@ class Notifier:
         if obj.awaiting_connect:
             obj.stop_awaiting_connect()
             obj.connected = True
-            try:
-                obj.handle_connect()
-            except Exception:
-                obj.handle_error()
+            # Errno of the asynchronous connect function.
+            err = getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+            if err:
+                try:
+                    obj.handle_connect_failed(err)
+                except Exception:
+                    obj.handle_error()
+            else:
+                try:
+                    obj.handle_connect()
+                except Exception:
+                    obj.handle_error()
         
         if not obj.writeable:
             # This should only be happening if the object was just connected.
@@ -298,6 +307,10 @@ class Handler(object):
         """ Connection established. """
         pass
     
+    def handle_connect_failed(self):
+        """ Connection couldn't be established. """
+        pass
+    
     def handle_close(self):
         """ Connection closed. """
         pass
@@ -382,15 +395,26 @@ class IOHandler(Handler):
     def connect(self, address):
         """ Connect to (host, port). """
         err = self.socket.connect_ex(address)
+        # FIXME: Is EALREADY right here? As with EISCONN, asyncore does
+        # it, but it may be wrong. See http://tinyurl.com/nyye9b for more
+        # information. "This is usually a sign of a programming bug."
+        # makes it seem as if it was wrong for us to catch that here.
+        # -- Florian Mayer <flormayer@aim.com>
         if err in (errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK):
             self.connected = False
             self.await_connect()
             return
+        # FIXME: Is EISCONN right here? asyncore does it, but it's not
+        # really a good authority. See http://tinyurl.com/lgm67j. The
+        # description there seems as if we shouldn't catch the error
+        # here, as it is a sign of a bug in the code of the user of
+        # asynchia.
+        # -- Florian Mayer <flormayer@aim.com>
         if err in (0, errno.EISCONN):
             self.connected = True
             self.handle_connect()
         else:
-            self.handle_except(err)
+            raise socket.error(err, os.strerror(err))
 
 
 class Server(AcceptHandler):
