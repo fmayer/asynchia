@@ -140,11 +140,11 @@ class Notifier:
             obj.handle_error()
     
     @staticmethod
-    def close_obj(obj, why):
+    def close_obj(obj):
         """ Call handle_close of the object. If any error occurs within it,
         call handle_error of the object.  """
         try:
-            obj.handle_close(why)
+            obj.handle_close()
         except Exception:
             obj.handle_error()        
 
@@ -311,7 +311,7 @@ class Handler(object):
         """ Connection couldn't be established. """
         pass
     
-    def handle_close(self, why):
+    def handle_close(self):
         """ Connection closed.
         
         why may either be errno.ECONNRESET or 0."""
@@ -396,9 +396,9 @@ class IOHandler(Handler):
         except socket.error, err:
             if err.args[0] in trylater:
                 return 0
-            elif err.args[0] in connection_lost:
+            elif err.args[0] == errno.EPIPE:
                 # FIXME: Is this wise?
-                self.socket_map.notifier.close_obj(self, err.args[0])
+                self.socket_map.notifier.close_obj(self)
                 return 0
             else:
                 raise
@@ -425,15 +425,18 @@ class IOHandler(Handler):
         try:
             data = self.socket.recv(buffer_size, flags)
             if not data:
-                self.socket_map.notifier.close_obj(self, 0)
+                self.socket_map.notifier.close_obj(self)
             return data
         except socket.error, err:
             # FIXME: Is this wise?
             if err.args[0] in connection_lost:
-                self.socket_map.notifier.close_obj(self, err.args[0])
+                self.socket_map.notifier.close_obj(self)
                 return ''
             else:
                 raise
+    
+    def peek(self, buffer_size):
+        return self.recv(buffer_size, socket.MSG_PEEK)
     
     def connect(self, address):
         """ Connect to (host, port). """
