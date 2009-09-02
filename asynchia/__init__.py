@@ -108,7 +108,7 @@ class Notifier:
             obj.stop_awaiting_connect()
             obj.connected = True
             # Errno of the asynchronous connect function.
-            err = getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+            err = obj.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
             if err:
                 try:
                     obj.handle_connect_failed(err)
