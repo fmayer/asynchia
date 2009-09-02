@@ -25,8 +25,8 @@ import socket
 import traceback
 
 
-connection_lost = (errno.ECONNRESET, errno.ENOTCONN,
-                   errno.ESHUTDOWN, errno.ECONNABORTED)
+trylater = (errno.EWOULDBLOCK, errno.EAGAIN)
+connection_lost = (errno.ECONNRESET, errno.ECONNABORTED)
 defaultsocket_factory = socket.socket
 
 
@@ -140,11 +140,11 @@ class Notifier:
             obj.handle_error()
     
     @staticmethod
-    def close_obj(obj):
+    def close_obj(obj, why):
         """ Call handle_close of the object. If any error occurs within it,
         call handle_error of the object.  """
         try:
-            obj.handle_close()
+            obj.handle_close(why)
         except Exception:
             obj.handle_error()        
 
@@ -311,8 +311,10 @@ class Handler(object):
         """ Connection couldn't be established. """
         pass
     
-    def handle_close(self):
-        """ Connection closed. """
+    def handle_close(self, why):
+        """ Connection closed.
+        
+        why may either be errno.ECONNRESET or 0."""
         pass
 
 
@@ -365,29 +367,72 @@ class AcceptHandler(Handler):
 
 class IOHandler(Handler):
     """ Handle socket that sends and receives data. """
-    def send(self, data):
-        """ Send data. """
+    def send(self, data, flags=0):
+        """ Send data.
+    
+        flags is constructed by ORing zero or more of the following values.
+        
+        MSG_OOB
+            Sends out-of-band data on sockets that support this notion
+            (e.g. SOCK_STREAM); the underlying protocol must also support
+            out-of-band data.
+        MSG_DONTROUTE
+            Don't use a gateway to send out the packet, only send to hosts on
+            directly connected networks. This is usually used only by diagnostic
+            or routing programs. This is only defined for protocol families that
+            route; packet sockets don't.
+        MSG_DONTWAIT
+            Enables non-blocking operation; if the operation would block,
+            EAGAIN is returned.
+        MSG_NOSIGNAL
+            Requests not to send SIGPIPE on errors on stream oriented sockets
+            when the other end breaks the connection. The EPIPE error is still
+            returned.
+        MSG_CONFIRM
+            (Linux 2.3+ only) Tell the link layer that forward process happened:
+            you got a successful reply from the other side. If the link layer
+            doesn't get this it'll regularly reprobe the neighbour
+            (e.g. via a unicast ARP). Only valid on SOCK_DGRAM and SOCK_RAW
+            sockets and currently only implemented for IPv4 and IPv6.
+            See arp(7) for details. """
         try:
             return self.socket.send(data)
         except socket.error, err:
-            if err.args[0] == errno.EWOULDBLOCK:
+            if err.args[0] in trylater:
                 return 0
             elif err.args[0] in connection_lost:
-                self.socket_map.notifier.close_obj(self)
+                self.socket_map.notifier.close_obj(self, err.args[0])
                 return 0
             else:
                 raise
     
-    def recv(self, buffer_size):
-        """ Receive at most buffer_size bytes of data. """
+    def recv(self, buffer_size, flags=0):
+        """ Receive at most buffer_size bytes of data.
+        
+        flags may be constructed by ORing zero or more of the following values:
+        MSG_PEEK
+            Peeks at an incoming message.
+            The data is treated as unread and the next recv() or similar
+            function shall still return this data.
+        MSG_OOB
+            Requests out-of-band data.
+            The significance and semantics of out-of-band data
+            are protocol-specific.
+        MSG_WAITALL
+            On SOCK_STREAM sockets this requests that the function block
+            until the full amount of data can be returned.
+            The function may return the smaller amount of data if the
+            socket is a message-based socket, if a signal is caught,
+            if the connection is terminated, if MSG_PEEK was specified,
+            or if an error is pending for the socket. """
         try:
-            data = self.socket.recv(buffer_size)
+            data = self.socket.recv(buffer_size, flags)
             if not data:
-                self.socket_map.notifier.close_obj(self)
+                self.socket_map.notifier.close_obj(self, 0)
             return data
         except socket.error, err:
             if err.args[0] in connection_lost:
-                self.socket_map.notifier.close_obj(self)
+                self.socket_map.notifier.close_obj(self, err.args[0])
                 return ''
             else:
                 raise
@@ -400,7 +445,9 @@ class IOHandler(Handler):
         # information. "This is usually a sign of a programming bug."
         # makes it seem as if it was wrong for us to catch that here.
         # -- Florian Mayer <flormayer@aim.com>
-        if err in (errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK):
+        # Was:
+        #  if err in (errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK):
+        if err == errno.EINPROGRESS:
             self.connected = False
             self.await_connect()
             return
@@ -410,10 +457,14 @@ class IOHandler(Handler):
         # here, as it is a sign of a bug in the code of the user of
         # asynchia.
         # -- Florian Mayer <flormayer@aim.com>
-        if err in (0, errno.EISCONN):
+        # Was:
+        #  if err in (0, errno.EISCONN)
+        elif err == 0:
             self.connected = True
             self.handle_connect()
         else:
+            # FIXME: Should we call `self.handle_connect_failed(err)`
+            # instead of raising an error here?
             raise socket.error(err, os.strerror(err))
 
 
