@@ -427,6 +427,7 @@ class IOHandler(Handler):
                 self.socket_map.notifier.close_obj(self, 0)
             return data
         except socket.error, err:
+            # FIXME: Is this wise?
             if err.args[0] in connection_lost:
                 self.socket_map.notifier.close_obj(self, err.args[0])
                 return ''
@@ -436,25 +437,10 @@ class IOHandler(Handler):
     def connect(self, address):
         """ Connect to (host, port). """
         err = self.socket.connect_ex(address)
-        # FIXME: Is EALREADY right here? As with EISCONN, asyncore does
-        # it, but it may be wrong. See http://tinyurl.com/nyye9b for more
-        # information. "This is usually a sign of a programming bug."
-        # makes it seem as if it was wrong for us to catch that here.
-        # -- Florian Mayer <flormayer@aim.com>
-        # Was:
-        #  if err in (errno.EINPROGRESS, errno.EALREADY, errno.EWOULDBLOCK):
         if err == errno.EINPROGRESS:
             self.connected = False
             self.await_connect()
             return
-        # FIXME: Is EISCONN right here? asyncore does it, but it's not
-        # really a good authority. See http://tinyurl.com/lgm67j. The
-        # description there seems as if we shouldn't catch the error
-        # here, as it is a sign of a bug in the code of the user of
-        # asynchia.
-        # -- Florian Mayer <flormayer@aim.com>
-        # Was:
-        #  if err in (0, errno.EISCONN)
         elif err == 0:
             self.connected = True
             self.handle_connect()
