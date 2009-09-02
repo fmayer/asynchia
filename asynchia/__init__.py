@@ -350,7 +350,7 @@ class AcceptHandler(Handler):
             conn, addr = self.socket.accept()
             return conn, addr
         except socket.error, err:
-            if err.args[0] == errno.EWOULDBLOCK:
+            if err.args[0] in trylater:
                 # Make the API of returning a tuple of two objects consistent.
                 return None, None
             else:
@@ -397,6 +397,7 @@ class IOHandler(Handler):
             if err.args[0] in trylater:
                 return 0
             elif err.args[0] in connection_lost:
+                # FIXME: Is this wise?
                 self.socket_map.notifier.close_obj(self, err.args[0])
                 return 0
             else:
