@@ -358,11 +358,7 @@ class AcceptHandler(Handler):
     
     def reuse_addr(self):
         """ Reuse the address. """
-        self.socket.setsockopt(
-            socket.SOL_SOCKET, socket.SO_REUSEADDR,
-            self.socket.getsockopt(socket.SOL_SOCKET,
-                                   socket.SO_REUSEADDR) | 1
-        )
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 
 class IOHandler(Handler):
