@@ -40,11 +40,11 @@ if __name__ == '__main__':
     m = asynchia.maps.DefaultSocketMap()
     a = EchoAcceptor(m, socket.socket())
     a.reuse_addr()
-    a.bind(('', 25000))
+    a.bind(('127.0.0.1', 25000))
     a.listen(0)
     
     c = asynchia.ee.Handler(m, socket.socket())
-    c.connect(('', 25000))
+    c.connect(('127.0.0.1', 25000))
     c.send_input(asynchia.ee.StringInput("Foo\n"))
     
     m.run()

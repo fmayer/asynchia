@@ -25,7 +25,7 @@ import socket
 import traceback
 
 
-trylater = (errno.EWOULDBLOCK, errno.EAGAIN)
+trylater = (errno.EAGAIN,)
 connection_lost = (errno.ECONNRESET, errno.ECONNABORTED)
 defaultsocket_factory = socket.socket
 
