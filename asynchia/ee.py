@@ -381,6 +381,22 @@ class CollectorQueue(Collector):
             collector.close()
 
 
+class StructCollector(DelimitedCollector):
+    """ Collect and unpack stru. Unpacked value can be found in .value. """
+    def __init__(self, stru, onclose=None):
+        DelimitedCollector.__init__(
+            self, StringCollector(), stru.size, onclose
+        )
+        
+        self.stru = stru
+        self.value = None
+    
+    def close(self):
+        """ Unpack the data received and close the collector afterwards. """
+        self.value = self.stru.unpack(self.collector.string)
+        DelimitedCollector.close(self)
+
+
 class Handler(asynchia.IOHandler):
     """ asynchia handler that adds all received data to a collector,
     and reads outgoing data from an Input. """
