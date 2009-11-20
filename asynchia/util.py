@@ -30,8 +30,8 @@ def socketpair():
     
     try:
         acceptor = socket.socket()
-        # Random port.
-        acceptor.bind(('', 0))
+        # Random port. Only accept local connections.
+        acceptor.bind(('127.0.0.1', 0))
         # We know we'll only get one connection.
         acceptor.listen(1)
 

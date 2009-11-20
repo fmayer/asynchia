@@ -441,7 +441,8 @@ class IOHandler(Handler):
     def connect(self, address):
         """ Connect to (host, port). """
         err = self.socket.connect_ex(address)
-        if err == errno.EINPROGRESS:
+        # EWOULDBLOCK is only expected with WinSock.
+        if err in (errno.EINPROGRESS, errno.EWOULDBLOCK):
             self.connected = False
             self.await_connect()
             return
