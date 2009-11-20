@@ -312,9 +312,7 @@ class Handler(object):
         pass
     
     def handle_close(self):
-        """ Connection closed.
-        
-        why may either be errno.ECONNRESET or 0."""
+        """ Connection closed. """
         pass
 
 
