@@ -281,11 +281,12 @@ class StringCollector(Collector):
 
 class FileCollector(Collector):
     """ Write data received from the socket into a fd. """
-    def __init__(self, fd=None, closing=True, onclose=None):
+    def __init__(self, fd=None, closing=True, autoflush=False, onclose=None):
         Collector.__init__(self, onclose)
         
         self.fd = fd
         self.closing = closing
+        self.autoflush = autoflush
     
     def add_data(self, prot, nbytes):
         """ Write at most nbytes data from prot to fd. """
@@ -297,6 +298,9 @@ class FileCollector(Collector):
         except ValueError:
             # I/O operation on closed file. This shouldn't be happening.
             raise CollectorFull
+        else:
+            if self.autoflush:
+                self.fd.flush()
         return len(received)
     
     def close(self):
