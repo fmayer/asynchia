@@ -23,11 +23,11 @@ import asynchia.ee
 
 from nose.tools import eq_, assert_raises
 
-def until_done(c, fun):
+def until_done(fun):
     while True:
         try:
             fun()
-        except (asynchia.ee.CollectorFull, asynchia.ee.InputEOF):
+        except asynchia.ee.Depleted:
             break
 
 
@@ -43,7 +43,7 @@ def test_fileinput():
     m = asynchia.ee.MockHandler()
     i = asynchia.ee.FileInput.from_filename(__file__)
     eq_(len(i), len(data))
-    until_done(i, lambda: i.tick(m))
+    until_done(lambda: i.tick(m))
     i.close()
     eq_(m.outbuf, data)
 
@@ -116,12 +116,7 @@ def test_collectorqueue():
     q = asynchia.ee.CollectorQueue([a, b, c])
     
     m = asynchia.ee.MockHandler(inbuf='a' * 5 + 'b' * 4 + 'c' * 3)
-    while True:
-        try:
-            q.add_data(m, 5)
-        except (ValueError, asynchia.ee.CollectorFull):
-            # The MockProtocol is out of data or the CollectorQueue is full.
-            break
+    until_done(lambda: q.add_data(m, 5))
     eq_(a.collector.string, 'a' * 5)
     eq_(b.collector.string, 'b' * 4)
     eq_(c.collector.string, 'c' * 3)

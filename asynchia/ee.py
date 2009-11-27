@@ -22,13 +22,18 @@ import asynchia
 
 # FIXME: Make up a nomenclature.
 
-class InputEOF(Exception):
+class Depleted(Exception):
+    """ Base exception of InputEOF and CollectorFull. """
+    pass
+
+
+class InputEOF(Depleted):
     """ Raised by Inputs to show that they do not have no
     data to be sent anymore. """
     pass
 
 
-class CollectorFull(Exception):
+class CollectorFull(Depleted):
     """ Raised by collectors to show that they either do not need any
     more data, or that they cannot store any data. """
     pass
@@ -382,7 +387,8 @@ class CollectorQueue(Collector):
 
 
 class StructCollector(DelimitedCollector):
-    """ Collect and unpack stru. Unpacked value can be found in .value. """
+    """ Collect and unpack stru. Unpacked value can be found in .value and
+    is available upon calling onclose. """
     def __init__(self, stru, onclose=None):
         DelimitedCollector.__init__(
             self, StringCollector(), stru.size, onclose
