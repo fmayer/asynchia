@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-""" asynchia is a minimalistic asynchronous networking library. """
+""" asynchia is a minimalist asynchronous networking library. """
 
 import os
 import errno
