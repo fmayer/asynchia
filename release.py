@@ -36,8 +36,8 @@ s_path = os.path.abspath(os.path.dirname(__file__))
 
 BUFFER = 4096
 NAME = 'asynchia'
-RELEASE_DIR = os.path.join(s_path, os.pardir, 'release/')
-SRC_PATH = os.path.abspath(os.path.join(s_path, os.pardir))
+RELEASE_DIR = os.path.join(s_path, 'release/')
+SRC_PATH = os.path.abspath(s_path)
 PKG_DIR = os.path.join(SRC_PATH, 'asynchia')
 VERSION_REGEX = re.compile("^VERSION = (.+?)$", re.MULTILINE)
 INIT_VERSION_REGEX = re.compile("^__version__ = (.+?)$", re.MULTILINE)
@@ -88,12 +88,6 @@ def hg_tag(name):
 
 def release(version, force=False, setup=True, commit=True,
             tag=True, packages=True):
-    if tests:
-        if not run_tests():
-            print "Testsuite failed!"
-            if not force:
-                sys.exit(1)
-    
     if setup:
         update_setup(version)
         if commit:
