@@ -1,0 +1,8 @@
+Thanks for your interest in asynchia. asynchia is licensed under the terms
+of the LGPL and written by Florian Mayer. Please be aware that this is an
+early alpha release and thus may contain bugs. By filing these bugs you
+help me develop a better library. Report any bugs and inconveniences that
+you may experience at
+http://bitbucket.org/segfaulthunter/asynchia-mainline/issues/.
+
+Use `python setup.py install` to install the library.
