@@ -24,6 +24,7 @@ import socket
 
 import traceback
 
+__version__ = '0.1'
 
 trylater = (errno.EAGAIN,)
 connection_lost = (errno.ECONNRESET, errno.ECONNABORTED)
