@@ -246,7 +246,9 @@ class PollSocketMap(RobustSocketMap):
     
     def handler_changed(self, handler):
         """ Update flags for handler. """
-        self.poller.modify(handler.fileno(), self.create_flags(handler))
+        # self.poller.register is compatible to 2.5 whilst
+        # self.poller.modify is not.
+        self.poller.register(handler.fileno(), self.create_flags(handler))
     
     # We just update the flags of the object, doesn't matter what has
     # changed.
