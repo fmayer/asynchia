@@ -20,6 +20,53 @@
 
 import socket
 
+class IDPool(object):
+    """
+    Pool that returns unique identifiers.
+    
+    Identifierers obtained using the get method are guaranteed to not be
+    returned by it again until they are released using the release method.
+    
+        >>> pool = IDPool()
+        >>> pool.get()
+        0
+        >>> pool.get()
+        1
+        >>> pool.get()
+        2
+        >>> pool.release(1)
+        >>> pool.get()
+        1
+        >>> 
+    """
+    def __init__(self):
+        self.max_id = -1
+        self.free_ids = []
+    
+    def get(self):
+        """ Return a new integer that is unique in this pool until
+        it is released. """
+        if self.free_ids:
+            return self.free_ids.pop()
+        else:
+            self.max_id += 1
+            return self.max_id
+    
+    def release(self, id_):
+        """ Release the id. It can now be returned by get again.
+        
+        Will reset the IDPool if the last id in use is released. """
+        self.free_ids.append(id_)
+        if len(self.free_ids) == self.max_id + 1:
+            self.reset()
+    
+    def reset(self):
+        """ Reset the state of the IDPool. This should only be called when
+        no identifier is in use. """
+        self.max_id = -1
+        self.free_ids = []
+
+
 def socketpair():
     """ Return pair of connected sockets. Unlike socket.socketpair this
     is platform independant. However, if socket.socketpair is available,
