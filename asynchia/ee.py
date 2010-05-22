@@ -421,8 +421,11 @@ class Handler(asynchia.IOHandler):
         if collector is not None:
             self.set_readable(True)
     
-    def set_collector(self, collector):
-        """ Set the top-level collector to collector. """
+    def set_collector(self, collector, noclose=False):
+        """ Set the top-level collector to collector. If noclose is False,
+        the previous collector's close method is called. """
+        if not noclose and self.collector is not None:
+            self.collector.close()
         self.collector = collector
         if not self.readable:
             self.set_readable(True)
@@ -456,6 +459,10 @@ class Handler(asynchia.IOHandler):
     def has_data(self):
         """ Tell whether the Handler has any data to be sent. """
         return bool(self.queue)
+    
+    def close(self):
+        """ Close top-level collector. """
+        self.collector.close()
 
 
 class MockHandler(object):

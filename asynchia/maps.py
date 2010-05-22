@@ -188,6 +188,11 @@ class SelectSocketMap(RobustSocketMap):
         """ Periodically poll for I/O. """
         while True:
             self.poll(None)
+    
+    def close(self):
+        """ See SocketMap.close """
+        for handler in self.socket_list:
+            self.notifier.cleanup_obj(handler)
 
 
 class PollSocketMap(RobustSocketMap):
@@ -265,6 +270,11 @@ class PollSocketMap(RobustSocketMap):
         if handler.writeable or handler.awaiting_connect:
             flags |= select.POLLOUT
         return flags
+    
+    def close(self):
+        """ See SocketMap.close """
+        for handler in self.socket_list.itervalues():
+            self.notifier.cleanup_obj(handler)
 
 
 class EPollSocketMap(RockSolidSocketMap):
@@ -345,6 +355,11 @@ class EPollSocketMap(RockSolidSocketMap):
         if handler.writeable or handler.awaiting_connect:
             flags |= select.EPOLLOUT
         return flags
+    
+    def close(self):
+        """ See SocketMap.close """
+        for handler in self.socket_list.itervalues():
+            self.notifier.cleanup_obj(handler)
 
 
 DefaultSocketMap = SelectSocketMap

@@ -47,4 +47,7 @@ if __name__ == '__main__':
     c.connect(('127.0.0.1', 25000))
     c.send_input(asynchia.ee.StringInput("Foo\n"))
     
-    m.run()
+    try:
+        m.run()
+    finally:
+        m.close()

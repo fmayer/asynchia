@@ -134,3 +134,9 @@ class QSocketMap(asynchia.SocketMap):
     def del_writer(self, handler):
         """ See asynchia.SocketMap.del_writer """
         self.handler_map[handler]['write'].disable()
+    
+    def close(self):
+        """ See asynchia.SocketMap.close """
+        for handler in self.handler_map:
+            self.notifier.cleanup_obj(handler)
+        self.handler_map.clear()

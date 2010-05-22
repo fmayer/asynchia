@@ -83,6 +83,11 @@ class SocketMap:
         """ Return a context-manager that automatically resumes the
         socket-map when the block is left. """
         raise NotImplementedError
+    
+    def close(self):
+        """ Call the handle_cleanup methods of all handlers contained
+        in the socket-map, indicating that they are void. """
+        raise NotImplementedError
 
 
 class Notifier:
@@ -147,7 +152,21 @@ class Notifier:
         try:
             obj.handle_close()
         except Exception:
-            obj.handle_error()        
+            obj.handle_error()
+        
+        try:
+            obj.handle_cleanup()
+        except Exception:
+            obj.handle_error()
+    
+    @staticmethod
+    def cleanup_obj(obj):
+        """ Call handle_cleanup of the object. If any error occurs within it,
+        call handle_error of the object. """
+        try:
+            obj.handle_cleanup()
+        except Exception:
+            obj.handle_error()
 
 
 class Handler(object):
@@ -177,6 +196,8 @@ class Handler(object):
         except socket.error, err:
             if err.args[0] not in (errno.ENOTCONN, errno.EBADF):
                 raise
+        finally:
+            self.socket_map.notifier.cleanup_obj(self)
     
     def set_socket(self, sock):
         """ Set socket as the socket of the handler.
@@ -313,8 +334,14 @@ class Handler(object):
         pass
     
     def handle_close(self):
-        """ Connection closed. """
+        """ Connection closed. Note that this is only called if the
+        connection is closed by the remote end! """
         pass
+    
+    def handle_cleanup(self):
+        """ Called whenever the Handler is voided, for whatever reason.
+        This may be the shutdown of the program, the closing of the
+        connection by the local end or the like. """
 
 
 class AcceptHandler(Handler):

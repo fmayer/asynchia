@@ -43,6 +43,9 @@ class Echo(asynchia.IOHandler):
         read = self.recv(4096)
         sys.stdout.write(read)
         sys.stdout.flush()
+    
+    def handle_cleanup(self):
+        print "Goodbye"
 
 
 class EchoAcceptor(asynchia.AcceptHandler):
@@ -52,6 +55,7 @@ class EchoAcceptor(asynchia.AcceptHandler):
 
 if __name__ == '__main__':
     # This should show "Foo" in your console.
+    # When you close this program, it should print "Goodbye".
     m = asynchia.maps.DefaultSocketMap()
     a = EchoAcceptor(m, socket.socket())
     a.reuse_addr()
@@ -61,4 +65,7 @@ if __name__ == '__main__':
     c = EchoClient(m, socket.socket())
     c.connect(('127.0.0.1', 25000))
     
-    m.run()
+    try:
+        m.run()
+    finally:
+        m.close()
