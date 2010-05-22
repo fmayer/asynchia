@@ -44,7 +44,7 @@ import Queue
 class PauseContext(object):
     """ Collection of Coroutines which are currently paused but not waiting
     for any data. They are paused to prevent too much time to be spent in
-    them without important I/O being done. """
+    them, preventing possibly important I/O from being done. """
     def __init__(self):
         self.paused = []
     
