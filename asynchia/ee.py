@@ -407,8 +407,8 @@ class CollectorQueue(Collector):
 
 
 class FactoryCollector(Collector):
-    """ Call factory method to obtain the next collector until selfsame raises
-    the Depleted exception. """
+    """ Call factory method to obtain the next collector until the factory
+    raises the Depleted exception. """
     def __init__(self, factory, onclose=None):
         Collector.__init__(self, onclose)
         self.factory = factory
