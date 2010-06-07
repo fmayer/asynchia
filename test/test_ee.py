@@ -120,3 +120,19 @@ def test_collectorqueue():
     eq_(a.collector.string, 'a' * 5)
     eq_(b.collector.string, 'b' * 4)
     eq_(c.collector.string, 'c' * 3)
+
+
+def test_factorycollector():
+    def make_eq(i):
+        def eq(c):
+            return eq_(c.string, 5 * string.ascii_letters[i])
+        return eq
+    itr = (asynchia.ee.DelimitedCollector(
+        asynchia.ee.StringCollector(make_eq(i)), 5) for i in xrange(3))
+    c = asynchia.ee.FactoryCollector(
+        asynchia.ee.FactoryCollector.wrap_iterator(itr.next)
+        )
+    m = asynchia.ee.MockHandler(inbuf='a' * 5 + 'b' * 5 + 'c' * 5 + 'd')
+    until_done(lambda: c.add_data(m, 5))
+    assert_raises(asynchia.ee.CollectorFull, c.add_data, m, 1)
+    

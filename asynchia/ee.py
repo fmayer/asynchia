@@ -21,6 +21,9 @@ import os
 import asynchia
 
 # FIXME: Make up a nomenclature.
+# When a Collector raises CollectorFull, it can savely be assumed that it
+# has closed itself. The close method must only be called when explicitely
+# closing the collector. The same holds true for Inputs and InputEOF.
 
 class Depleted(Exception):
     """ Base exception of InputEOF and CollectorFull. """
@@ -91,6 +94,7 @@ class InputQueue(Input):
         while True:
             if not self.inputs:
                 if not self.eof():
+                    self.close()
                     raise InputEOF
             inp = self.inputs[0]
             try:
@@ -138,6 +142,7 @@ class StringInput(Input):
         """ Send as much of the string as possible. """
         Input.tick(self, sock)
         if not self.buf:
+            self.close()
             raise InputEOF
         
         sent = sock.send(self.buf)
@@ -295,8 +300,13 @@ class FileCollector(Collector):
         received = prot.recv(nbytes)
         try:
             self.fd.write(received)
+        # FIXME: Reconsider how to handle following exceptional case.
         except ValueError:
             # I/O operation on closed file. This shouldn't be happening.
+            if not self.closed:
+                # No use closing the file when handling a
+                # "I/O operation on closed file" exception.
+                Collector.close(self)
             raise CollectorFull
         else:
             if self.autoflush:
@@ -327,6 +337,9 @@ class DelimitedCollector(Collector):
             self.size -= nrecv
             return nrecv
         else:
+            # Redundant if? Collector.add_data already checks for
+            # self.closed == False, so only self.collector.add_data
+            # could close it.
             if not self.closed:
                 self.close()
             raise CollectorFull
@@ -368,6 +381,9 @@ class CollectorQueue(Collector):
                 if not self.collectors:
                     # Returning 
                     if not self.full():
+                        # For the sake of consistency.
+                        if not self.closed:
+                            self.close()
                         raise CollectorFull
         return nrecv
     
@@ -388,6 +404,52 @@ class CollectorQueue(Collector):
         Collector.close(self)
         for collector in self.collectors:
             collector.close()
+
+
+class FactoryCollector(Collector):
+    """ Call factory method to obtain the next collector until selfsame raises
+    the Depleted exception. """
+    def __init__(self, factory, onclose=None):
+        Collector.__init__(self, onclose)
+        self.factory = factory
+        self.cur_coll = None
+    
+    def init(self):
+        """ Obtain first collector from factory method. """
+        Collector.init(self)
+        self.cur_coll = self.factory()
+    
+    def add_data(self, prot, nbytes):
+        """ Add data to the current collector. """
+        Collector.add_data(self, prot, nbytes)
+        while True:
+            try:
+                nrecv = self.cur_coll.add_data(prot, nbytes)
+                break
+            except CollectorFull:
+                self.cur_coll.close()
+                try:
+                    self.cur_coll = self.factory()
+                # Wise?
+                except Depleted:
+                    # Redundant if?
+                    if not self.closed:
+                        self.close()
+                    raise CollectorFull
+        return nrecv
+    
+    @staticmethod
+    def wrap_iterator(itr_next):
+        """ Wrap the next method of an iterable in such a way that whenever
+        it raises StopIteration, the wrapper raises Depleted. This is
+        convenient when using FactoryCollector to obtain the collectors
+        from an iterable. """
+        def _wrap():
+            try:
+                return itr_next()
+            except StopIteration:
+                raise Depleted
+        return _wrap
 
 
 class StructCollector(DelimitedCollector):
