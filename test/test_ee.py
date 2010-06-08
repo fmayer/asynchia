@@ -148,3 +148,11 @@ def test_factoryinput():
     until_done(lambda: c.tick(m))
     eq_(m.outbuf, 'a' * 5 + 'b' * 5 + 'c' * 5)
     assert_raises(asynchia.ee.InputEOF, c.tick, m)
+
+
+def test_close():
+    c = asynchia.ee.DelimitedCollector(asynchia.ee.StringCollector(), 5)
+    m = asynchia.ee.MockHandler('abcde')
+    c.add_data(m, 10)
+    # As of now, the collector is only closed at the next call.
+    eq_(c.closed, True)
