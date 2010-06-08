@@ -443,7 +443,6 @@ class FactoryCollector(Collector):
     
     def add_data(self, prot, nbytes):
         """ Add data to the current collector. """
-        factorydone = False
         Collector.add_data(self, prot, nbytes)
         while True:
             done, nrecv = self.cur_coll.add_data(prot, nbytes)
