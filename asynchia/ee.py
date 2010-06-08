@@ -25,22 +25,9 @@ import asynchia
 # has closed itself. The close method must only be called when explicitely
 # closing the collector. The same holds true for Inputs and InputEOF.
 
+
 class Depleted(Exception):
-    """ Base exception of InputEOF and CollectorFull. """
     pass
-
-
-class InputEOF(Depleted):
-    """ Raised by Inputs to show that they do not have no
-    data to be sent anymore. """
-    pass
-
-
-class CollectorFull(Depleted):
-    """ Raised by collectors to show that they either do not need any
-    more data, or that they cannot store any data. """
-    pass
-
 
 class Input(object):
     """ Base-class for all Inputs. It implements __add__ to return an
@@ -54,7 +41,7 @@ class Input(object):
         """ Abstract method to be overridden. This should send the data
         contained in the Input over sock. """
         if self.closed:
-            raise InputEOF
+            return True, 0
         if not self.inited:
             self.init()
     
@@ -92,17 +79,16 @@ class InputQueue(Input):
         it raises InputEOF. """
         Input.tick(self, sock)
         while True:
-            if not self.inputs:
-                if not self.eof():
-                    self.close()
-                    raise InputEOF
             inp = self.inputs[0]
-            try:
-                sent = inp.tick(sock)
-                break
-            except InputEOF:
+            done, sent = inp.tick(sock)
+            if done:
                 self.inputs.pop(0)
-        return sent
+                if not self.inputs:
+                    self.close()
+                    return False, sent
+            if sent:
+                break
+        return bool(self.inputs), sent
     
     def eof(self):
         """ Called when the last Input in the queue raises InputEOF.
@@ -141,15 +127,15 @@ class StringInput(Input):
     def tick(self, sock):
         """ Send as much of the string as possible. """
         Input.tick(self, sock)
-        if not self.buf:
-            self.close()
-            raise InputEOF
         
         sent = sock.send(self.buf)
         self.buf = self.buf[sent:]
         self.length -= sent
         
-        return sent
+        if not self.buf:
+            self.close()
+        
+        return not bool(self.buf), sent
     
     def __len__(self):
         return self.length
@@ -186,14 +172,14 @@ class FileInput(Input):
                 self.eof = True
             self.buf += read
         
-        if self.eof and not self.buf:
-            self.close()
-            raise InputEOF
-        
         sent = sock.send(self.buf)        
         self.buf = self.buf[sent:]
         self.length -= sent
-        return sent
+        
+        if self.eof and not self.buf:
+            self.close()
+        
+        return self.eof and not self.buf, sent
     
     def close(self):
         """ If FileInput is closing, close the fd. """
@@ -251,20 +237,16 @@ class FactoryInput(Input):
         """ Send data from the current input. """
         Input.tick(self, sock)
         while True:
-            try:
-                sent = self.cur_inp.tick(sock)
-                break
-            except InputEOF:
-                self.cur_inp.close()
+            done, sent = self.cur_inp.tick(sock)
+            if done:
                 try:
                     self.cur_inp = self.factory()
-                # Wise?
                 except Depleted:
-                    # Redundant if?
-                    if not self.closed:
-                        self.close()
-                    raise InputEOF
-        return sent
+                    self.close()
+                    return True, sent
+            if sent:
+                break
+        return False, sent
     
     @staticmethod
     def wrap_iterator(itr_next):
@@ -291,7 +273,7 @@ class Collector(object):
         """ Override to read at most nbytes from prot and store them in the
         collector. """
         if self.closed:
-            raise CollectorFull
+            return True, 0
         
         if not self.inited:
             self.init()
@@ -353,11 +335,11 @@ class FileCollector(Collector):
                 # No use closing the file when handling a
                 # "I/O operation on closed file" exception.
                 Collector.close(self)
-            raise CollectorFull
+            return True, 0
         else:
             if self.autoflush:
                 self.fd.flush()
-        return len(received)
+        return False, len(received)
     
     def close(self):
         """ Close the fd if the FileCollector is closing. """
@@ -378,17 +360,11 @@ class DelimitedCollector(Collector):
         """ Add data until the received data exceeds size. """
         Collector.add_data(self, prot, nbytes)
         
-        if self.size > 0:
-            nrecv = self.collector.add_data(prot, min(self.size, nbytes))
-            self.size -= nrecv
-            return nrecv
-        else:
-            # Redundant if? Collector.add_data already checks for
-            # self.closed == False, so only self.collector.add_data
-            # could close it.
-            if not self.closed:
-                self.close()
-            raise CollectorFull
+        nrecv = self.collector.add_data(prot, min(self.size, nbytes))
+        self.size -= nrecv
+        if self.size == 0:
+            self.close()
+        return (self.size == 0), nrecv
     
     def close(self):
         """ Close wrapped collector. """
@@ -419,10 +395,8 @@ class CollectorQueue(Collector):
         """ Add data to first collector until it is full. """
         Collector.add_data(self, prot, nbytes)
         while True:
-            try:
-                nrecv = self.collectors[0].add_data(prot, nbytes)
-                break
-            except CollectorFull:
+            done, nrecv = self.collectors[0].add_data(prot, nbytes)
+            if done:
                 self.finish_collector(self.collectors.pop(0))
                 if not self.collectors:
                     # Returning 
@@ -430,8 +404,10 @@ class CollectorQueue(Collector):
                         # For the sake of consistency.
                         if not self.closed:
                             self.close()
-                        raise CollectorFull
-        return nrecv
+                        return True, nrecv
+            if nrecv:
+                break
+        return False, nrecv
     
     def finish_collector(self, coll):
         """ Called when a collector raises CollectorFull. """
@@ -467,12 +443,11 @@ class FactoryCollector(Collector):
     
     def add_data(self, prot, nbytes):
         """ Add data to the current collector. """
+        factorydone = False
         Collector.add_data(self, prot, nbytes)
         while True:
-            try:
-                nrecv = self.cur_coll.add_data(prot, nbytes)
-                break
-            except CollectorFull:
+            done, nrecv = self.cur_coll.add_data(prot, nbytes)
+            if done:
                 self.cur_coll.close()
                 try:
                     self.cur_coll = self.factory()
@@ -481,8 +456,10 @@ class FactoryCollector(Collector):
                     # Redundant if?
                     if not self.closed:
                         self.close()
-                    raise CollectorFull
-        return nrecv
+                    return True, nrecv
+            if nrecv:
+                break
+        return False, nrecv
     
     @staticmethod
     def wrap_iterator(itr_next):
@@ -550,17 +527,15 @@ class Handler(asynchia.IOHandler):
     
     def handle_read(self):
         """ Do the read call. """
-        try:
-            self.collector.add_data(self, self.buffer_size)
-        except CollectorFull:
+        done, nrecv = self.collector.add_data(self, self.buffer_size)
+        if done:
             # We can safely assume it is readable here.
             self.set_readable(False)
     
     def handle_write(self):
         """ Do the write call. """
-        try:
-            sent = self.queue.tick(self)
-        except InputEOF:
+        done, sent = self.queue.tick(self)
+        if done:
             # We can safely assume it is writeable here.
             self.set_writeable(False)
     
