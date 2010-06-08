@@ -234,6 +234,52 @@ class AutoFileInput(FileInput):
         return sent
 
 
+class FactoryInput(Input):
+    """ Call factory method to obtain the next input until the factory
+    raises the Depleted exception. """
+    def __init__(self, factory, onclose=None):
+        Input.__init__(self, onclose)
+        self.factory = factory
+        self.cur_inp = None
+    
+    def init(self):
+        """ Obtain first input from factory method. """
+        Input.init(self)
+        self.cur_inp = self.factory()
+    
+    def tick(self, sock):
+        """ Send data from the current input. """
+        Input.tick(self, sock)
+        while True:
+            try:
+                sent = self.cur_inp.tick(sock)
+                break
+            except InputEOF:
+                self.cur_inp.close()
+                try:
+                    self.cur_inp = self.factory()
+                # Wise?
+                except Depleted:
+                    # Redundant if?
+                    if not self.closed:
+                        self.close()
+                    raise InputEOF
+        return sent
+    
+    @staticmethod
+    def wrap_iterator(itr_next):
+        """ Wrap the next method of an iterable in such a way that whenever
+        it raises StopIteration, the wrapper raises Depleted. This is
+        convenient when using FactoryCollector to obtain the collectors
+        from an iterable. """
+        def _wrap():
+            try:
+                return itr_next()
+            except StopIteration:
+                raise Depleted
+        return _wrap
+
+
 class Collector(object):
     """ This is the base-class for all collectors. Collectors read up to
     nbytes bytes of data from the protocol passed to them. """

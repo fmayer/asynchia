@@ -93,7 +93,8 @@ def test_delimited():
         asynchia.ee.StringCollector(), 5
     )
     m = asynchia.ee.MockHandler(inbuf=string.ascii_letters)
-    c.add_data(m, 10)
+    n = c.add_data(m, 10)
+    eq_(n, 5)
     # As we are using a MockHandler, we can be sure the collector
     # collected all 5 bytes it was supposed to.
     assert_raises(asynchia.ee.CollectorFull, c.add_data, m, 10)
@@ -136,3 +137,14 @@ def test_factorycollector():
     until_done(lambda: c.add_data(m, 5))
     assert_raises(asynchia.ee.CollectorFull, c.add_data, m, 1)
     
+
+def test_factoryinput():
+    itr = (asynchia.ee.StringInput(5 * string.ascii_letters[i])
+           for i in xrange(3))
+    c = asynchia.ee.FactoryInput(
+        asynchia.ee.FactoryInput.wrap_iterator(itr.next)
+        )
+    m = asynchia.ee.MockHandler()
+    until_done(lambda: c.tick(m))
+    eq_(m.outbuf, 'a' * 5 + 'b' * 5 + 'c' * 5)
+    assert_raises(asynchia.ee.InputEOF, c.tick, m)
