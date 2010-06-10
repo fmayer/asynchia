@@ -309,7 +309,7 @@ class StringCollector(Collector):
         
         received = prot.recv(nbytes)
         self.string += received
-        return len(received)
+        return False, len(received)
 
 
 class FileCollector(Collector):
@@ -360,7 +360,7 @@ class DelimitedCollector(Collector):
         """ Add data until the received data exceeds size. """
         Collector.add_data(self, prot, nbytes)
         
-        nrecv = self.collector.add_data(prot, min(self.size, nbytes))
+        done, nrecv = self.collector.add_data(prot, min(self.size, nbytes))
         self.size -= nrecv
         if self.size == 0:
             self.close()
@@ -447,7 +447,6 @@ class FactoryCollector(Collector):
         while True:
             done, nrecv = self.cur_coll.add_data(prot, nbytes)
             if done:
-                self.cur_coll.close()
                 try:
                     self.cur_coll = self.factory()
                 # Wise?
@@ -559,7 +558,7 @@ class MockHandler(object):
         """ Return up to bufsize bytes from inbuf. Raise ValueError
         when inbuf is empty. """
         if not self.inbuf:
-            raise ValueError
+            return ''
         i = min(bufsize, len(self.inbuf))
         data = self.inbuf[:i]
         self.inbuf = self.inbuf[i:]
