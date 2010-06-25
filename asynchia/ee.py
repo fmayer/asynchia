@@ -29,6 +29,7 @@ import asynchia
 class Depleted(Exception):
     pass
 
+
 class Input(object):
     """ Base-class for all Inputs. It implements __add__ to return an
     InputQueue consisting of the two operants. """
