@@ -25,9 +25,8 @@ from nose.tools import eq_, assert_raises
 
 def until_done(fun):
     while True:
-        try:
-            fun()
-        except asynchia.ee.Depleted:
+        d, s = fun()
+        if d:
             break
 
 
@@ -94,10 +93,10 @@ def test_delimited():
     )
     m = asynchia.ee.MockHandler(inbuf=string.ascii_letters)
     n = c.add_data(m, 10)
-    eq_(n, 5)
+    eq_(n[1], 5)
     # As we are using a MockHandler, we can be sure the collector
     # collected all 5 bytes it was supposed to.
-    assert_raises(asynchia.ee.CollectorFull, c.add_data, m, 10)
+    eq_(c.add_data(m, 10)[0], True)
     # The collector
     eq_(c.collector.string, string.ascii_letters[:5])
     eq_(m.inbuf, string.ascii_letters[5:])
@@ -135,7 +134,7 @@ def test_factorycollector():
         )
     m = asynchia.ee.MockHandler(inbuf='a' * 5 + 'b' * 5 + 'c' * 5 + 'd')
     until_done(lambda: c.add_data(m, 5))
-    assert_raises(asynchia.ee.CollectorFull, c.add_data, m, 1)
+    eq_(c.add_data(m, 1)[0], True)
     
 
 def test_factoryinput():
@@ -147,4 +146,12 @@ def test_factoryinput():
     m = asynchia.ee.MockHandler()
     until_done(lambda: c.tick(m))
     eq_(m.outbuf, 'a' * 5 + 'b' * 5 + 'c' * 5)
-    assert_raises(asynchia.ee.InputEOF, c.tick, m)
+    eq_(c.tick(m)[0], True)
+
+
+def test_close():
+    c = asynchia.ee.DelimitedCollector(asynchia.ee.StringCollector(), 5)
+    m = asynchia.ee.MockHandler('abcde')
+    c.add_data(m, 10)
+    # As of now, the collector is only closed at the next call.
+    eq_(c.closed, True)
