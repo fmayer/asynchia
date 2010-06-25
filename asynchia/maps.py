@@ -121,10 +121,10 @@ class RockSolidSocketMap(ControlSocketSocketMap):
             self.controlsender.send('e')
 
 
-class SelectSocketMap(RobustSocketMap):
+class SelectSocketMap(FragileSocketMap):
     """ Decide which sockets have I/O to do using select.select. """
     def __init__(self, notifier=None):
-        RobustSocketMap.__init__(self, notifier)
+        FragileSocketMap.__init__(self, notifier)
         self.readers = []
         self.writers = []
         self.socket_list = []
