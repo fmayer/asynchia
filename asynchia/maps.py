@@ -164,6 +164,9 @@ class SelectSocketMap(FragileSocketMap):
             self.del_reader(handler)
         if handler.writeable:
             self.del_writer(handler)
+        if handler.awaiting_connect:
+            self.del_writer(handler)
+        pass
     
     def add_writer(self, handler):
         """ See SocketMap.add_writer. """

@@ -287,9 +287,9 @@ class Handler(object):
         be called. """
         # If we are already writeable, the handler is already in the
         # socket-map's writers.
+        self.awaiting_connect = True
         if not self.writeable:
             self.socket_map.add_writer(self)
-        self.awaiting_connect = True
     
     def stop_awaiting_connect(self):
         """ Remove handler from its socket-map's writers if necessary.
@@ -471,10 +471,13 @@ class IOHandler(Handler):
         err = self.socket.connect_ex(address)
         # EWOULDBLOCK is only expected with WinSock.
         if err in (errno.EINPROGRESS, errno.EWOULDBLOCK):
-            self.connected = False
-            self.await_connect()
+            if not self.awaiting_connect:
+                self.connected = False
+                self.await_connect()
             return
         elif err == 0:
+            if self.awaiting_connect:
+                self.stop_awaiting_connect()
             self.connected = True
             self.handle_connect()
         else:

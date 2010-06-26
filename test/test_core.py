@@ -111,6 +111,106 @@ def tes_changeflag(map_):
     eq_(container.thr.isAlive(), False)
 
 
+def tes_remove(map_):
+    mo = map_()
+    container = Container()
+    container.done = False    
+    
+    class Serv(asynchia.Server):
+        def __init__(
+            self, socket_map, sock=None, handlercls=asynchia.IOHandler
+            ):
+            asynchia.Server.__init__(self, socket_map, sock, handlercls)
+            self.clients = []
+        
+        def new_connection(self, handler, addr):
+            self.clients.append(handler)
+    
+    
+    class Handler(asynchia.IOHandler):
+        def __init__(self, socket_map, sock=None, container=None):
+            asynchia.IOHandler.__init__(self, socket_map, sock)
+            self.container = container
+            self.set_writeable(True)
+        
+        def handle_write(self):
+            container.done = True
+            
+        # Prevent exception from being suppressed.
+        def handle_error(self):
+            raise
+    
+    mo = map_()
+    s = Serv(mo)
+    s.bind(('127.0.0.1', 0))
+    # We know we'll only get one connection.
+    s.listen(1)
+    
+    c = Handler(mo, None, container)
+    c.connect(s.socket.getsockname())
+    s = time.time()
+    while (not container.done):
+        mo.poll(None)
+    mo.del_handler(c)
+    container.done = False
+    s = time.time()
+    while time.time() < s + 10:
+        mo.poll(10 - (time.time() - s))
+    mo.close()
+    eq_(container.done, False)
+
+
+def tes_remove2(map_):
+    mo = map_()
+    container = Container()
+    container.done = False    
+    
+    class Serv(asynchia.Server):
+        def __init__(
+            self, socket_map, sock=None, handlercls=asynchia.IOHandler
+            ):
+            asynchia.Server.__init__(self, socket_map, sock, handlercls)
+            self.clients = []
+        
+        def new_connection(self, handler, addr):
+            self.clients.append(handler)
+    
+    
+    class Handler(asynchia.IOHandler):
+        def __init__(self, socket_map, sock=None, container=None):
+            asynchia.IOHandler.__init__(self, socket_map, sock)
+            self.container = container
+        
+        def handle_connect(self):
+            self.set_writeable(True)
+        
+        def handle_write(self):
+            container.done = True
+            
+        # Prevent exception from being suppressed.
+        def handle_error(self):
+            raise
+    
+    mo = map_()
+    s = Serv(mo)
+    s.bind(('127.0.0.1', 0))
+    # We know we'll only get one connection.
+    s.listen(1)
+    
+    c = Handler(mo, None, container)
+    c.connect(s.socket.getsockname())
+    s = time.time()
+    while (not container.done):
+        mo.poll(None)
+    mo.del_handler(c)
+    container.done = False
+    s = time.time()
+    while time.time() < s + 10:
+        mo.poll(10 - (time.time() - s))
+    mo.close()
+    eq_(container.done, False)
+
+
 def test_maps():
     maps = \
          (getattr(asynchia.maps, name) for name in 
@@ -121,7 +221,7 @@ def test_maps():
           ]
           if hasattr(asynchia.maps, name)
           )
-    tests = [tes_interrupt, tes_changeflag]
+    tests = [tes_interrupt, tes_changeflag, tes_remove, tes_remove2]
     for m in maps:
         for test in tests:
             yield test, m
@@ -167,3 +267,7 @@ def test_error():
     
     while not container.done:
         mo.poll(None)
+
+
+if __name__ == '__main__':
+    tes_remove2(asynchia.maps.SelectSocketMap)
