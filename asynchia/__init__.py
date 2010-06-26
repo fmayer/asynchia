@@ -296,11 +296,13 @@ class Handler(object):
        
         At the next write-event from the socket-map handle_connect will
         not be called. """
+        # Because of the way E/PollSocketMap works, the flag has to be
+        # set before del_writer is called!
+        self.awaiting_connect = False
         # If we are writeable, the handler needs to remain in the
         # socket-map's writers.
         if not self.writeable:
             self.socket_map.del_writer(self)
-        self.awaiting_connect = False
     
     def fileno(self):
         """ Return fileno of underlying socket object.

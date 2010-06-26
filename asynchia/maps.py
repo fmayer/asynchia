@@ -87,12 +87,18 @@ class FragileSocketMap(ControlSocketSocketMap):
 class RobustSocketMap(ControlSocketSocketMap):
     """ The socket-map has to be stopped and resumed after internals
     are changed. """
+    def __init__(self, notifier=None):
+        ControlSocketSocketMap.__init__(self, notifier)
+        self.needresp = False
+    
     def start_interrupt(self, changeflags=False):
         """ See SocketMap.start_interrupt. """
         if not changeflags:
             # Same as FragileSocketMap.start_interrupt.
             self.controlsender.send('s')
             self.controlsender.recv(1)
+        else:
+            self.needresp = True
     
     def end_interrupt(self, changeflags=False):
         """ See SocketMap.end_interrupt. """
@@ -100,8 +106,18 @@ class RobustSocketMap(ControlSocketSocketMap):
             # Same as FragileSocketMap.end_interrupt.
             self.controlsender.send('e')
         else:
-            self.controlsender.send('se')
+            self.controlsender.send('s')
             self.controlsender.recv(1)
+            self.controlsender.send('e')
+    
+    def close(self):
+        """ Signal the interrupt is finished to any thread that may be
+        waiting, as the program, waiting for the thread to finish,
+        would not be able to exit otherwise. """
+        if self.needresp:
+            self.controlreceiver.send('i')
+            self.needresp = False
+        
 
 
 class RockSolidSocketMap(ControlSocketSocketMap):
@@ -273,6 +289,7 @@ class PollSocketMap(RobustSocketMap):
     
     def close(self):
         """ See SocketMap.close """
+        RobustSocketMap.close(self)
         for handler in self.socket_list.itervalues():
             self.notifier.cleanup_obj(handler)
 
