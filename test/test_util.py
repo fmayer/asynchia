@@ -26,3 +26,41 @@ def test_socketpair():
     a.send(data)
     # One byte must at least be received.
     eq_(b.recv(len(data)), data)
+
+
+def test_idpool():
+    pool = asynchia.util.IDPool()
+    eq_(pool.get(), 0)
+    eq_(pool.get(), 1)
+    eq_(pool.get(), 2)
+    pool.release(1)
+    eq_(pool.get(), 1)
+    pool.reset()
+    eq_(pool.get(), 0)
+    eq_(pool.get(), 1)
+    eq_(pool.get(), 2)
+    pool.release(1)
+    eq_(pool.get(), 1)    
+
+
+def test_ipv4():
+    eq_(asynchia.util.parse_ipv4('127.0.0.1:12345'), ('127.0.0.1', 12345))
+
+
+def test_ipv6():
+    eq_(
+        asynchia.util.parse_ipv6(
+            '[2001:0db8:85a3:08d3:1319:8a2e:0370:7344]:443'
+            ),
+        ('2001:0db8:85a3:08d3:1319:8a2e:0370:7344', 443)
+    )
+
+
+def test_ip():
+    eq_(asynchia.util.parse_ip('127.0.0.1:12345'), ('127.0.0.1', 12345))
+    eq_(
+        asynchia.util.parse_ip(
+            '[2001:0db8:85a3:08d3:1319:8a2e:0370:7344]:443'
+            ),
+        ('2001:0db8:85a3:08d3:1319:8a2e:0370:7344', 443)
+    )

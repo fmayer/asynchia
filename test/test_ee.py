@@ -30,6 +30,17 @@ def until_done(fun):
             break
 
 
+def test_inputqueue():
+    m = asynchia.ee.MockHandler()
+    a = asynchia.ee.StringInput('a' * 5)
+    b = asynchia.ee.StringInput('b' * 5)
+    c = asynchia.ee.StringInput('c' * 5)
+    q = asynchia.ee.InputQueue([a, b, c])
+    
+    until_done(lambda: q.tick(m))
+    eq_(m.outbuf, 'a' * 5 + 'b' * 5 + 'c' * 5)
+
+
 def test_stringinput():
     m = asynchia.ee.MockHandler()
     i = asynchia.ee.StringInput(string.ascii_letters)

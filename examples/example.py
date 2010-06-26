@@ -38,6 +38,7 @@ class Echo(asynchia.IOHandler):
         asynchia.IOHandler.__init__(self, socket_map, sock)
         if not self.readable:
             self.set_readable(True)
+        self.set_writeable(False)
         
     def handle_read(self):
         read = self.recv(4096)
@@ -62,10 +63,14 @@ if __name__ == '__main__':
     a.bind(('127.0.0.1', 25000))
     a.listen(0)
     
+    a.set_writeable(False)
+    
     c = EchoClient(m, socket.socket())
     c.connect(('127.0.0.1', 25000))
     
+    c.set_writeable(False)
+    
     try:
-        m.run()
+        print m.run()
     finally:
         m.close()
