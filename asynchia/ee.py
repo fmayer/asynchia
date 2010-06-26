@@ -151,7 +151,7 @@ class FileInput(Input):
         Input.__init__(self, onclose)
         if length is None:
             pos = fd.tell()
-            fd.seek(-1, 2)
+            fd.seek(0, 2)
             newpos = fd.tell()
             length = newpos - pos
             fd.seek(pos)
@@ -419,8 +419,6 @@ class CollectorQueue(Collector):
         CollectorFull.
         
         Return True to prevent CollectorQueue from raising CollectorFull. """
-        if not self.closed:
-            self.close()
     
     def close(self):
         """ Close collectors contained in the queue. """

@@ -17,10 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import time
+import socket
 import threading
 
 import asynchia
 import asynchia.maps
+import asynchia.util
 
 from nose.tools import eq_, assert_raises
 
@@ -46,71 +48,79 @@ def tes_interrupt(map_):
 
 cf_done = False
 cf_thr = None
-    
-def tes_changeflag(map_):
-    container = Container()
-    container.done = False
-    container.thr = None
-    
-    def subthread(mo, hand):
-        time.sleep(1)
-        mo.start_interrupt(True)
-        try:
-            hand.set_writeable(True)
-        finally:
-            mo.end_interrupt(True)
-            pass
-    
-    
-    class Serv(asynchia.Server):
-        def __init__(
-            self, socket_map, sock=None, handlercls=asynchia.IOHandler
-            ):
-            asynchia.Server.__init__(self, socket_map, sock, handlercls)
-            self.clients = []
+
         
-        def new_connection(self, handler, addr):
-            self.clients.append(handler)
-    
-    
-    class Handler(asynchia.IOHandler):
-        def __init__(self, socket_map, sock=None, container=None):
-            asynchia.IOHandler.__init__(self, socket_map, sock)
-            self.container = container
-        
-        def handle_connect(self):
-            container.thr = threading.Thread(
-                target=subthread, args=(self.socket_map, self)
-            )
-            container.thr.start()
-        
-        def handle_write(self):
-            container.done = True
-            self.set_writeable(False)
-        
-        # Prevent exception from being suppressed.
-        def handle_error(self):
-            raise
-    
-    mo = map_()
-    s = Serv(mo)
-    s.bind(('127.0.0.1', 0))
-    # We know we'll only get one connection.
-    s.listen(1)
-    
-    c = Handler(mo, None, container)
-    c.connect(s.socket.getsockname())
-    n = 0
-    while (not container.done):
-        mo.poll(None)
-        n += 1
-        if n > 10 ** 6:
-            eq_(True, False, 'Timeout')
-    mo.close()
-    container.thr.join(10)
-    eq_(container.thr.isAlive(), False)
+def std(mo, hand):
+    time.sleep(1)
+    mo.start_interrupt(True)
+    try:
+        hand.set_writeable(True)
+    finally:
+        mo.end_interrupt(True)
+        pass
 
 
+def ctx(mo, hand):
+    time.sleep(1)
+    with mo.interrupt(True):
+        hand.set_writeable(True)
+
+
+def t_changeflag(subthread):
+    def tes_changeflag(map_):
+        container = Container()
+        container.done = False
+        container.thr = None        
+        
+        class Serv(asynchia.Server):
+            def __init__(
+                self, socket_map, sock=None, handlercls=asynchia.IOHandler
+                ):
+                asynchia.Server.__init__(self, socket_map, sock, handlercls)
+                self.clients = []
+            
+            def new_connection(self, handler, addr):
+                self.clients.append(handler)
+        
+        
+        class Handler(asynchia.IOHandler):
+            def __init__(self, socket_map, sock=None, container=None):
+                asynchia.IOHandler.__init__(self, socket_map, sock)
+                self.container = container
+            
+            def handle_connect(self):
+                container.thr = threading.Thread(
+                    target=subthread, args=(self.socket_map, self)
+                )
+                container.thr.start()
+            
+            def handle_write(self):
+                container.done = True
+                self.set_writeable(False)
+            
+            # Prevent exception from being suppressed.
+            def handle_error(self):
+                raise
+        
+        mo = map_()
+        s = Serv(mo)
+        s.bind(('127.0.0.1', 0))
+        # We know we'll only get one connection.
+        s.listen(1)
+        
+        c = Handler(mo, None, container)
+        c.connect(s.socket.getsockname())
+        n = 0
+        while (not container.done):
+            mo.poll(None)
+            n += 1
+            if n > 10 ** 6:
+                eq_(True, False, 'Timeout')
+        mo.close()
+        container.thr.join(10)
+        eq_(container.thr.isAlive(), False)
+    return tes_changeflag
+    
 def tes_remove(map_):
     mo = map_()
     container = Container()
@@ -221,7 +231,10 @@ def test_maps():
           ]
           if hasattr(asynchia.maps, name)
           )
-    tests = [tes_interrupt, tes_changeflag, tes_remove, tes_remove2]
+    tests = [
+        tes_interrupt, t_changeflag(ctx), t_changeflag(std),
+        tes_remove, tes_remove2
+    ]
     for m in maps:
         for test in tests:
             yield test, m
@@ -267,6 +280,42 @@ def test_error():
     
     while not container.done:
         mo.poll(None)
+
+def test_connfailed():
+    container = Container()
+    container.done = False
+    
+    class Handler(asynchia.IOHandler):
+        def __init__(self, socket_map, sock=None, container=None):
+            asynchia.IOHandler.__init__(self, socket_map, sock)
+            self.container = container
+        
+        def handle_connect_failed(self, err):
+            container.done = True
+    
+    mo = asynchia.maps.DefaultSocketMap()
+    c = Handler(mo, None, container)
+    try:
+        c.connect(('wrong.invalid', 81))
+    except socket.error:
+        container.done = True
+        
+    
+    while not container.done:
+        mo.poll(None)
+
+
+def test_pingpong():
+    mo = asynchia.maps.DefaultSocketMap()
+    a, b = asynchia.util.socketpair()
+    ha = asynchia.IOHandler(mo, a)
+    hb = asynchia.IOHandler(mo, b)
+    
+    ha.set_writeable(True)
+    hb.set_readable(True)
+    
+    ha.handle_write = lambda: ha.send("Foo")
+    hb.handle_read = lambda: eq_(hb.recv(3), 'Foo')
 
 
 if __name__ == '__main__':

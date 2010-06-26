@@ -16,12 +16,19 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import string
+import struct
 import tempfile
 
 import asynchia.ee
 
 from nose.tools import eq_, assert_raises
+
+def del_strcoll(size):
+    return asynchia.ee.DelimitedCollector(
+        asynchia.ee.StringCollector(), size
+    )
 
 def until_done(fun):
     while True:
@@ -166,3 +173,70 @@ def test_close():
     c.add_data(m, 10)
     # As of now, the collector is only closed at the next call.
     eq_(c.closed, True)
+
+
+def test_inputadd():
+    m = asynchia.ee.MockHandler()
+    q = asynchia.ee.StringInput('a') + asynchia.ee.StringInput('b')
+    id1 = id(q)
+    q += asynchia.ee.StringInput('c')
+    id2 = id(q)
+    eq_(id1, id2)
+    until_done(lambda: q.tick(m))
+    eq_(m.outbuf, 'abc')
+
+
+def test_closeinqueue():
+    q = asynchia.ee.InputQueue()
+    a = asynchia.ee.Input()
+    q.add(a)
+    q.close()
+    eq_(a.closed, True)
+
+
+def test_lenpredict():
+    strings = ['a' * i for i in xrange(1, 20)]
+    for string in strings:
+        fd = tempfile.NamedTemporaryFile(delete=True)
+        try:
+            fd.write(string)
+            fd.flush()
+            fd.seek(0)
+            c = asynchia.ee.FileInput(fd)
+            eq_(c.length, len(string))
+        finally:
+            fd.close()
+
+
+def test_collectoradd():
+    a = del_strcoll(5)
+    b = del_strcoll(6)
+    
+    q = a + b
+    m = asynchia.ee.MockHandler('a' * 5 + 'b' * 6)
+    until_done(lambda: q.add_data(m, 2))
+    eq_(a.collector.string, 'a' * 5)
+    eq_(b.collector.string, 'b' * 6)
+
+
+def test_autoflush():
+    fd = tempfile.NamedTemporaryFile(delete=True)
+    fc = asynchia.ee.FileCollector(fd, autoflush=True)
+    
+    i = 0
+    m = asynchia.ee.MockHandler('a' * 20000000)
+    
+    while m.inbuf:
+        d, n = fc.add_data(m, 8000000)
+        i += n
+        
+        eq_(os.stat(fd.name).st_size, i)
+
+
+def test_strucollector():
+    s = struct.Struct('!dh')
+    c = asynchia.ee.StructCollector(s)
+    m = asynchia.ee.MockHandler(s.pack(14, 25))
+    until_done(lambda: c.add_data(m, 2))
+    eq_(c.value, (14, 25))
+    

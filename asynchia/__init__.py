@@ -331,7 +331,7 @@ class Handler(object):
         """ Connection established. """
         pass
     
-    def handle_connect_failed(self):
+    def handle_connect_failed(self, err):
         """ Connection couldn't be established. """
         pass
     

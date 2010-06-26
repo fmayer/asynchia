@@ -30,21 +30,20 @@ def test_socketpair():
 
 def test_idpool():
     pool = asynchia.util.IDPool()
-    eq_(pool.get(), 0)
-    eq_(pool.get(), 1)
-    eq_(pool.get(), 2)
+    [eq_(pool.get(), n) for n in xrange(3)]
     pool.release(1)
     eq_(pool.get(), 1)
     pool.reset()
-    eq_(pool.get(), 0)
-    eq_(pool.get(), 1)
-    eq_(pool.get(), 2)
+    [eq_(pool.get(), n) for n in xrange(3)]
     pool.release(1)
-    eq_(pool.get(), 1)    
+    eq_(pool.get(), 1)
+    [pool.release(n) for n in xrange(3)]
+    eq_(pool.free_ids, [])
 
 
 def test_ipv4():
     eq_(asynchia.util.parse_ipv4('127.0.0.1:12345'), ('127.0.0.1', 12345))
+    eq_(asynchia.util.parse_ipv4('127.0.0.1'), ('127.0.0.1', -1))
 
 
 def test_ipv6():
@@ -53,6 +52,12 @@ def test_ipv6():
             '[2001:0db8:85a3:08d3:1319:8a2e:0370:7344]:443'
             ),
         ('2001:0db8:85a3:08d3:1319:8a2e:0370:7344', 443)
+    )
+    eq_(
+        asynchia.util.parse_ipv6(
+            '2001:0db8:85a3:08d3:1319:8a2e:0370:7344'
+            ),
+        ('2001:0db8:85a3:08d3:1319:8a2e:0370:7344', -1)
     )
 
 
