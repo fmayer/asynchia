@@ -33,6 +33,9 @@ class EchoAcceptor(asynchia.AcceptHandler):
     def handle_accept(self, sock, addr):
         collector = asynchia.ee.FileCollector(sys.stdout, False)
         asynchia.ee.Handler(self.socket_map, sock, collector)
+    
+    def handle_error(self):
+        raise
 
 
 if __name__ == '__main__':

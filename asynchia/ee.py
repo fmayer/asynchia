@@ -86,10 +86,10 @@ class InputQueue(Input):
                 self.inputs.pop(0)
                 if not self.inputs:
                     self.close()
-                    return False, sent
+                    return True, sent
             if sent:
                 break
-        return bool(self.inputs), sent
+        return False, sent
     
     def eof(self):
         """ Called when the last Input in the queue raises InputEOF.
@@ -545,6 +545,9 @@ class Handler(asynchia.IOHandler):
     def close(self):
         """ Close top-level collector. """
         self.collector.close()
+    
+    def handle_error(self):
+        raise
 
 
 class MockHandler(object):
