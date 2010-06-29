@@ -37,7 +37,6 @@ def tes_interrupt(map_):
         mo.start_interrupt()
         try:
             time.sleep(4)
-            pass
         finally:
             container.flag = True
             mo.end_interrupt()
@@ -57,7 +56,6 @@ def std(mo, hand):
         hand.set_writeable(True)
     finally:
         mo.end_interrupt(True)
-        pass
 
 
 def ctx(mo, hand):
