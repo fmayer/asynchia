@@ -162,7 +162,7 @@ def tes_remove(map_):
     mo.del_handler(c)
     container.done = False
     s = time.time()
-    while time.time() < s + 10:
+    while not container.done and time.time() < s + 10:
         mo.poll(10 - (time.time() - s))
     mo.close()
     eq_(container.done, False)
@@ -213,7 +213,7 @@ def tes_remove2(map_):
     mo.del_handler(c)
     container.done = False
     s = time.time()
-    while time.time() < s + 10:
+    while not container.done and time.time() < s + 10:
         mo.poll(10 - (time.time() - s))
     mo.close()
     eq_(container.done, False)
