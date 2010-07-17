@@ -189,11 +189,11 @@ class FileInput(Input):
             self.fd.close()
     
     @classmethod
-    def from_filename(cls, filename, *args, **kwargs):
+    def from_filename(cls, filename, mode='rb', *args, **kwargs):
         """ Same as cls(fd, size, *args, **kwargs) while fd and size
         get constructed from the filename. """
         stat = os.stat(filename)
-        fd = open(filename)
+        fd = open(filename, mode)
         return cls(fd, stat.st_size, *args, **kwargs)
     
     def __len__(self):
