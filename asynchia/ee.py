@@ -427,6 +427,19 @@ class CollectorQueue(Collector):
             collector.close()
 
 
+class KeepingCollectorQueue(CollectorQueue):
+    """ CollectorQueue that does not discard the collectors contained within
+    after they have finished but rather appends to them to the list accessible
+    through its member collected. """
+    def __init__(self, collectors=None, onclose=None):
+        CollectorQueue.__init__(self, collectors, onclose)
+        self.collected = []
+    
+    def finish_collector(self, coll):
+        """ Append finished collector to self.collected. """
+        self.collected.append(coll)
+
+
 class FactoryCollector(Collector):
     """ Call factory method to obtain the next collector until the factory
     raises the Depleted exception. """
