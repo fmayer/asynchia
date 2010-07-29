@@ -160,7 +160,7 @@ bl = binarylookback
 FLE = FixedLenExpr
 #: String expression
 SE = StringExpr
-#: Binary expressionn
+#: Binary expression
 BE = BinaryExpr
 
 #: Binary-lookback fixed-length string-expression
