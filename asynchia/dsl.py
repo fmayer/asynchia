@@ -82,7 +82,7 @@ class ExprAdd(Expr):
     def __init__(self, one, other):
         self.exprs = [one, other]
     
-    def __call__(self, state):
+    def __call__(self, state=None):
         # We need to pass a copy so ExprCollectorQueue does not pop
         # from this list. Consider creating the copy in
         # ExprCollectorQueue.__init__.
