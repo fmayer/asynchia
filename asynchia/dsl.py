@@ -89,10 +89,7 @@ class ExprAdd(Expr):
         return ExprCollectorQueue(self.exprs[:])
     
     def __add__(self, other):
-        if isinstance(other, ExprAdd):
-            self.exprs.extend(other)
-        else:
-            self.exprs.append(other)
+        self.exprs.append(other)
         return self
     
     def produce(self, value):
