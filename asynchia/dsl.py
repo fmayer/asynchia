@@ -27,13 +27,10 @@ class Container(object):
 class State(object):
     def __init__(self):
         self.tbl = {}
-        self.n = 0
+        self.ind = 0
 
 
 class Expr(object):
-    def __init__(self, noproduce=False):
-        self.noproduce = noproduce
-    
     def __add__(self, other):
         return ExprAdd(self, other)
 
@@ -62,7 +59,7 @@ class ExprCollectorQueue(asynchia.ee.Collector):
             done, nrecv = self.coll.add_data(prot, nbytes)
             if done:
                 self.done.append(self.coll)
-                self.state.n += 1
+                self.state.ind += 1
                 if not self.exprs:
                     if not self.closed:
                         self.close()
@@ -115,6 +112,19 @@ class BinaryExpr(Expr):
         )
     
     def produce(self, value):
+        return struct.pack(self.pattern, *value)
+
+
+class SingleBinaryExpr(Expr):
+    def __init__(self, pattern):
+        self.pattern = pattern
+    
+    def __call__(self, state):
+        return asynchia.ee.SingleStructValueCollector(
+            struct.Struct(self.pattern),
+        )
+    
+    def produce(self, value):
         return struct.pack(self.pattern, value)
 
 
@@ -122,7 +132,8 @@ class StringExpr(Expr):
     def __call__(self, state):
         return asynchia.ee.StringCollector()
     
-    def produce(self, value):
+    @staticmethod
+    def produce(value):
         return value
 
 
@@ -140,42 +151,54 @@ class FixedLenExpr(Expr):
         return self.expr.produce(value)
 
 
-def lookback(n, fun):
+def lookback(ind, fun):
     def _fun(state):
-        return fun(state.tbl[n])
+        return fun(state.tbl[ind])
     return _fun
 
 
-def binarylookback(n, i=0):
+def binarylookback(ind, item=0):
     def _fun(state):
-        return state.tbl[n].value[i]
+        return state.tbl[ind].value[item]
     return _fun
 
 
-def const(v):
+def singlebinarylookback(ind, item=0):
     def _fun(state):
-        return v
+        return state.tbl[ind].value
+    return _fun
+
+
+def const(value):
+    def _fun(state):
+        return value
     return _fun
 
 
 #: Binary lookback
 bl = binarylookback
+sbl = singlebinarylookback
 #: Fixed-length expression
 FLE = FixedLenExpr
 #: String expression
 SE = StringExpr
 #: Binary expression
 BE = BinaryExpr
+SBE = SingleBinaryExpr
 
 #: Binary-lookback fixed-length string-expression
-def BLFLSE(n):
-    return FixedLenExpr(binarylookback(n), StringExpr())
+def BLFLSE(ind):
+    return FixedLenExpr(binarylookback(ind), StringExpr())
+
+def SBLFLSE(ind):
+    return FixedLenExpr(singlebinarylookback(ind), StringExpr())
+
 
 FRMT_CHARS = ('x', 'c', 'b', 'B', '?', 'h', 'H', 'i', 'I', 'l',
               'L', 'q', 'Q', 'f', 'd', 's', 'p', 'P')
 b = Container()
 for symbol in FRMT_CHARS:
-    setattr(b, symbol, BinaryExpr("!" + symbol))
+    setattr(b, symbol, SingleBinaryExpr("!" + symbol))
 
 if __name__ == '__main__':
     # Actual debug here.

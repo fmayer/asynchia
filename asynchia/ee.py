@@ -24,7 +24,9 @@ import asynchia
 # When a Collector raises CollectorFull, it can savely be assumed that it
 # has closed itself. The close method must only be called when explicitely
 # closing the collector. The same holds true for Inputs and InputEOF.
-
+#
+# The way values of Collectors currently used is suboptimal. See
+# StructCollector for an example.
 
 class Depleted(Exception):
     pass
@@ -271,8 +273,6 @@ class Collector(object):
     def __init__(self, onclose=None):
         self.inited = self.closed = False
         self.onclose = onclose
-        
-        self.intvalue = None
     
     def add_data(self, prot, nbytes):
         """ Override to read at most nbytes from prot and store them in the
@@ -299,10 +299,6 @@ class Collector(object):
     
     def __add__(self, other):
         return CollectorQueue([self, other])
-    
-    @property
-    def value(self):
-        return self.intvalue
 
 
 class StringCollector(Collector):
@@ -319,6 +315,10 @@ class StringCollector(Collector):
         received = prot.recv(nbytes)
         self.intvalue += received
         return False, len(received)
+    
+    @property
+    def value(self):
+        return self.intvalue
 
 
 class FileCollector(Collector):
@@ -355,6 +355,10 @@ class FileCollector(Collector):
         Collector.close(self)
         if self.closing:
             self.intvalue.close()
+    
+    @property
+    def value(self):
+        return self.intvalue
 
 
 class DelimitedCollector(Collector):
@@ -437,6 +441,10 @@ class CollectorQueue(Collector):
         Collector.close(self)
         for collector in self.collectors:
             collector.close()
+    
+    @property
+    def value(self):
+        return None
 
 
 class KeepingCollectorQueue(CollectorQueue):
@@ -453,6 +461,10 @@ class KeepingCollectorQueue(CollectorQueue):
         """ Append finished collector to self.collected. """
         self.collected.append(coll)
         self.intvalue.append(coll.value)
+        
+    @property
+    def value(self):
+        return self.intvalue
 
 
 class FactoryCollector(Collector):
@@ -498,6 +510,10 @@ class FactoryCollector(Collector):
             except StopIteration:
                 raise Depleted
         return _wrap
+    
+    @property
+    def value(self):
+        return None
 
 
 class StructCollector(DelimitedCollector):
@@ -513,10 +529,19 @@ class StructCollector(DelimitedCollector):
     
     def close(self):
         """ Unpack the data received and close the collector afterwards. """
-        self.intvalue = self.stru.unpack(self.collector.string)
+        self.intvalue = self.stru.unpack(self.collector.value)
         DelimitedCollector.close(self)
+    
+    @property
+    def value(self):
+        return self.intvalue
 
 
+class SingleStructValueCollector(StructCollector):
+    @property
+    def value(self):
+        return self.intvalue[0]
+    
 class Handler(asynchia.IOHandler):
     """ asynchia handler that adds all received data to a collector,
     and reads outgoing data from an Input. """

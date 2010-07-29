@@ -87,7 +87,7 @@ def test_filecollector_closing():
     c.add_data(m, 10)
     c.close()
     # I/O operation on closed file.
-    assert_raises(ValueError, c.fd.read, 6)
+    assert_raises(ValueError, c.value.read, 6)
 
 
 def test_filecollector_notclosing():
@@ -98,10 +98,10 @@ def test_filecollector_notclosing():
     m = asynchia.ee.MockHandler(inbuf=string.ascii_letters)
     c.add_data(m, 10)
     c.close()
-    c.fd.seek(0)
+    c.value.seek(0)
     r = ''
     while len(r) < 10:
-        r += c.fd.read(10 - len(r))
+        r += c.value.read(10 - len(r))
     eq_(r, string.ascii_letters[:10])
 
 
@@ -116,7 +116,7 @@ def test_delimited():
     # collected all 5 bytes it was supposed to.
     eq_(c.add_data(m, 10)[0], True)
     # The collector
-    eq_(c.collector.string, string.ascii_letters[:5])
+    eq_(c.collector.value, string.ascii_letters[:5])
     eq_(m.inbuf, string.ascii_letters[5:])
     
 
@@ -135,15 +135,15 @@ def test_collectorqueue():
     
     m = asynchia.ee.MockHandler(inbuf='a' * 5 + 'b' * 4 + 'c' * 3)
     until_done(lambda: q.add_data(m, 5))
-    eq_(a.collector.string, 'a' * 5)
-    eq_(b.collector.string, 'b' * 4)
-    eq_(c.collector.string, 'c' * 3)
+    eq_(a.collector.value, 'a' * 5)
+    eq_(b.collector.value, 'b' * 4)
+    eq_(c.collector.value, 'c' * 3)
 
 
 def test_factorycollector():
     def make_eq(i):
         def eq(c):
-            return eq_(c.string, 5 * string.ascii_letters[i])
+            return eq_(c.value, 5 * string.ascii_letters[i])
         return eq
     itr = (asynchia.ee.DelimitedCollector(
         asynchia.ee.StringCollector(make_eq(i)), 5) for i in xrange(3))
@@ -215,8 +215,8 @@ def test_collectoradd():
     q = a + b
     m = asynchia.ee.MockHandler('a' * 5 + 'b' * 6)
     until_done(lambda: q.add_data(m, 2))
-    eq_(a.collector.string, 'a' * 5)
-    eq_(b.collector.string, 'b' * 6)
+    eq_(a.collector.value, 'a' * 5)
+    eq_(b.collector.value, 'b' * 6)
 
 
 def test_autoflush():
