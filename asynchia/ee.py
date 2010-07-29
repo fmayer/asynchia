@@ -193,6 +193,8 @@ class FileInput(Input):
         """ Same as cls(fd, size, *args, **kwargs) while fd and size
         get constructed from the filename. """
         stat = os.stat(filename)
+        # FIXME: This could possibly break if file LF does not equal Unix
+        # LF and the file is opened in another mode than 'rb'.
         fd = open(filename, mode)
         return cls(fd, stat.st_size, *args, **kwargs)
     
@@ -269,6 +271,8 @@ class Collector(object):
     def __init__(self, onclose=None):
         self.inited = self.closed = False
         self.onclose = onclose
+        
+        self.intvalue = None
     
     def add_data(self, prot, nbytes):
         """ Override to read at most nbytes from prot and store them in the
@@ -295,6 +299,10 @@ class Collector(object):
     
     def __add__(self, other):
         return CollectorQueue([self, other])
+    
+    @property
+    def value(self):
+        return self.intvalue
 
 
 class StringCollector(Collector):
@@ -302,14 +310,14 @@ class StringCollector(Collector):
     def __init__(self, onclose=None):
         Collector.__init__(self, onclose)
         
-        self.string = ''
+        self.intvalue = ''
     
     def add_data(self, prot, nbytes):
         """ Write at most nbytes bytes from prot to string. """
         Collector.add_data(self, prot, nbytes)
         
         received = prot.recv(nbytes)
-        self.string += received
+        self.intvalue += received
         return False, len(received)
 
 
@@ -318,7 +326,7 @@ class FileCollector(Collector):
     def __init__(self, fd=None, closing=True, autoflush=False, onclose=None):
         Collector.__init__(self, onclose)
         
-        self.fd = fd
+        self.intvalue = fd
         self.closing = closing
         self.autoflush = autoflush
     
@@ -328,7 +336,7 @@ class FileCollector(Collector):
         
         received = prot.recv(nbytes)
         try:
-            self.fd.write(received)
+            self.intvalue.write(received)
         # FIXME: Reconsider how to handle following exceptional case.
         except ValueError:
             # I/O operation on closed file. This shouldn't be happening.
@@ -339,14 +347,14 @@ class FileCollector(Collector):
             return True, 0
         else:
             if self.autoflush:
-                self.fd.flush()
+                self.intvalue.flush()
         return False, len(received)
     
     def close(self):
         """ Close the fd if the FileCollector is closing. """
         Collector.close(self)
         if self.closing:
-            self.fd.close()
+            self.intvalue.close()
 
 
 class DelimitedCollector(Collector):
@@ -376,6 +384,10 @@ class DelimitedCollector(Collector):
         """ Initialise wrapped collector. """
         Collector.init(self)
         self.collector.init()
+    
+    @property
+    def value(self):
+        return self.collector.value
 
 
 class CollectorQueue(Collector):
@@ -434,10 +446,13 @@ class KeepingCollectorQueue(CollectorQueue):
     def __init__(self, collectors=None, onclose=None):
         CollectorQueue.__init__(self, collectors, onclose)
         self.collected = []
+        
+        self.intvalue = []
     
     def finish_collector(self, coll):
         """ Append finished collector to self.collected. """
         self.collected.append(coll)
+        self.intvalue.append(coll.value)
 
 
 class FactoryCollector(Collector):
@@ -494,11 +509,11 @@ class StructCollector(DelimitedCollector):
         )
         
         self.stru = stru
-        self.value = None
+        self.intvalue = None
     
     def close(self):
         """ Unpack the data received and close the collector afterwards. """
-        self.value = self.stru.unpack(self.collector.string)
+        self.intvalue = self.stru.unpack(self.collector.string)
         DelimitedCollector.close(self)
 
 

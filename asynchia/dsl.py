@@ -75,6 +75,10 @@ class ExprCollectorQueue(asynchia.ee.Collector):
     
     def __iter__(self):
         return iter(self.done)
+    
+    @property
+    def value(self):
+        return (elem.value for elem in self.done)
 
 
 class ExprAdd(Expr):
