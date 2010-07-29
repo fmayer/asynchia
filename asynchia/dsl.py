@@ -147,13 +147,17 @@ def binarylookback(n, i=0):
         return state.tbl[n].value[i]
     return _fun
 
-
+#: Binary lookback
 bl = binarylookback
+#: Fixed-length expression
 FLE = FixedLenExpr
+#: String expression
 SE = StringExpr
+#: Binary expressionn
 BE = BinaryExpr
 
-def FLSE(n):
+#: Binary-lookback fixed-length string-expression
+def BLFLSE(n):
     return FixedLenExpr(binarylookback(n), StringExpr())
 
 FRMT_CHARS = ('x', 'c', 'b', 'B', '?', 'h', 'H', 'i', 'I', 'l',
@@ -164,4 +168,4 @@ for symbol in FRMT_CHARS:
 
 if __name__ == '__main__':
     # Actual debug here.
-    e = b.L + b.B + FLSE(0)
+    e = b.L + b.B + BLFLSE(0)
