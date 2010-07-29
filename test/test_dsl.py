@@ -1,7 +1,7 @@
 # -*- coding: us-ascii -*-
 
 # asynchia - asynchronous networking library
-# Copyright (C) 2009 Florian Mayer
+# Copyright (C) 2010 Florian Mayer
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -52,12 +52,12 @@ def test_example():
 
 
 def test_nested():
-    i = [2, 'AB', [5, 'ABCDE']]
+    i = [2, 'AB', [5, 'ABCDE'], [5, 'ABCDE']]
     
     a = b.B + SBLFLSE(0)
-    c = b.B + SBLFLSE(0) + a
+    c = b.B + SBLFLSE(0) + a + a
     
-    d = c.produce((2, 'AB', (5, 'ABCDE')))
+    d = c.produce(i)
     
     p = c(None)
     
