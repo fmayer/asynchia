@@ -21,7 +21,8 @@ import struct
 import asynchia.ee
 
 class Container(object):
-    pass
+    def __getitem__(self, item):
+        return getattr(self, item)
 
 
 class State(object):
@@ -109,7 +110,9 @@ class BinaryExpr(Expr):
         )
     
     def produce(self, value):
-        return struct.pack(self.pattern, *value)
+        return asynchia.ee.StringInput(
+            struct.pack(self.pattern, *value)
+        )
 
 
 class SingleBinaryExpr(Expr):
@@ -122,7 +125,25 @@ class SingleBinaryExpr(Expr):
         )
     
     def produce(self, value):
-        return struct.pack(self.pattern, value)
+        return asynchia.ee.StringInput(
+            struct.pack(self.pattern, value)
+        )
+
+
+class FileExpr(Expr):
+    def __init__(self, fd, closing=False, autoflush=True):
+        self.fd = fd
+        self.closing = closing
+        self.autoflush = autoflush
+    
+    def __call__(self, state):
+        return asynchia.ee.FileCollector(
+            self.fd, self.closing, self.autoflush
+        )
+    
+    @staticmethod
+    def produce(value):
+        return asynchia.ee.FileInput(value, closing=False)
 
 
 class StringExpr(Expr):
@@ -131,7 +152,7 @@ class StringExpr(Expr):
     
     @staticmethod
     def produce(value):
-        return value
+        return asynchia.ee.StringInput(value)
 
 
 class FixedLenExpr(Expr):
@@ -182,11 +203,13 @@ SE = StringExpr
 #: Binary expression
 BE = BinaryExpr
 SBE = SingleBinaryExpr
+FE = FileExpr
 
 #: Binary-lookback fixed-length string-expression
 def BLFLSE(ind):
     return FixedLenExpr(binarylookback(ind), StringExpr())
 
+#: Single-binary lookback fixed-length string-expression
 def SBLFLSE(ind):
     return FixedLenExpr(singlebinarylookback(ind), StringExpr())
 
