@@ -147,6 +147,13 @@ def binarylookback(n, i=0):
         return state.tbl[n].value[i]
     return _fun
 
+
+def const(v):
+    def _fun(state):
+        return v
+    return _fun
+
+
 #: Binary lookback
 bl = binarylookback
 #: Fixed-length expression
