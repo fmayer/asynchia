@@ -16,6 +16,86 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+""" A domain-specific language to conveniently define the structure of packets
+in binary protocols.
+
+An elementary expression is an object implementing the Expr interface (which
+is preferably an interface of a subclass of Expr and thus consistenly
+integrates with other Exprs). It needs to implement the __call__(state)
+and the produce(value) methods where __call__ returns the appropriate
+collector to collect the data described by the expression and produce
+returns the input that encodes the value passed to it according to the
+expression.
+
+By default the following expressions are defined by the module::
+
+    - BinaryExpr (BE)
+    - SingleBinaryExpr (SBE)
+    - StringExpr (SE)
+    - FixedLenExpr (FLE)
+    - FileExpression (FE)
+
+Two methods are provided to lookback data earlier collected in order to
+construct the collector. binarylookback(ind, item=0) (also exported as bl)
+gets the item specified from the binary data parsed from the expression at
+the index ind (zero-index) of the ExprAdd the respective expression is
+contained within. It is also possible to use positions relative to the
+current one (-1 is the element before the one the lookback is passed to).
+singlebinarylookback (also exported as sbl) does likewise for
+SingleBinaryExpr (and is arguably more useful, see the Example section).
+The only Expr in this module that takes a lookback as a parameter is
+FixedLenExpr which limits whichever expression is contained in it
+to the number of bytes aquired by the lookback function.
+
+Example
+=======
+Packets are described by expressions which can be converted to collectors
+whenever a packet of that type should be parsed. Complex expressions can
+be created by adding expressions, resulting in ExprAdds (but that is semi-
+internal API which you do not necessarily need to care about, unless you
+try to write your own types of expressions).
+
+Let us henceforth consider the following simple example::
+    
+    from asynchia.dsl import b, SBLFLSE
+    e = b.L + b.B + SBLFLSE(0)
+
+This might appear utterly complicated at first glance, but it is not. The
+first statement imports b (which is a container for binary numeric types)
+and SBLFLSE which expands to single-binary-lookback fixed-length
+string-expression.
+
+The expression (which is the second statement) describes a packet which
+contains three parts. The first part is an unsigned long (which is named by its
+name in the struct module) in network byte-order (all binary types contained
+in `b` assume network byte-order (so b.L expands to the struct format "!L");
+the second part is an unsigned byte; the interesting thing in the expression
+is the third part which describes a fixed-length string with the length equal
+to the first element in the expression (which is referred to by its index 0):
+the unsigned long.
+
+The expression can now be used to parse and to produce pacets according to the
+given format. An asynchia.ee collector can be created by calling the
+expression ::
+
+    collector = e()
+
+You can now pass the protocol to the add_data method of the collector and it
+will collect the data as specified. Any other data (which appears after the
+whole packet has been read) is left in the protocol.
+
+To create a packet you need to call the expression's produce method and pass
+a tuple of the data you want to construct a package of. This operation
+returns an asynchia.ee.Input that can directly be passed to be sent by
+an asynchia.Handler. ::
+
+    data = e.produce((5, 2, 'ABCDE'))
+
+In this case it is important that the first number equals the length of the
+string, as the system does not derive it from the length of the string
+(though you are advised to do so in your client code).
+"""
+
 import struct
 
 import asynchia.ee
