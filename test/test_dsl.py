@@ -79,3 +79,17 @@ def test_named():
     
     eq_(tuple(a.value), (5, 1, 'ABCDE'))
     eq_(m.inbuf, 'FG')
+
+
+def test_tonamed():
+    e = b.L['size'] + b.B['blub'] + FLSE(lookback('size'))['string']
+    
+    a = e(None)
+    m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+    until_done(lambda: a.add_data(m, 120))
+    
+    d = e.tonamed(a.value)
+    eq_(d['size'], 5)
+    eq_(d['blub'], 1)
+    eq_(d['string'], 'ABCDE')
+

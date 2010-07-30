@@ -196,6 +196,7 @@ class ExprAdd(Expr):
         for expr, elem in zip(self.exprs, tup):
             if expr.name is not None:
                 d[expr.name] = elem
+        return d
 
 
 class BinaryExpr(Expr):
