@@ -299,15 +299,7 @@ def lookback(ind, fun=(lambda x: x.value)):
 
 
 def binarylookback(ind, item=0):
-    def _fun(state):
-        return state.tbl[ind].value[item]
-    return _fun
-
-
-def singlebinarylookback(ind, item=0):
-    def _fun(state):
-        return state.tbl[ind].value
-    return _fun
+    return lookback(ind, lambda x: x.value[item])
 
 
 def const(value):
