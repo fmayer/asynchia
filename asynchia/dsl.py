@@ -55,7 +55,7 @@ lookbacks. ::
 
 The tuple of values collected can be converted into a dictionary that
 maps the name of the expression to the respective value by calling the
-tonamed methods of the ExprAdd. ::
+tonamed method of the ExprAdd. ::
 
     a = e()
     [Collecting of data takes place]

@@ -23,9 +23,20 @@ from nose.tools import eq_, assert_raises
 
 import asynchia.ee
 import asynchia.dsl
-asynchia.dsl.asynchia.ee.StringInput = lambda x: x
 
 from asynchia.dsl import b, LFLSE, lookback, FLSE
+
+StringInput = None
+
+
+def setup():
+    global StringInput
+    StringInput = asynchia.ee.StringInput 
+    asynchia.ee.StringInput = lambda x: x
+
+
+def teardown():
+    asynchia.ee.StringInput = StringInput
 
 
 def exhaust(itr):
