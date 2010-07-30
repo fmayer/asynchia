@@ -22,6 +22,9 @@ import inspect
 from nose.tools import eq_, assert_raises
 
 import asynchia.ee
+import asynchia.dsl
+asynchia.dsl.asynchia.ee.StringInput = lambda x: x
+
 from asynchia.dsl import b, SBLFLSE
 
 
