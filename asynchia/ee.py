@@ -24,9 +24,6 @@ import asynchia
 # When a Collector raises CollectorFull, it can savely be assumed that it
 # has closed itself. The close method must only be called when explicitely
 # closing the collector. The same holds true for Inputs and InputEOF.
-#
-# The way values of Collectors currently used is suboptimal. See
-# StructCollector for an example.
 
 class Depleted(Exception):
     pass
