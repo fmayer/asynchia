@@ -139,8 +139,8 @@ class Expr(object):
 
 
 class ExprCollectorQueue(asynchia.ee.Collector):
-    def __init__(self, exprs):
-        asynchia.ee.Collector.__init__(self)
+    def __init__(self, exprs, onclose=None):
+        asynchia.ee.Collector.__init__(self, onclose)
         
         self.exprs = exprs
         self.done = []
@@ -189,11 +189,11 @@ class ExprAdd(Expr):
         Expr.__init__(self)
         self.exprs = [one, other]
     
-    def __call__(self, state=None):
+    def __call__(self, state=None, onclose=None):
         # We need to pass a copy so ExprCollectorQueue does not pop
         # from this list. Consider creating the copy in
         # ExprCollectorQueue.__init__.
-        return ExprCollectorQueue(self.exprs[:])
+        return ExprCollectorQueue(self.exprs[:], onclose)
     
     def __add__(self, other):
         self.exprs.append(other)
@@ -218,9 +218,10 @@ class BinaryExpr(Expr):
         Expr.__init__(self)
         self.pattern = pattern
     
-    def __call__(self, state):
+    def __call__(self, state, onclose=None):
         return asynchia.ee.StructCollector(
             struct.Struct(self.pattern),
+            onclose
         )
     
     def produce(self, value):
@@ -234,9 +235,10 @@ class SingleBinaryExpr(Expr):
         Expr.__init__(self)
         self.pattern = pattern
     
-    def __call__(self, state):
+    def __call__(self, state, onclose=None):
         return asynchia.ee.SingleStructValueCollector(
             struct.Struct(self.pattern),
+            onclose
         )
     
     def produce(self, value):
@@ -252,9 +254,9 @@ class FileExpr(Expr):
         self.closing = closing
         self.autoflush = autoflush
     
-    def __call__(self, state):
+    def __call__(self, state, onclose=None):
         return asynchia.ee.FileCollector(
-            self.fd, self.closing, self.autoflush
+            self.fd, self.closing, self.autoflush, onclose
         )
     
     @staticmethod
@@ -263,8 +265,8 @@ class FileExpr(Expr):
 
 
 class StringExpr(Expr):
-    def __call__(self, state):
-        return asynchia.ee.StringCollector()
+    def __call__(self, state, onclose=None):
+        return asynchia.ee.StringCollector(onclose)
     
     @staticmethod
     def produce(value):
@@ -277,9 +279,9 @@ class FixedLenExpr(Expr):
         self.glen = glen
         self.expr = expr
     
-    def __call__(self, state):
+    def __call__(self, state, onclose=None):
         return asynchia.ee.DelimitedCollector(
-            self.expr(state), self.glen(state)
+            self.expr(state), self.glen(state), onclose
         )
     
     def produce(self, value):
