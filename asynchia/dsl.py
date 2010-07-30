@@ -47,6 +47,21 @@ The only Expr in this module that takes a lookback as a parameter is
 FixedLenExpr which limits whichever expression is contained in it
 to the number of bytes aquired by the lookback function.
 
+Attributes can be named by passing the name in square brackets. It is
+also possible to refer to expresions by the name given to them in
+lookbacks. ::
+
+    e = b.L['size'] + b.B['blub'] + LFLSE('size')['string']
+
+The tuple of values collected can be converted into a dictionary that
+maps the name of the expression to the respective value by calling the
+tonamed methods of the ExprAdd. ::
+
+    a = e()
+    [Collecting of data takes place]
+    tup = a.values
+    dic = e.tonamed(tup)
+
 Example
 =======
 Packets are described by expressions which can be converted to collectors
