@@ -58,12 +58,11 @@ try to write your own types of expressions).
 Let us henceforth consider the following simple example::
     
     from asynchia.dsl import b, SBLFLSE
-    e = b.L + b.B + SBLFLSE(0)
+    e = b.L + b.B + LFLSE(0)
 
 This might appear utterly complicated at first glance, but it is not. The
 first statement imports b (which is a container for binary numeric types)
-and SBLFLSE which expands to single-binary-lookback fixed-length
-string-expression.
+and SBLFLSE which expands to lookback fixed-length string-expression.
 
 The expression (which is the second statement) describes a packet which
 contains three parts. The first part is an unsigned long (which is named by its
