@@ -316,9 +316,9 @@ FE = FileExpr
 def FLSE(glen):
     return FixedLenExpr(glen, StringExpr())
 
-#: Binary-lookback fixed-length string-expression
-def BLFLSE(ind):
-    return FixedLenExpr(binarylookback(ind), StringExpr())
+#: Lookback fixed-length string-expression
+def LFLSE(ind, fun=(lambda x: x.value)):
+    return FixedLenExpr(lookback(ind, fun), StringExpr())
 
 #: Single-binary lookback fixed-length string-expression
 def SBLFLSE(ind):

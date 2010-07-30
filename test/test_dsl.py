@@ -25,7 +25,7 @@ import asynchia.ee
 import asynchia.dsl
 asynchia.dsl.asynchia.ee.StringInput = lambda x: x
 
-from asynchia.dsl import b, SBLFLSE, lookback, FLSE
+from asynchia.dsl import b, LFLSE, lookback, FLSE
 
 
 def exhaust(itr):
@@ -46,7 +46,7 @@ def until_done(fun):
 
 
 def test_example():
-    e = b.L + b.B + SBLFLSE(0)
+    e = b.L + b.B + LFLSE(0)
     a = e(None)
     m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
     until_done(lambda: a.add_data(m, 120))
@@ -57,8 +57,8 @@ def test_example():
 def test_nested():
     i = [2, 'AB', [5, 'ABCDE'], [5, 'ABCDE']]
     
-    a = b.B + SBLFLSE(0)
-    c = b.B + SBLFLSE(0) + a + a
+    a = b.B + LFLSE(0)
+    c = b.B + LFLSE(0) + a + a
     
     d = c.produce(i)
     
