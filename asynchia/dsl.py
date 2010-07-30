@@ -48,7 +48,7 @@ FixedLenExpr which limits whichever expression is contained in it
 to the number of bytes aquired by the lookback function.
 
 Attributes can be named by passing the name in square brackets. It is
-also possible to refer to expresions by the name given to them in
+also possible to refer to expressions by the name given to them in
 lookbacks. ::
 
     e = b.L['size'] + b.B['blub'] + LFLSE('size')['string']
