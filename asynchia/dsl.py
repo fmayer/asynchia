@@ -109,11 +109,19 @@ class State(object):
     def __init__(self):
         self.tbl = {}
         self.ind = 0
+        self.nametbl = {}
 
 
 class Expr(object):
+    def __init__(self):
+        self.name = None
+    
     def __add__(self, other):
         return ExprAdd(self, other)
+    
+    def __getitem__(self, other):
+        self.name = other
+        return self
 
 
 class ExprCollectorQueue(asynchia.ee.Collector):
@@ -135,11 +143,14 @@ class ExprCollectorQueue(asynchia.ee.Collector):
     def add_data(self, prot, nbytes):
         asynchia.ee.Collector.add_data(self, prot, nbytes)
         if self.coll is None:
-            self.coll = self.exprs.pop(0)(self.state)
+            self.expr = self.exprs.pop(0)
+            self.coll = self.expr(self.state)
         while True:
             done, nrecv = self.coll.add_data(prot, nbytes)
             if done:
                 self.done.append(self.coll)
+                if self.expr.name is not None:
+                    self.state.nametbl[self.expr.name] = self.coll
                 self.state.ind += 1
                 if not self.exprs:
                     if not self.closed:
@@ -161,6 +172,7 @@ class ExprCollectorQueue(asynchia.ee.Collector):
 
 class ExprAdd(Expr):
     def __init__(self, one, other):
+        Expr.__init__(self)
         self.exprs = [one, other]
     
     def __call__(self, state=None):
@@ -174,14 +186,21 @@ class ExprAdd(Expr):
         return self
     
     def produce(self, value):
-        result = ""
+        result = asynchia.ee.StringInput("")
         for expr, elem in zip(self.exprs, value):
             result += expr.produce(elem)
         return result
+    
+    def tonamed(self, tup):
+        d = {}
+        for expr, elem in zip(self.exprs, tup):
+            if expr.name is not None:
+                d[expr.name] = elem
 
 
 class BinaryExpr(Expr):
     def __init__(self, pattern):
+        Expr.__init__(self)
         self.pattern = pattern
     
     def __call__(self, state):
@@ -197,6 +216,7 @@ class BinaryExpr(Expr):
 
 class SingleBinaryExpr(Expr):
     def __init__(self, pattern):
+        Expr.__init__(self)
         self.pattern = pattern
     
     def __call__(self, state):
@@ -212,6 +232,7 @@ class SingleBinaryExpr(Expr):
 
 class FileExpr(Expr):
     def __init__(self, fd, closing=False, autoflush=True):
+        Expr.__init__(self)
         self.fd = fd
         self.closing = closing
         self.autoflush = autoflush
@@ -237,6 +258,7 @@ class StringExpr(Expr):
 
 class FixedLenExpr(Expr):
     def __init__(self, glen, expr):
+        Expr.__init__(self)
         self.glen = glen
         self.expr = expr
     
@@ -249,9 +271,13 @@ class FixedLenExpr(Expr):
         return self.expr.produce(value)
 
 
-def lookback(ind, fun):
-    def _fun(state):
-        return fun(state.tbl[ind])
+def lookback(ind, fun=(lambda x: x.value)):
+    if isinstance(ind, basestring):
+        def _fun(state):
+            return fun(state.nametbl[ind])
+    else:
+        def _fun(state):
+            return fun(state.tbl[ind])
     return _fun
 
 
@@ -285,13 +311,17 @@ BE = BinaryExpr
 SBE = SingleBinaryExpr
 FE = FileExpr
 
+
+def FLSE(glen):
+    return FixedLenExpr(glen, StringExpr())
+
 #: Binary-lookback fixed-length string-expression
 def BLFLSE(ind):
     return FixedLenExpr(binarylookback(ind), StringExpr())
 
 #: Single-binary lookback fixed-length string-expression
 def SBLFLSE(ind):
-    return FixedLenExpr(singlebinarylookback(ind), StringExpr())
+    return FixedLenExpr(lookback(ind), StringExpr())
 
 
 FRMT_CHARS = ('x', 'c', 'b', 'B', '?', 'h', 'H', 'i', 'I', 'l',
@@ -302,4 +332,4 @@ for symbol in FRMT_CHARS:
 
 if __name__ == '__main__':
     # Actual debug here.
-    e = b.L + b.B + BLFLSE(0)
+    e = b.L['size'] + b.B['blub'] + SBLFLSE(0)['string']

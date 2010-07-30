@@ -25,7 +25,7 @@ import asynchia.ee
 import asynchia.dsl
 asynchia.dsl.asynchia.ee.StringInput = lambda x: x
 
-from asynchia.dsl import b, SBLFLSE
+from asynchia.dsl import b, SBLFLSE, lookback, FLSE
 
 
 def exhaust(itr):
@@ -68,3 +68,14 @@ def test_nested():
     until_done(lambda: p.add_data(m, 120))
     
     eq_(exhaust(iter(p.value)), i)
+
+
+def test_named():
+    e = b.L['size'] + b.B['blub'] + FLSE(lookback('size'))['string']
+    
+    a = e(None)
+    m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+    until_done(lambda: a.add_data(m, 120))
+    
+    eq_(tuple(a.value), (5, 1, 'ABCDE'))
+    eq_(m.inbuf, 'FG')
