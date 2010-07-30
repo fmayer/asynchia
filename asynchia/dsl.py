@@ -310,7 +310,7 @@ def const(value):
 
 #: Binary lookback
 bl = binarylookback
-sbl = singlebinarylookback
+lb = lookback
 #: Fixed-length expression
 FLE = FixedLenExpr
 #: String expression
