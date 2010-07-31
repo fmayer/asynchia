@@ -328,10 +328,6 @@ def FLSE(glen):
 def LFLSE(ind, fun=(lambda x: x.value)):
     return FixedLenExpr(lookback(ind, fun), StringExpr())
 
-#: Single-binary lookback fixed-length string-expression
-def SBLFLSE(ind):
-    return FixedLenExpr(lookback(ind), StringExpr())
-
 
 FRMT_CHARS = ('x', 'c', 'b', 'B', '?', 'h', 'H', 'i', 'I', 'l',
               'L', 'q', 'Q', 'f', 'd', 's', 'p', 'P')
@@ -341,4 +337,4 @@ for symbol in FRMT_CHARS:
 
 if __name__ == '__main__':
     # Actual debug here.
-    e = b.L['size'] + b.B['blub'] + SBLFLSE(0)['string']
+    e = b.L['size'] + b.B['blub'] + LFLSE(0)['string']
