@@ -56,6 +56,29 @@ def until_done(fun):
             break
 
 
+def test_LFLSE():
+    e = b.L + b.B + LFLSE(-1)
+    m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+    a = e(None)
+    until_done(lambda: a.add_data(m, 120))
+    
+    eq_(tuple(a.value), (5, 1, 'A'))
+
+    
+def test_two_instances():
+    e = b.L + b.B + LFLSE(-1)
+    a = e()
+    m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+    until_done(lambda: a.add_data(m, 120))
+    
+    eq_(tuple(a.value), (5, 1, 'A'))
+    c = e()
+    m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+    until_done(lambda: c.add_data(m, 120))
+    
+    eq_(tuple(a.value), (5, 1, 'A'))
+
+
 def test_example():
     e = b.L + b.B + LFLSE(0)
     a = e(None)
