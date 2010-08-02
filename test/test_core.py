@@ -226,6 +226,7 @@ def test_maps():
               'SelectSocketMap',
               'PollSocketMap',
               'EPollSocketMap',
+              'KQueueSocketMap',
           ]
           if hasattr(asynchia.maps, name)
           )

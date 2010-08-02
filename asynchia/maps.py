@@ -382,6 +382,80 @@ class EPollSocketMap(RockSolidSocketMap):
             self.notifier.cleanup_obj(handler)
 
 
+# FIXME: Implement except_obj. Make it report connection-lost even if
+# the socket is not in the readers or writers, should this be possible.
+class KQueueSocketMap(RockSolidSocketMap):
+    def __init__(self, notifier=None):
+        RockSolidSocketMap.__init__(self, notifier)
+        self.socket_list = {}
+        self.queue = select.kqueue()
+        
+        self.controlfd = self.controlreceiver.fileno()
+        self.queue.control(
+            [select.kevent(sock, select.KQ_FILTER_READ, KQ_EV_ADD)], 0
+        )
+    
+    def add_handler(self, handler):
+        """ See SocketMap.add_handler. """
+        if handler in self.socket_list:
+            raise ValueError("Handler %r already in socket map!" % handler)
+        self.socket_list[handler.fileno()] = handler
+        if handler.readable:
+            self.add_reader(handler)
+        if handler.writeable:
+            self.add_writer(handler)
+    
+    def del_handler(self, handler):
+        """ See SocketMap.del_handler. """
+        self.socket_list.pop(handler.fileno())
+        if handler.readable:
+            self.del_reader(handler)
+        if handler.writeable or handler.awaiting_connect:
+            self.del_writer(handler)
+    
+    def add_writer(self, handler):
+        """ See SocketMap.add_writer. """
+        self.queue.control(
+            [select.kevent(handler, select.KQ_FILTER_WRITE, select.KQ_EV_ADD)],
+            0
+        )
+    
+    def del_writer(self, handler):
+        """ See SocketMap.del_writer. """
+        self.queue.control(
+            [select.kevent(
+                handler, select.KQ_FILTER_WRITE, select.KQ_EV_DELETE)
+             ],
+            0
+        )
+    
+    def add_reader(self, handler):
+        """ See SocketMap.add_reader. """
+        self.queue.control(
+            [select.kevent(handler, select.KQ_FILTER_READ, select.KQ_EV_ADD)],
+            0
+        )
+    
+    def del_reader(self, handler):
+        """ See SocketMap.del_reader. """
+        self.queue.control(
+            [select.kevent(
+                handler, select.KQ_FILTER_READ, select.KQ_EV_DELETE)
+             ],
+            0
+        )
+    
+    def _handle_kqueue_result(self, res):
+        for event in res:
+            handler = self.socket_list[event.indet]
+            if event.filter == select.KQ_FILTER_READ:
+                self.notifier.read_obj(handler)
+            if event.filter == select.KQ_FILTER_WRITE:
+                self.notifier.read_obj(handler)
+            if event.flags == select.KQ_EV_EOD:
+                self.notifier.close_obj(handler)
+
+
 DefaultSocketMap = SelectSocketMap
 
 if hasattr(select, 'poll'):
@@ -393,4 +467,8 @@ if hasattr(select, 'epoll'):
     DefaultSocketMap = EPollSocketMap
 else:
     del EPollSocketMap
-    
+
+if hasattr(select, 'kqueue'):
+    DefaultSocketMap = KQueueSocketMap
+else:
+    del KQueueSocketMap
