@@ -57,7 +57,7 @@ def until_done(fun):
 
 
 def test_LFLSE():
-    e = b.L + b.B + LFLSE(-1)
+    e = b.L() + b.B() + LFLSE(-1)
     m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
     a = e(None)
     until_done(lambda: a.add_data(m, 120))
@@ -66,7 +66,7 @@ def test_LFLSE():
 
     
 def test_two_instances():
-    e = b.L + b.B + LFLSE(-1)
+    e = b.L() + b.B() + LFLSE(-1)
     a = e()
     m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
     until_done(lambda: a.add_data(m, 120))
@@ -80,7 +80,7 @@ def test_two_instances():
 
 
 def test_example():
-    e = b.L + b.B + LFLSE(0)
+    e = b.L() + b.B() + LFLSE(0)
     a = e(None)
     m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
     until_done(lambda: a.add_data(m, 120))
@@ -91,8 +91,8 @@ def test_example():
 def test_nested():
     i = [2, 'AB', [5, 'ABCDE'], [5, 'ABCDE']]
     
-    a = b.B + LFLSE(0)
-    c = b.B + LFLSE(0) + a + a
+    a = b.B() + LFLSE(0)
+    c = b.B() + LFLSE(0) + a + a
     
     d = c.produce(i)
     
@@ -105,7 +105,7 @@ def test_nested():
 
 
 def test_named():
-    e = b.L['size'] + b.B['blub'] + FLSE(lookback('size'))['string']
+    e = b.L()['size'] + b.B()['blub'] + FLSE(lookback('size'))['string']
     
     a = e(None)
     m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
@@ -116,7 +116,7 @@ def test_named():
 
 
 def test_tonamed():
-    e = b.L['size'] + b.B['blub'] + FLSE(lookback('size'))['string']
+    e = b.L()['size'] + b.B()['blub'] + FLSE(lookback('size'))['string']
     
     a = e(None)
     m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
@@ -127,3 +127,15 @@ def test_tonamed():
     eq_(d['blub'], 1)
     eq_(d['string'], 'ABCDE')
 
+
+def test_tonamed2():
+    e = b.L()['size'] + b.L()['blub'] + FLSE(lookback('size'))['string']
+    
+    a = e(None)
+    m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+    until_done(lambda: a.add_data(m, 120))
+    
+    d = e.tonamed(a.value)
+    eq_(d['size'], 5)
+    eq_(d['blub'], 1)
+    eq_(d['string'], 'ABCDE')

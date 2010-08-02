@@ -332,8 +332,14 @@ def LFLSE(ind, fun=(lambda x: x.value)):
 FRMT_CHARS = ('x', 'c', 'b', 'B', '?', 'h', 'H', 'i', 'I', 'l',
               'L', 'q', 'Q', 'f', 'd', 's', 'p', 'P')
 b = Container()
+
+def _single_binary(symbol):
+    def _fun():
+        return SingleBinaryExpr(symbol)
+    return _fun
+
 for symbol in FRMT_CHARS:
-    setattr(b, symbol, SingleBinaryExpr("!" + symbol))
+    setattr(b, symbol, _single_binary("!" + symbol))
 
 if __name__ == '__main__':
     # Actual debug here.
