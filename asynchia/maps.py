@@ -413,6 +413,11 @@ class KQueueSocketMap(RockSolidSocketMap):
             raise ValueError("Handler %r already in socket map!" % handler)
         self.socket_list[handler.fileno()] = handler
         
+        self.queue.control(
+            [select.kevent(handler, select.KQ_FILTER_WRITE, select.KQ_EV_ADD)],
+            0
+        )
+        
         if handler.readable:
             self.add_reader(handler)
         if handler.writeable:
@@ -421,6 +426,14 @@ class KQueueSocketMap(RockSolidSocketMap):
     def del_handler(self, handler):
         """ See SocketMap.del_handler. """
         self.socket_list.pop(handler.fileno())
+        
+        self.queue.control(
+            [select.kevent(
+                handler, select.KQ_FILTER_WRITE, select.KQ_EV_DELETE)
+             ],
+            0
+        )
+        
         if handler.readable:
             self.del_reader(handler)
         if handler.writeable or handler.awaiting_connect:
@@ -428,19 +441,11 @@ class KQueueSocketMap(RockSolidSocketMap):
     
     def add_writer(self, handler):
         """ See SocketMap.add_writer. """
-        self.queue.control(
-            [select.kevent(handler, select.KQ_FILTER_WRITE, select.KQ_EV_ADD)],
-            0
-        )
+        pass
     
     def del_writer(self, handler):
         """ See SocketMap.del_writer. """
-        self.queue.control(
-            [select.kevent(
-                handler, select.KQ_FILTER_WRITE, select.KQ_EV_DELETE)
-             ],
-            0
-        )
+        pass
     
     def add_reader(self, handler):
         """ See SocketMap.add_reader. """
