@@ -194,7 +194,8 @@ class SelectSocketMap(FragileSocketMap):
         for obj in read:
             if obj is not self.controlreceiver:
                 try:
-                    obj.socket.send('')
+                    if obj.connected:
+                        obj.socket.send('')
                 except socket.error, err:
                     if err.errno == errno.EPIPE:
                         self.notifier.close_obj(obj)
