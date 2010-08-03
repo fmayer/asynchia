@@ -451,7 +451,7 @@ class KQueueSocketMap(RockSolidSocketMap):
         )
     
     def poll(self, timeout=None):
-        res = kq.control(None, 10)
+        res = self.queue.control(None, 10)
         
         for event in res:
             handler = self.socket_list[event.indet]
