@@ -30,6 +30,8 @@ PollSocketMap or SelectSocketMap.
 """
 
 import select
+import socket
+import errno
 
 import asynchia
 import asynchia.util
@@ -141,11 +143,10 @@ class SelectSocketMap(FragileSocketMap):
     """ Decide which sockets have I/O to do using select.select. """
     def __init__(self, notifier=None):
         FragileSocketMap.__init__(self, notifier)
-        self.readers = []
         self.writers = []
         self.socket_list = []
         
-        self.readers.append(self.controlreceiver)
+        self.socket_list.append(self.controlreceiver)
     
     def add_handler(self, handler):
         """ See SocketMap.add_handler. """
@@ -178,21 +179,30 @@ class SelectSocketMap(FragileSocketMap):
     
     def add_reader(self, handler):
         """ See SocketMap.add_reader. """
-        self.readers.append(handler)
+        pass
     
     def del_reader(self, handler):
         """ See SocketMap.del_reader. """
-        self.readers.remove(handler)
+        pass
     
     def poll(self, timeout):
         """ Poll for I/O. """
         interrupted = False
-        read, write, expt = select.select(self.readers,
+        read, write, expt = select.select(self.socket_list,
                                           self.writers,
                                           self.socket_list, timeout)
         for obj in read:
             if obj is not self.controlreceiver:
-                self.notifier.read_obj(obj)
+                try:
+                    if obj.connected:
+                        obj.socket.send('')
+                except socket.error, err:
+                    if err.errno == errno.EPIPE:
+                        self.notifier.close_obj(obj)
+                    else:
+                        raise
+                else:
+                    self.notifier.read_obj(obj)
             else:
                 interrupted = True
         for obj in write:
@@ -210,7 +220,7 @@ class SelectSocketMap(FragileSocketMap):
     
     def close(self):
         """ See SocketMap.close """
-        for handler in self.socket_list:
+        for handler in self.socket_list[1:]:
             self.notifier.cleanup_obj(handler)
 
 
@@ -382,6 +392,111 @@ class EPollSocketMap(RockSolidSocketMap):
             self.notifier.cleanup_obj(handler)
 
 
+# It is possible to only get hangup events by applying the hack presented
+# at http://paste.pocoo.org/show/245033/
+
+# The concept of exceptional socket state does not exist on BSD, to quote
+# the manpage of select on FreeBSD:
+#     The only exceptional condition detectable is out-of-band data
+#     received on a socket.
+# Thus we need not call notifier.except_obj in this socket-map.
+class KQueueSocketMap(RockSolidSocketMap):
+    def __init__(self, nevents=100, notifier=None):
+        RockSolidSocketMap.__init__(self, notifier)
+        self.socket_list = {}
+        self.queue = select.kqueue()
+        
+        self.nevents = nevents
+        
+        self.controlfd = self.controlreceiver.fileno()
+        self.queue.control(
+            [select.kevent(self.controlfd,
+                           select.KQ_FILTER_READ,
+                           select.KQ_EV_ADD)], 0
+        )
+    
+    def add_handler(self, handler):
+        """ See SocketMap.add_handler. """
+        if handler in self.socket_list:
+            raise ValueError("Handler %r already in socket map!" % handler)
+        self.socket_list[handler.fileno()] = handler
+        
+        self.queue.control(
+            [select.kevent(handler, select.KQ_FILTER_WRITE, select.KQ_EV_ADD)],
+            0
+        )
+        
+        if handler.readable:
+            self.add_reader(handler)
+        if handler.writeable:
+            self.add_writer(handler)
+    
+    def del_handler(self, handler):
+        """ See SocketMap.del_handler. """
+        self.socket_list.pop(handler.fileno())
+        
+        self.queue.control(
+            [select.kevent(
+                handler, select.KQ_FILTER_WRITE, select.KQ_EV_DELETE)
+             ],
+            0
+        )
+        
+        if handler.readable:
+            self.del_reader(handler)
+        if handler.writeable or handler.awaiting_connect:
+            self.del_writer(handler)
+    
+    def add_writer(self, handler):
+        """ See SocketMap.add_writer. """
+        pass
+    
+    def del_writer(self, handler):
+        """ See SocketMap.del_writer. """
+        pass
+    
+    def add_reader(self, handler):
+        """ See SocketMap.add_reader. """
+        self.queue.control(
+            [select.kevent(handler, select.KQ_FILTER_READ, select.KQ_EV_ADD)],
+            0
+        )
+    
+    def del_reader(self, handler):
+        """ See SocketMap.del_reader. """
+        self.queue.control(
+            [select.kevent(
+                handler, select.KQ_FILTER_READ, select.KQ_EV_DELETE)
+             ],
+            0
+        )
+    
+    def poll(self, timeout=None):
+        interrupted = False
+        
+        res = self.queue.control(None, self.nevents, timeout)
+        
+        for event in res:
+            if event.ident == self.controlfd:
+                interrupted = True
+                continue
+            handler = self.socket_list[event.ident]
+            if event.filter == select.KQ_FILTER_READ:
+                self.notifier.read_obj(handler)
+            if event.filter == select.KQ_FILTER_WRITE:
+                self.notifier.write_obj(handler)
+            if event.flags == select.KQ_EV_EOF:
+                self.notifier.close_obj(handler)
+        
+        if interrupted:
+            self.do_interrupt()
+    
+    def close(self):
+        self.queue.close()
+        for handler in self.socket_list.itervalues():
+            self.notifier.cleanup_obj(handler)
+
+
 DefaultSocketMap = SelectSocketMap
 
 if hasattr(select, 'poll'):
@@ -393,4 +508,8 @@ if hasattr(select, 'epoll'):
     DefaultSocketMap = EPollSocketMap
 else:
     del EPollSocketMap
-    
+
+if hasattr(select, 'kqueue'):
+    DefaultSocketMap = KQueueSocketMap
+else:
+    del KQueueSocketMap

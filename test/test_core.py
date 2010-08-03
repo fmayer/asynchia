@@ -43,7 +43,7 @@ def tes_interrupt(map_):
     threading.Thread(target=thread, args=(container, )).start()
     s = time.time()
     while not container.flag and time.time() < s + 10:
-        mo.poll(10 - (time.time() - s))
+        mo.poll(abs(10 - (time.time() - s)))
     eq_(container.flag, True)
 
 
@@ -113,7 +113,7 @@ def t_changeflag(subthread):
         n = 0
         s = time.time()
         while not container.done and time.time() < s + 10:
-            mo.poll(10 - (time.time() - s))
+            mo.poll(abs(10 - (time.time() - s)))
         eq_(container.done, True)
         mo.close()
         container.thr.join(10)
@@ -159,13 +159,13 @@ def tes_remove(map_):
     c.connect(s.socket.getsockname())
     s = time.time()
     while not container.done and time.time() < s + 10:
-        mo.poll(10 - (time.time() - s))
+        mo.poll(abs(10 - (time.time() - s)))
     eq_(container.done, True)
     mo.del_handler(c)
     container.done = False
     s = time.time()
     while not container.done and time.time() < s + 10:
-        mo.poll(10 - (time.time() - s))
+        mo.poll(abs(10 - (time.time() - s)))
     mo.close()
     eq_(container.done, False)
 
@@ -212,13 +212,13 @@ def tes_remove2(map_):
     s = time.time()
     s = time.time()
     while not container.done and time.time() < s + 10:
-        mo.poll(10 - (time.time() - s))
+        mo.poll(abs(10 - (time.time() - s)))
     eq_(container.done,  True)
     mo.del_handler(c)
     container.done = False
     s = time.time()
     while not container.done and time.time() < s + 10:
-        mo.poll(10 - (time.time() - s))
+        mo.poll(abs(10 - (time.time() - s)))
     mo.close()
     eq_(container.done, False)
 
@@ -245,7 +245,7 @@ def tes_close(map_):
     b.close()
     s = time.time()
     while not container.done and time.time() < s + 10:
-        mo.poll(10 - (time.time() - s))
+        mo.poll(abs(10 - (time.time() - s)))
     mo.close()
     eq_(container.done, True)
 
@@ -274,7 +274,7 @@ def tes_close_read(map_):
     b.close()
     s = time.time()
     while not container.done and time.time() < s + 10:
-        mo.poll(10 - (time.time() - s))
+        mo.poll(abs(10 - (time.time() - s)))
     mo.close()
     eq_(container.done, True)
 
@@ -303,7 +303,7 @@ def tes_close_write(map_):
     b.close()
     s = time.time()
     while not container.done and time.time() < s + 10:
-        mo.poll(10 - (time.time() - s))
+        mo.poll(abs(10 - (time.time() - s)))
     mo.close()
     eq_(container.done, True)
 
@@ -315,6 +315,7 @@ def test_maps():
               'SelectSocketMap',
               'PollSocketMap',
               'EPollSocketMap',
+              'KQueueSocketMap',
           ]
           if hasattr(asynchia.maps, name)
           )
@@ -370,7 +371,7 @@ def test_error():
     
     s = time.time()
     while not container.done and time.time() < s + 10:
-        mo.poll(10 - (time.time() - s))
+        mo.poll(abs(10 - (time.time() - s)))
     eq_(container.done, True)
 
 def test_connfailed():
@@ -395,7 +396,7 @@ def test_connfailed():
     
     s = time.time()
     while not container.done and time.time() < s + 10:
-        mo.poll(10 - (time.time() - s))
+        mo.poll(abs(10 - (time.time() - s)))
     eq_(container.done, True)
 
 
