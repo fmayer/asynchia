@@ -382,8 +382,10 @@ class EPollSocketMap(RockSolidSocketMap):
             self.notifier.cleanup_obj(handler)
 
 
-# FIXME: Implement except_obj. Make it report connection-lost even if
-# the socket is not in the readers or writers, should this be possible.
+# It is possible to only get hangup events by applying the hack presented
+# at http://paste.pocoo.org/show/245033/
+# FIXME: Always readable. Test other maps! Add TestCase that checks disconnect
+# with neither read nor write.
 class KQueueSocketMap(RockSolidSocketMap):
     def __init__(self, notifier=None):
         RockSolidSocketMap.__init__(self, notifier)
@@ -400,6 +402,7 @@ class KQueueSocketMap(RockSolidSocketMap):
         if handler in self.socket_list:
             raise ValueError("Handler %r already in socket map!" % handler)
         self.socket_list[handler.fileno()] = handler
+        
         if handler.readable:
             self.add_reader(handler)
         if handler.writeable:
