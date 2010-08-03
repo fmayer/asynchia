@@ -453,15 +453,20 @@ class KQueueSocketMap(RockSolidSocketMap):
         )
     
     def poll(self, timeout=None):
+        interrupted = False
+        
         res = self.queue.control(None, self.nevents, timeout)
         
         for event in res:
+            if event.ident == self.controlfd:
+                interrupted = True
+                continue
             handler = self.socket_list[event.ident]
             if event.filter == select.KQ_FILTER_READ:
                 self.notifier.read_obj(handler)
             if event.filter == select.KQ_FILTER_WRITE:
                 self.notifier.read_obj(handler)
-            if event.flags == select.KQ_EV_EOD:
+            if event.flags == select.KQ_EV_EOF:
                 if handler.socket.getsockopt(
                     socket.SOL_SOCKET, socket.SO_ERROR
                     ):
@@ -471,6 +476,9 @@ class KQueueSocketMap(RockSolidSocketMap):
             # FIXME: Does this work?
             if event.flags == select.KQ_EV_ERROR:
                 self.notifier.except_obj(handler)
+        
+        if interrupted:
+            self.do_interrupt()
 
 
 DefaultSocketMap = SelectSocketMap
