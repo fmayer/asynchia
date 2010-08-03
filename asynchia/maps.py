@@ -471,7 +471,7 @@ class KQueueSocketMap(RockSolidSocketMap):
             if event.filter == select.KQ_FILTER_READ:
                 self.notifier.read_obj(handler)
             if event.filter == select.KQ_FILTER_WRITE:
-                self.notifier.read_obj(handler)
+                self.notifier.write_obj(handler)
             if event.flags == select.KQ_EV_EOF:
                 self.notifier.close_obj(handler)
         
