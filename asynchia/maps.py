@@ -450,7 +450,9 @@ class KQueueSocketMap(RockSolidSocketMap):
             0
         )
     
-    def _handle_kqueue_result(self, res):
+    def poll(self, timeout=None):
+        res = kq.control(None, 10)
+        
         for event in res:
             handler = self.socket_list[event.indet]
             if event.filter == select.KQ_FILTER_READ:
