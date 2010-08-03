@@ -41,7 +41,9 @@ def tes_interrupt(map_):
             container.flag = True
             mo.end_interrupt()
     threading.Thread(target=thread, args=(container, )).start()
-    mo.poll(None)
+    s = time.time()
+    while not container.flag and time.time() < s + 10:
+        mo.poll(10 - (time.time() - s))
     eq_(container.flag, True)
 
 
@@ -109,11 +111,10 @@ def t_changeflag(subthread):
         c = Handler(mo, None, container)
         c.connect(s.socket.getsockname())
         n = 0
-        while (not container.done):
-            mo.poll(None)
-            n += 1
-            if n > 10 ** 6:
-                eq_(True, False, 'Timeout')
+        s = time.time()
+        while not container.done and time.time() < s + 10:
+            mo.poll(10 - (time.time() - s))
+        eq_(container.done, True)
         mo.close()
         container.thr.join(10)
         eq_(container.thr.isAlive(), False)
@@ -209,8 +210,10 @@ def tes_remove2(map_):
     c = Handler(mo, None, container)
     c.connect(s.socket.getsockname())
     s = time.time()
-    while (not container.done):
-        mo.poll(None)
+    s = time.time()
+    while not container.done and time.time() < s + 10:
+        mo.poll(10 - (time.time() - s))
+    eq_(container.done,  True)
     mo.del_handler(c)
     container.done = False
     s = time.time()
@@ -366,8 +369,10 @@ def test_error():
     
     c.set_writeable(True)
     
-    while not container.done:
-        mo.poll(None)
+    s = time.time()
+    while not container.done and time.time() < s + 10:
+        mo.poll(10 - (time.time() - s))
+    eq_(container.done, True)
 
 def test_connfailed():
     container = Container()
@@ -389,8 +394,10 @@ def test_connfailed():
         container.done = True
         
     
-    while not container.done:
-        mo.poll(None)
+    s = time.time()
+    while not container.done and time.time() < s + 10:
+        mo.poll(10 - (time.time() - s))
+    eq_(container.done, True)
 
 
 def test_pingpong():
