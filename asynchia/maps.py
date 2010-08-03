@@ -394,7 +394,9 @@ class KQueueSocketMap(RockSolidSocketMap):
         
         self.controlfd = self.controlreceiver.fileno()
         self.queue.control(
-            [select.kevent(self.controlfd, select.KQ_FILTER_READ, KQ_EV_ADD)], 0
+            [select.kevent(self.controlfd,
+                           select.KQ_FILTER_READ,
+                           select.KQ_EV_ADD)], 0
         )
     
     def add_handler(self, handler):
