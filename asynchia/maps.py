@@ -456,7 +456,7 @@ class KQueueSocketMap(RockSolidSocketMap):
         res = self.queue.control(None, self.nevents, timeout)
         
         for event in res:
-            handler = self.socket_list[event.indet]
+            handler = self.socket_list[event.ident]
             if event.filter == select.KQ_FILTER_READ:
                 self.notifier.read_obj(handler)
             if event.filter == select.KQ_FILTER_WRITE:
