@@ -394,8 +394,6 @@ class EPollSocketMap(RockSolidSocketMap):
 
 # It is possible to only get hangup events by applying the hack presented
 # at http://paste.pocoo.org/show/245033/
-# FIXME: Always readable. Test other maps! Add TestCase that checks disconnect
-# with neither read nor write.
 
 # The concept of exceptional socket state does not exist on BSD, to quote
 # the manpage of select on FreeBSD:
