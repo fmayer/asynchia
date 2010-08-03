@@ -157,8 +157,9 @@ def tes_remove(map_):
     c = Handler(mo, None, container)
     c.connect(s.socket.getsockname())
     s = time.time()
-    while (not container.done):
-        mo.poll(None)
+    while not container.done and time.time() < s + 10:
+        mo.poll(10 - (time.time() - s))
+    eq_(container.done, True)
     mo.del_handler(c)
     container.done = False
     s = time.time()
