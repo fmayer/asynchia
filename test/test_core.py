@@ -122,7 +122,7 @@ def t_changeflag(subthread):
 def tes_remove(map_):
     mo = map_()
     container = Container()
-    container.done = False    
+    container.done = False
     
     class Serv(asynchia.Server):
         def __init__(
@@ -171,7 +171,7 @@ def tes_remove(map_):
 def tes_remove2(map_):
     mo = map_()
     container = Container()
-    container.done = False    
+    container.done = False
     
     class Serv(asynchia.Server):
         def __init__(
@@ -219,6 +219,91 @@ def tes_remove2(map_):
     eq_(container.done, False)
 
 
+def tes_close(map_):
+    mo = map_()
+    container = Container()
+    container.done = False
+    
+    a, b = asynchia.util.socketpair()
+    
+    class Handler(asynchia.IOHandler):
+        def __init__(self, socket_map, sock=None, container=None):
+            asynchia.IOHandler.__init__(self, socket_map, sock)
+            self.container = container
+        
+        def handle_close(self):
+            container.done = True
+    
+    
+    mo = map_()
+    
+    c = Handler(mo, a, container)
+    b.close()
+    s = time.time()
+    while not container.done and time.time() < s + 10:
+        mo.poll(10 - (time.time() - s))
+    mo.close()
+    eq_(container.done, True)
+
+
+def tes_close_read(map_):
+    mo = map_()
+    container = Container()
+    container.done = False
+    
+    a, b = asynchia.util.socketpair()
+    
+    class Handler(asynchia.IOHandler):
+        def __init__(self, socket_map, sock=None, container=None):
+            asynchia.IOHandler.__init__(self, socket_map, sock)
+            self.container = container
+            
+            self.set_readable(True)
+        
+        def handle_close(self):
+            container.done = True
+    
+    
+    mo = map_()
+    
+    c = Handler(mo, a, container)
+    b.close()
+    s = time.time()
+    while not container.done and time.time() < s + 10:
+        mo.poll(10 - (time.time() - s))
+    mo.close()
+    eq_(container.done, True)
+
+
+def tes_close_write(map_):
+    mo = map_()
+    container = Container()
+    container.done = False
+    
+    a, b = asynchia.util.socketpair()
+    
+    class Handler(asynchia.IOHandler):
+        def __init__(self, socket_map, sock=None, container=None):
+            asynchia.IOHandler.__init__(self, socket_map, sock)
+            self.container = container
+            
+            self.set_writeable(True)
+        
+        def handle_close(self):
+            container.done = True
+    
+    
+    mo = map_()
+    
+    c = Handler(mo, a, container)
+    b.close()
+    s = time.time()
+    while not container.done and time.time() < s + 10:
+        mo.poll(10 - (time.time() - s))
+    mo.close()
+    eq_(container.done, True)
+
+
 def test_maps():
     maps = \
          (getattr(asynchia.maps, name) for name in 
@@ -229,10 +314,13 @@ def test_maps():
           ]
           if hasattr(asynchia.maps, name)
           )
+    
     tests = [
         tes_interrupt, t_changeflag(ctx), t_changeflag(std),
-        tes_remove, tes_remove2
+        tes_remove, tes_remove2, tes_close, tes_close_read,
+        tes_close_write
     ]
+    
     for m in maps:
         for test in tests:
             yield test, m
