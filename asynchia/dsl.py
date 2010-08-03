@@ -73,7 +73,7 @@ try to write your own types of expressions).
 Let us henceforth consider the following simple example::
     
     from asynchia.dsl import b, SBLFLSE
-    e = b.L + b.B + LFLSE(0)
+    e = b.L() + b.B() + LFLSE(0)
 
 This might appear utterly complicated at first glance, but it is not. The
 first statement imports b (which is a container for binary numeric types)
