@@ -30,6 +30,8 @@ PollSocketMap or SelectSocketMap.
 """
 
 import select
+import socket
+import errno
 
 import asynchia
 import asynchia.util
@@ -141,11 +143,10 @@ class SelectSocketMap(FragileSocketMap):
     """ Decide which sockets have I/O to do using select.select. """
     def __init__(self, notifier=None):
         FragileSocketMap.__init__(self, notifier)
-        self.readers = []
         self.writers = []
         self.socket_list = []
         
-        self.readers.append(self.controlreceiver)
+        self.socket_list.append(self.controlreceiver)
     
     def add_handler(self, handler):
         """ See SocketMap.add_handler. """
@@ -178,21 +179,29 @@ class SelectSocketMap(FragileSocketMap):
     
     def add_reader(self, handler):
         """ See SocketMap.add_reader. """
-        self.readers.append(handler)
+        pass
     
     def del_reader(self, handler):
         """ See SocketMap.del_reader. """
-        self.readers.remove(handler)
+        pass
     
     def poll(self, timeout):
         """ Poll for I/O. """
         interrupted = False
-        read, write, expt = select.select(self.readers,
+        read, write, expt = select.select(self.socket_list,
                                           self.writers,
                                           self.socket_list, timeout)
         for obj in read:
             if obj is not self.controlreceiver:
-                self.notifier.read_obj(obj)
+                try:
+                    obj.socket.send('')
+                except socket.error, err:
+                    if err.errno == errno.EPIPE:
+                        self.notifier.close_obj(obj)
+                    else:
+                        raise
+                else:
+                    self.notifier.read_obj(obj)
             else:
                 interrupted = True
         for obj in write:
@@ -210,7 +219,7 @@ class SelectSocketMap(FragileSocketMap):
     
     def close(self):
         """ See SocketMap.close """
-        for handler in self.socket_list:
+        for handler in self.socket_list[1:]:
             self.notifier.cleanup_obj(handler)
 
 
