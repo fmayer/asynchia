@@ -453,7 +453,15 @@ class KQueueSocketMap(RockSolidSocketMap):
             if event.filter == select.KQ_FILTER_WRITE:
                 self.notifier.read_obj(handler)
             if event.flags == select.KQ_EV_EOD:
-                self.notifier.close_obj(handler)
+                if handler.socket.getsockopt(
+                    socket.SOL_SOCKET, socket.SO_ERROR
+                    ):
+                    self.notifier.except_obj(handler)
+                else:
+                    self.notifier.close_obj(handler)
+            # FIXME: Does this work?
+            if event.flags == select.KQ_EV_ERROR:
+                self.notifier.except_obj(handler)
 
 
 DefaultSocketMap = SelectSocketMap
