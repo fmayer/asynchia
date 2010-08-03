@@ -386,6 +386,12 @@ class EPollSocketMap(RockSolidSocketMap):
 # at http://paste.pocoo.org/show/245033/
 # FIXME: Always readable. Test other maps! Add TestCase that checks disconnect
 # with neither read nor write.
+
+# The concept of exceptional socket state does not exist on BSD, to quote
+# the manpage of select on FreeBSD:
+#     The only exceptional condition detectable is out-of-band data
+#     received on a socket.
+# Thus we need not call notifier.except_obj in this socket-map.
 class KQueueSocketMap(RockSolidSocketMap):
     def __init__(self, nevents=100, notifier=None):
         RockSolidSocketMap.__init__(self, notifier)
@@ -467,18 +473,15 @@ class KQueueSocketMap(RockSolidSocketMap):
             if event.filter == select.KQ_FILTER_WRITE:
                 self.notifier.read_obj(handler)
             if event.flags == select.KQ_EV_EOF:
-                if handler.socket.getsockopt(
-                    socket.SOL_SOCKET, socket.SO_ERROR
-                    ):
-                    self.notifier.except_obj(handler)
-                else:
-                    self.notifier.close_obj(handler)
-            # FIXME: Does this work?
-            if event.flags == select.KQ_EV_ERROR:
-                self.notifier.except_obj(handler)
+                self.notifier.close_obj(handler)
         
         if interrupted:
             self.do_interrupt()
+    
+    def close(self):
+        self.queue.close()
+        for handler in self.socket_list.itervalues():
+            self.notifier.cleanup_obj(handler)
 
 
 DefaultSocketMap = SelectSocketMap
