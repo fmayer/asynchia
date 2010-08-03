@@ -387,10 +387,12 @@ class EPollSocketMap(RockSolidSocketMap):
 # FIXME: Always readable. Test other maps! Add TestCase that checks disconnect
 # with neither read nor write.
 class KQueueSocketMap(RockSolidSocketMap):
-    def __init__(self, notifier=None):
+    def __init__(self, nevents=100, notifier=None):
         RockSolidSocketMap.__init__(self, notifier)
         self.socket_list = {}
         self.queue = select.kqueue()
+        
+        self.nevents = nevents
         
         self.controlfd = self.controlreceiver.fileno()
         self.queue.control(
@@ -451,7 +453,7 @@ class KQueueSocketMap(RockSolidSocketMap):
         )
     
     def poll(self, timeout=None):
-        res = self.queue.control(None, 10)
+        res = self.queue.control(None, self.nevents, timeout)
         
         for event in res:
             handler = self.socket_list[event.indet]
