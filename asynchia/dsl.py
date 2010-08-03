@@ -51,7 +51,7 @@ Attributes can be named by passing the name in square brackets. It is
 also possible to refer to expressions by the name given to them in
 lookbacks. ::
 
-    e = b.L['size'] + b.B['blub'] + LFLSE('size')['string']
+    e = b.L()['size'] + b.B()['blub'] + LFLSE('size')['string']
 
 The tuple of values collected can be converted into a dictionary that
 maps the name of the expression to the respective value by calling the
