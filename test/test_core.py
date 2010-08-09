@@ -308,6 +308,32 @@ def tes_close_write(map_):
     eq_(container.done, True)
 
 
+def tes_connfailed(map_):
+    container = Container()
+    container.done = False
+    
+    class Handler(asynchia.IOHandler):
+        def __init__(self, socket_map, sock=None, container=None):
+            asynchia.IOHandler.__init__(self, socket_map, sock)
+            self.container = container
+        
+        def handle_connect_failed(self, err):
+            container.done = True
+    
+    mo = map_()
+    c = Handler(mo, None, container)
+    try:
+        c.connect(('wrong.invalid', 81))
+    except socket.error:
+        container.done = True
+        
+    
+    s = time.time()
+    while not container.done and time.time() < s + 10:
+        mo.poll(abs(10 - (time.time() - s)))
+    eq_(container.done, True)
+
+
 def test_maps():
     maps = \
          (getattr(asynchia.maps, name) for name in 
@@ -323,7 +349,7 @@ def test_maps():
     tests = [
         tes_interrupt, t_changeflag(ctx), t_changeflag(std),
         tes_remove, tes_remove2, tes_close, tes_close_read,
-        tes_close_write
+        tes_close_write, tes_connfailed
     ]
     
     for m in maps:
@@ -368,31 +394,6 @@ def test_error():
     c.connect(s.socket.getsockname())
     
     c.set_writeable(True)
-    
-    s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
-    eq_(container.done, True)
-
-def test_connfailed():
-    container = Container()
-    container.done = False
-    
-    class Handler(asynchia.IOHandler):
-        def __init__(self, socket_map, sock=None, container=None):
-            asynchia.IOHandler.__init__(self, socket_map, sock)
-            self.container = container
-        
-        def handle_connect_failed(self, err):
-            container.done = True
-    
-    mo = asynchia.maps.DefaultSocketMap()
-    c = Handler(mo, None, container)
-    try:
-        c.connect(('wrong.invalid', 81))
-    except socket.error:
-        container.done = True
-        
     
     s = time.time()
     while not container.done and time.time() < s + 10:
