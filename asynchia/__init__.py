@@ -97,19 +97,6 @@ class Notifier:
         """ Call handle_read of the object. If any error occurs within it,
         call handle_error of the object. If it is the first read event call
         the handle_connect method. """
-        if not obj.readable:
-            # This shouldn't be happening!
-            return
-        try:
-            obj.handle_read()
-        except Exception:
-            obj.handle_error()
-    
-    @staticmethod
-    def write_obj(obj):
-        """ Call handle_write of the object. If any error occurs within it,
-        call handle_error of the object. If it is the first write event call
-        the handle_connect method. """
         if obj.awaiting_connect:
             obj.stop_awaiting_connect()
             obj.connected = True
@@ -126,6 +113,19 @@ class Notifier:
                 except Exception:
                     obj.handle_error()
         
+        if not obj.readable:
+            # This shouldn't be happening!
+            return
+        try:
+            obj.handle_read()
+        except Exception:
+            obj.handle_error()
+    
+    @staticmethod
+    def write_obj(obj):
+        """ Call handle_write of the object. If any error occurs within it,
+        call handle_error of the object. If it is the first write event call
+        the handle_connect method. """
         if not obj.writeable:
             # This should only be happening if the object was just connected.
             return
