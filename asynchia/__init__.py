@@ -104,6 +104,7 @@ class Notifier:
             err = obj.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
             if err:
                 try:
+                    obj.connected = False
                     obj.handle_connect_failed(err)
                 except Exception:
                     obj.handle_error()
@@ -126,6 +127,23 @@ class Notifier:
         """ Call handle_write of the object. If any error occurs within it,
         call handle_error of the object. If it is the first write event call
         the handle_connect method. """
+        if obj.awaiting_connect:
+            obj.stop_awaiting_connect()
+            obj.connected = True
+            # Errno of the asynchronous connect function.
+            err = obj.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+            if err:
+                try:
+                    obj.connected = False
+                    obj.handle_connect_failed(err)
+                except Exception:
+                    obj.handle_error()
+            else:
+                try:
+                    obj.handle_connect()
+                except Exception:
+                    obj.handle_error()
+        
         if not obj.writeable:
             # This should only be happening if the object was just connected.
             return
