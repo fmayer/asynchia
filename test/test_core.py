@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import time
+import errno
 import socket
 import threading
 
@@ -327,6 +328,43 @@ def tes_connfailed(map_):
     except socket.error:
         container.done = True
         
+    
+    s = time.time()
+    while not container.done and time.time() < s + 10:
+        mo.poll(abs(10 - (time.time() - s)))
+    eq_(container.done, True)
+
+def tes_connfailed2(map_):
+    container = Container()
+    container.done = False
+    
+    class Handler(asynchia.IOHandler):
+        def __init__(self, socket_map, sock=None, container=None):
+            asynchia.IOHandler.__init__(self, socket_map, sock)
+            self.container = container
+        
+        def handle_connect_failed(self, err):
+            if err != errno.ECONNREFUSED:
+                eq_(True, False)
+            container.done = True
+    
+    mo = map_()
+    c = Handler(mo, None, container)
+    
+    acceptor = socket.socket()
+    # Random port. Only accept local connections.
+    acceptor.bind(('127.0.0.1', 0))
+    # We know we'll only get one connection.
+    acceptor.listen(1)
+
+    one = socket.socket()
+    one.connect(acceptor.getsockname())
+    
+    other = acceptor.accept()[0]
+    try:
+        c.connect(acceptor.getsockname())
+    except socket.error:
+        container.done = True
     
     s = time.time()
     while not container.done and time.time() < s + 10:
