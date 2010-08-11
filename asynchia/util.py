@@ -18,6 +18,7 @@
 
 """ Auxiliary functions. """
 
+import math
 import socket
 
 class IDPool(object):
@@ -131,3 +132,8 @@ def parse_ip(string, default_port=-1):
         return parse_ipv6(string, default_port)
     else:
         return parse_ipv4(string, default_port)
+
+
+def goodsize(maxsize):
+    """ Return biggest power of two that is less or equal to maxsize. """
+    return 2 ** math.floor(math.log(maxsize, 2))
