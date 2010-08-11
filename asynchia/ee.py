@@ -542,16 +542,16 @@ class SingleStructValueCollector(StructCollector):
 class Handler(asynchia.IOHandler):
     """ asynchia handler that adds all received data to a collector,
     and reads outgoing data from an Input. """
-    def __init__(self, socket_map, sock=None, collector=None,
+    def __init__(self, transport, collector=None,
                  buffer_size=9046):
-        asynchia.IOHandler.__init__(self, socket_map, sock)
+        asynchia.IOHandler.__init__(self, transport)
         
         self.queue = InputQueue()
         self.collector = collector
         self.buffer_size = buffer_size
         
         if collector is not None:
-            self.set_readable(True)
+            self.transport.set_readable(True)
     
     def set_collector(self, collector, noclose=False):
         """ Set the top-level collector to collector. If noclose is False,
@@ -560,13 +560,13 @@ class Handler(asynchia.IOHandler):
             self.collector.close()
         self.collector = collector
         if not self.readable:
-            self.set_readable(True)
+            self.transport.set_readable(True)
     
     def send_input(self, inp):
         """ Add inp to the main input queue. """
         self.queue.add(inp)
-        if not self.writeable:
-            self.set_writeable(True)
+        if not self.transport.writeable:
+            self.transport.set_writeable(True)
     
     def send_str(self, string):
         """ Convenience method for .send_input(StringInput(string)) """
@@ -574,17 +574,19 @@ class Handler(asynchia.IOHandler):
     
     def handle_read(self):
         """ Do the read call. """
-        done, nrecv = self.collector.add_data(self, self.buffer_size)
+        done, nrecv = self.collector.add_data(
+            self.transport, self.buffer_size
+        )
         if done:
             # We can safely assume it is readable here.
-            self.set_readable(False)
+            self.transport.set_readable(False)
     
     def handle_write(self):
         """ Do the write call. """
-        done, sent = self.queue.tick(self)
+        done, sent = self.queue.tick(self.transport)
         if done:
             # We can safely assume it is writeable here.
-            self.set_writeable(False)
+            self.transport.set_writeable(False)
     
     def has_data(self):
         """ Tell whether the Handler has any data to be sent. """

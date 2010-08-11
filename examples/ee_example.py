@@ -32,7 +32,11 @@ import asynchia.protocols
 class EchoAcceptor(asynchia.AcceptHandler):
     def handle_accept(self, sock, addr):
         collector = asynchia.ee.FileCollector(sys.stdout, False)
-        asynchia.ee.Handler(self.socket_map, sock, collector)
+        asynchia.ee.Handler(
+            asynchia.SocketTransport(
+                self.transport.socket_map, sock
+            ),
+            collector)
     
     def handle_error(self):
         raise
@@ -41,13 +45,13 @@ class EchoAcceptor(asynchia.AcceptHandler):
 if __name__ == '__main__':
     # This should show "Foo" in your console.
     m = asynchia.maps.DefaultSocketMap()
-    a = EchoAcceptor(m, socket.socket())
-    a.reuse_addr()
-    a.bind(('127.0.0.1', 25000))
-    a.listen(0)
+    a = EchoAcceptor(asynchia.SocketTransport(m))
+    a.transport.reuse_addr()
+    a.transport.bind(('127.0.0.1', 25000))
+    a.transport.listen(0)
     
-    c = asynchia.ee.Handler(m, socket.socket())
-    c.connect(('127.0.0.1', 25000))
+    c = asynchia.ee.Handler(asynchia.SocketTransport(m))
+    c.transport.connect(('127.0.0.1', 25000))
     c.send_input(asynchia.ee.StringInput("Foo\n"))
     
     try:
