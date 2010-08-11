@@ -26,10 +26,6 @@ import traceback
 
 __version__ = '0.1a1'
 
-trylater = (errno.EAGAIN,)
-connection_lost = (errno.ECONNRESET, errno.ECONNABORTED)
-defaultsocket_factory = socket.socket
-
 
 class SocketMap:
     """ Decide which sockets have I/O to be done and tell the notifier
@@ -188,9 +184,64 @@ class Notifier:
             obj.handle_error()
 
 
-class Handler(object):
-    """ Handle a socket object. Call this objects handle_* methods upon I/O """
-    def __init__(self, socket_map, sock=None):
+class Transport(object):
+    def __init__(self, handler=None):
+        self.handler = None
+    
+    def recv(self, nbytes):
+        raise NotImplementedError
+    
+    def send(self, string):
+        raise NotImplementedError
+    
+    def handle_read(self):
+        """ Handle read I/O at socket. """
+        if self.handler is not None:
+            self.handler.handle_read()
+    
+    def handle_write(self):
+        """ Handle write I/O at socket. """
+        if self.handler is not None:
+            self.handler.handle_write()
+    
+    def handle_error(self):
+        """ Handle error in handler. """
+        # This is the sanest default.
+        if self.handler is not None:
+            self.handler.handle_error()
+    
+    def handle_except(self, err):
+        """ Handle exception state at error. """
+        if self.handler is not None:
+            self.handler.handle_except(err)
+    
+    def handle_connect(self):
+        """ Connection established. """
+        if self.handler is not None:
+            self.handler.handle_connect()
+    
+    def handle_connect_failed(self, err):
+        """ Connection couldn't be established. """
+        if self.handler is not None:
+            self.handler.handle_connect_failed()
+    
+    def handle_close(self):
+        """ Connection closed. Note that this is only called if the
+        connection is closed by the remote end! """
+        if self.handler is not None:
+            self.handler.handle_close()
+    
+    def handle_cleanup(self):
+        """ Called whenever the Handler is voided, for whatever reason.
+        This may be the shutdown of the program, the closing of the
+        connection by the local end or the like. """
+        if self.handler is not None:
+            self.handler.handle_cleanup()
+
+
+class SocketTransport(Transport):
+    def __init__(self, socket_map, sock=None, handler=None):
+        super(SocketTransport, self).__init__(handler)
         # Make no assumptions on what we want to do with the handler.
         # The user will need to explicitely make it read- or writeable.
         if sock is None:
@@ -328,58 +379,6 @@ class Handler(object):
         Needed for select.select. """
         return self.socket.fileno()
     
-    # Dummy handlers.
-    def handle_read(self):
-        """ Handle read I/O at socket. """
-        pass
-    
-    def handle_write(self):
-        """ Handle write I/O at socket. """
-        pass
-    
-    def handle_error(self):
-        """ Handle error in handler. """
-        # This is the sanest default.
-        traceback.print_exc()
-    
-    def handle_except(self, err):
-        """ Handle exception state at error. """
-        pass
-    
-    def handle_connect(self):
-        """ Connection established. """
-        pass
-    
-    def handle_connect_failed(self, err):
-        """ Connection couldn't be established. """
-        pass
-    
-    def handle_close(self):
-        """ Connection closed. Note that this is only called if the
-        connection is closed by the remote end! """
-        pass
-    
-    def handle_cleanup(self):
-        """ Called whenever the Handler is voided, for whatever reason.
-        This may be the shutdown of the program, the closing of the
-        connection by the local end or the like. """
-
-
-class AcceptHandler(Handler):
-    """ Handle socket that accepts connections. """
-    def __init__(self, socket_map, sock=None):
-        Handler.__init__(self, socket_map, sock)
-    
-    def handle_read(self):
-        """ Do not override. """
-        sock, addr = self.accept()
-        if sock is not None:
-            self.handle_accept(sock, addr)
-    
-    def handle_accept(self, sock, addr):
-        """ Accept connection from addr at sock. """
-        pass
-    
     def listen(self, num):
         """ Listen for a maximum of num connections. """
         if not self.readable:
@@ -406,10 +405,7 @@ class AcceptHandler(Handler):
     def reuse_addr(self):
         """ Reuse the address. """
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-
-class IOHandler(Handler):
-    """ Handle socket that sends and receives data. """
+    
     def send(self, data, flags=0):
         """ Send data.
     
@@ -505,6 +501,87 @@ class IOHandler(Handler):
             raise socket.error(err, os.strerror(err))
 
 
+class SendallTrait(object):
+    def __init__(self, *args, **kwargs):
+        super(SendallTrait, self).__init__(*args, **kwargs)
+        self.buf = ''
+    
+    def sendall(self, data):
+        self.buf += data
+    
+    def handle_write(self):
+        if not self.buf and self.handler is not None:
+            super(SendallTrait, self).handle_write()
+        sent = self.send(self.buf)
+        self.buf = self.buf[sent:]
+
+
+class Handler(object):
+    """ Handle a socket object. Call this objects handle_* methods upon I/O """
+    # Dummy handlers.
+    def __init__(self, transport=None):
+        if transport is None:
+            transport = defaulttransport_factory()
+        self.transport = transport
+        
+        self.transport.handler = self
+    
+    def handle_read(self):
+        """ Handle read I/O at socket. """
+        pass
+    
+    def handle_write(self):
+        """ Handle write I/O at socket. """
+        pass
+    
+    def handle_error(self):
+        """ Handle error in handler. """
+        # This is the sanest default.
+        traceback.print_exc()
+    
+    def handle_except(self, err):
+        """ Handle exception state at error. """
+        pass
+    
+    def handle_connect(self):
+        """ Connection established. """
+        pass
+    
+    def handle_connect_failed(self, err):
+        """ Connection couldn't be established. """
+        pass
+    
+    def handle_close(self):
+        """ Connection closed. Note that this is only called if the
+        connection is closed by the remote end! """
+        pass
+    
+    def handle_cleanup(self):
+        """ Called whenever the Handler is voided, for whatever reason.
+        This may be the shutdown of the program, the closing of the
+        connection by the local end or the like. """
+
+
+class AcceptHandler(Handler):
+    """ Handle socket that accepts connections. """
+    def __init__(self, transport=None):
+        Handler.__init__(self, transport)
+    
+    def handle_read(self):
+        """ Do not override. """
+        sock, addr = self.transport.accept()
+        if sock is not None:
+            self.handle_accept(sock, addr)
+    
+    def handle_accept(self, sock, addr):
+        """ Accept connection from addr at sock. """
+        pass
+
+
+class IOHandler(Handler):
+    """ Handle socket that sends and receives data. """
+
+
 class Server(AcceptHandler):
     """ Automatically create an instance of handlercls for every
     connection. """
@@ -529,3 +606,8 @@ class Server(AcceptHandler):
             self.socket_map.run()
         finally:
             self.close()
+
+trylater = (errno.EAGAIN,)
+connection_lost = (errno.ECONNRESET, errno.ECONNABORTED)
+defaultsocket_factory = socket.socket
+defaulttransport_factory = SocketTransport
