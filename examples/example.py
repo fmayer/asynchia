@@ -28,14 +28,14 @@ import asynchia.maps
 import asynchia.protocols
 
 
-class EchoClient(asynchia.IOHandler):
+class EchoClient(asynchia.Handler):
     def handle_connect(self):
         self.transport.send("Foo\n")
 
 
-class Echo(asynchia.IOHandler):
+class Echo(asynchia.Handler):
     def __init__(self, transport=None):
-        asynchia.IOHandler.__init__(self, transport)
+        asynchia.Handler.__init__(self, transport)
         if not self.transport.readable:
             self.transport.set_readable(True)
         self.transport.set_writeable(False)
@@ -51,7 +51,11 @@ class Echo(asynchia.IOHandler):
 
 class EchoAcceptor(asynchia.AcceptHandler):
     def handle_accept(self, sock, addr):
-        Echo(asynchia.SocketTransport(self.transport.socket_map, sock))
+        Echo(
+            asynchia.SocketTransport(
+                self.transport.socket_map, sock
+            )
+        )
 
 
 if __name__ == '__main__':

@@ -578,14 +578,10 @@ class AcceptHandler(Handler):
         pass
 
 
-class IOHandler(Handler):
-    """ Handle socket that sends and receives data. """
-
-
 class Server(AcceptHandler):
     """ Automatically create an instance of handlercls for every
     connection. """
-    def __init__(self, socket_map, sock=None, handlercls=IOHandler):
+    def __init__(self, socket_map, sock=None, handlercls=Handler):
         AcceptHandler.__init__(self, socket_map, sock)
         self.handlercls = handlercls
     

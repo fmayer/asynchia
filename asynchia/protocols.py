@@ -21,11 +21,11 @@
 import asynchia
 
 
-class BufferedSendHandler(asynchia.IOHandler):
+class BufferedSendHandler(asynchia.Handler):
     """ Buffer the data that's sent if it couldn't be sent as
     one piece. """
     def __init__(self, socket_map, sock=None):
-        asynchia.IOHandler.__init__(self, socket_map, sock)
+        asynchia.Handler.__init__(self, socket_map, sock)
         self.write_buffer = ''
     
     def sendall(self, data):

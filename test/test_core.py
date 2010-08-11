@@ -75,7 +75,7 @@ def t_changeflag(subthread):
         
         class Serv(asynchia.Server):
             def __init__(
-                self, socket_map, sock=None, handlercls=asynchia.IOHandler
+                self, socket_map, sock=None, handlercls=asynchia.Handler
                 ):
                 asynchia.Server.__init__(self, socket_map, sock, handlercls)
                 self.clients = []
@@ -84,9 +84,9 @@ def t_changeflag(subthread):
                 self.clients.append(handler)
         
         
-        class Handler(asynchia.IOHandler):
+        class Handler(asynchia.Handler):
             def __init__(self, socket_map, sock=None, container=None):
-                asynchia.IOHandler.__init__(self, socket_map, sock)
+                asynchia.Handler.__init__(self, socket_map, sock)
                 self.container = container
             
             def handle_connect(self):
@@ -128,7 +128,7 @@ def tes_remove(map_):
     
     class Serv(asynchia.Server):
         def __init__(
-            self, socket_map, sock=None, handlercls=asynchia.IOHandler
+            self, socket_map, sock=None, handlercls=asynchia.Handler
             ):
             asynchia.Server.__init__(self, socket_map, sock, handlercls)
             self.clients = []
@@ -137,9 +137,9 @@ def tes_remove(map_):
             self.clients.append(handler)
     
     
-    class Handler(asynchia.IOHandler):
+    class Handler(asynchia.Handler):
         def __init__(self, socket_map, sock=None, container=None):
-            asynchia.IOHandler.__init__(self, socket_map, sock)
+            asynchia.Handler.__init__(self, socket_map, sock)
             self.container = container
             self.set_writeable(True)
         
@@ -178,7 +178,7 @@ def tes_remove2(map_):
     
     class Serv(asynchia.Server):
         def __init__(
-            self, socket_map, sock=None, handlercls=asynchia.IOHandler
+            self, socket_map, sock=None, handlercls=asynchia.Handler
             ):
             asynchia.Server.__init__(self, socket_map, sock, handlercls)
             self.clients = []
@@ -187,9 +187,9 @@ def tes_remove2(map_):
             self.clients.append(handler)
     
     
-    class Handler(asynchia.IOHandler):
+    class Handler(asynchia.Handler):
         def __init__(self, socket_map, sock=None, container=None):
-            asynchia.IOHandler.__init__(self, socket_map, sock)
+            asynchia.Handler.__init__(self, socket_map, sock)
             self.container = container
         
         def handle_connect(self):
@@ -231,9 +231,9 @@ def tes_close(map_):
     
     a, b = asynchia.util.socketpair()
     
-    class Handler(asynchia.IOHandler):
+    class Handler(asynchia.Handler):
         def __init__(self, socket_map, sock=None, container=None):
-            asynchia.IOHandler.__init__(self, socket_map, sock)
+            asynchia.Handler.__init__(self, socket_map, sock)
             self.container = container
         
         def handle_close(self):
@@ -258,9 +258,9 @@ def tes_close_read(map_):
     
     a, b = asynchia.util.socketpair()
     
-    class Handler(asynchia.IOHandler):
+    class Handler(asynchia.Handler):
         def __init__(self, socket_map, sock=None, container=None):
-            asynchia.IOHandler.__init__(self, socket_map, sock)
+            asynchia.Handler.__init__(self, socket_map, sock)
             self.container = container
             
             self.set_readable(True)
@@ -287,9 +287,9 @@ def tes_close_write(map_):
     
     a, b = asynchia.util.socketpair()
     
-    class Handler(asynchia.IOHandler):
+    class Handler(asynchia.Handler):
         def __init__(self, socket_map, sock=None, container=None):
-            asynchia.IOHandler.__init__(self, socket_map, sock)
+            asynchia.Handler.__init__(self, socket_map, sock)
             self.container = container
             
             self.set_writeable(True)
@@ -313,9 +313,9 @@ def tes_connfailed(map_):
     container = Container()
     container.done = False
     
-    class Handler(asynchia.IOHandler):
+    class Handler(asynchia.Handler):
         def __init__(self, socket_map, sock=None, container=None):
-            asynchia.IOHandler.__init__(self, socket_map, sock)
+            asynchia.Handler.__init__(self, socket_map, sock)
             self.container = container
         
         def handle_connect_failed(self, err):
@@ -338,9 +338,9 @@ def tes_connfailed2(map_):
     container = Container()
     container.done = False
     
-    class Handler(asynchia.IOHandler):
+    class Handler(asynchia.Handler):
         def __init__(self, socket_map, sock=None, container=None):
-            asynchia.IOHandler.__init__(self, socket_map, sock)
+            asynchia.Handler.__init__(self, socket_map, sock)
             self.container = container
         
         def handle_connect_failed(self, err):
@@ -401,7 +401,7 @@ def test_error():
     
     class Serv(asynchia.Server):
         def __init__(
-            self, socket_map, sock=None, handlercls=asynchia.IOHandler
+            self, socket_map, sock=None, handlercls=asynchia.Handler
             ):
             asynchia.Server.__init__(self, socket_map, sock, handlercls)
             self.clients = []
@@ -410,9 +410,9 @@ def test_error():
             self.clients.append(handler)
     
     
-    class Handler(asynchia.IOHandler):
+    class Handler(asynchia.Handler):
         def __init__(self, socket_map, sock=None, container=None):
-            asynchia.IOHandler.__init__(self, socket_map, sock)
+            asynchia.Handler.__init__(self, socket_map, sock)
             self.container = container
         
         def handle_write(self):
@@ -442,8 +442,8 @@ def test_error():
 def test_pingpong():
     mo = asynchia.maps.DefaultSocketMap()
     a, b = asynchia.util.socketpair()
-    ha = asynchia.IOHandler(mo, a)
-    hb = asynchia.IOHandler(mo, b)
+    ha = asynchia.Handler(mo, a)
+    hb = asynchia.Handler(mo, b)
     
     ha.set_writeable(True)
     hb.set_readable(True)

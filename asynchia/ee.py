@@ -539,12 +539,12 @@ class SingleStructValueCollector(StructCollector):
     def value(self):
         return self.intvalue[0]
     
-class Handler(asynchia.IOHandler):
+class Handler(asynchia.Handler):
     """ asynchia handler that adds all received data to a collector,
     and reads outgoing data from an Input. """
     def __init__(self, transport, collector=None,
                  buffer_size=9046):
-        asynchia.IOHandler.__init__(self, transport)
+        asynchia.Handler.__init__(self, transport)
         
         self.queue = InputQueue()
         self.collector = collector
