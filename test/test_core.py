@@ -75,9 +75,9 @@ def t_changeflag(subthread):
         
         class Serv(asynchia.Server):
             def __init__(
-                self, socket_map, sock=None, handlercls=asynchia.Handler
+                self, transport, handlercls=asynchia.Handler
                 ):
-                asynchia.Server.__init__(self, socket_map, sock, handlercls)
+                asynchia.Server.__init__(self, transport, handlercls)
                 self.clients = []
             
             def new_connection(self, handler, addr):
@@ -85,32 +85,33 @@ def t_changeflag(subthread):
         
         
         class Handler(asynchia.Handler):
-            def __init__(self, socket_map, sock=None, container=None):
-                asynchia.Handler.__init__(self, socket_map, sock)
+            def __init__(self, transport, container=None):
+                asynchia.Handler.__init__(self, transport)
                 self.container = container
             
             def handle_connect(self):
                 container.thr = threading.Thread(
-                    target=subthread, args=(self.socket_map, self)
+                    target=subthread,
+                    args=[self.transport.socket_map, self.transport]
                 )
                 container.thr.start()
             
             def handle_write(self):
                 container.done = True
-                self.set_writeable(False)
+                self.transport.set_writeable(False)
             
             # Prevent exception from being suppressed.
             def handle_error(self):
                 raise
         
         mo = map_()
-        s = Serv(mo)
-        s.bind(('127.0.0.1', 0))
+        s = Serv(asynchia.SocketTransport(mo))
+        s.transport.bind(('127.0.0.1', 0))
         # We know we'll only get one connection.
-        s.listen(1)
+        s.transport.listen(1)
         
-        c = Handler(mo, None, container)
-        c.connect(s.socket.getsockname())
+        c = Handler(asynchia.SocketTransport(mo), container)
+        c.transport.connect(s.transport.socket.getsockname())
         n = 0
         s = time.time()
         while not container.done and time.time() < s + 10:
@@ -128,9 +129,9 @@ def tes_remove(map_):
     
     class Serv(asynchia.Server):
         def __init__(
-            self, socket_map, sock=None, handlercls=asynchia.Handler
+            self, transport, handlercls=asynchia.Handler
             ):
-            asynchia.Server.__init__(self, socket_map, sock, handlercls)
+            asynchia.Server.__init__(self, transport, handlercls)
             self.clients = []
         
         def new_connection(self, handler, addr):
@@ -138,10 +139,10 @@ def tes_remove(map_):
     
     
     class Handler(asynchia.Handler):
-        def __init__(self, socket_map, sock=None, container=None):
-            asynchia.Handler.__init__(self, socket_map, sock)
+        def __init__(self, transport, container=None):
+            asynchia.Handler.__init__(self, transport)
             self.container = container
-            self.set_writeable(True)
+            self.transport.set_writeable(True)
         
         def handle_write(self):
             container.done = True
@@ -151,18 +152,18 @@ def tes_remove(map_):
             raise
     
     mo = map_()
-    s = Serv(mo)
-    s.bind(('127.0.0.1', 0))
+    s = Serv(asynchia.SocketTransport(mo))
+    s.transport.bind(('127.0.0.1', 0))
     # We know we'll only get one connection.
-    s.listen(1)
+    s.transport.listen(1)
     
-    c = Handler(mo, None, container)
-    c.connect(s.socket.getsockname())
+    c = Handler(asynchia.SocketTransport(mo), container)
+    c.transport.connect(s.transport.socket.getsockname())
     s = time.time()
     while not container.done and time.time() < s + 10:
         mo.poll(abs(10 - (time.time() - s)))
     eq_(container.done, True)
-    mo.del_handler(c)
+    mo.del_transport(c.transport)
     container.done = False
     s = time.time()
     while not container.done and time.time() < s + 10:
@@ -178,9 +179,9 @@ def tes_remove2(map_):
     
     class Serv(asynchia.Server):
         def __init__(
-            self, socket_map, sock=None, handlercls=asynchia.Handler
+            self, transport, handlercls=asynchia.Handler
             ):
-            asynchia.Server.__init__(self, socket_map, sock, handlercls)
+            asynchia.Server.__init__(self, transport, handlercls)
             self.clients = []
         
         def new_connection(self, handler, addr):
@@ -188,12 +189,12 @@ def tes_remove2(map_):
     
     
     class Handler(asynchia.Handler):
-        def __init__(self, socket_map, sock=None, container=None):
-            asynchia.Handler.__init__(self, socket_map, sock)
+        def __init__(self, transport, container=None):
+            asynchia.Handler.__init__(self, transport)
             self.container = container
         
         def handle_connect(self):
-            self.set_writeable(True)
+            self.transport.set_writeable(True)
         
         def handle_write(self):
             container.done = True
@@ -203,19 +204,19 @@ def tes_remove2(map_):
             raise
     
     mo = map_()
-    s = Serv(mo)
-    s.bind(('127.0.0.1', 0))
+    s = Serv(asynchia.SocketTransport(mo))
+    s.transport.bind(('127.0.0.1', 0))
     # We know we'll only get one connection.
-    s.listen(1)
+    s.transport.listen(1)
     
-    c = Handler(mo, None, container)
-    c.connect(s.socket.getsockname())
+    c = Handler(asynchia.SocketTransport(mo), container)
+    c.transport.connect(s.transport.socket.getsockname())
     s = time.time()
     s = time.time()
     while not container.done and time.time() < s + 10:
         mo.poll(abs(10 - (time.time() - s)))
     eq_(container.done,  True)
-    mo.del_handler(c)
+    mo.del_transport(c.transport)
     container.done = False
     s = time.time()
     while not container.done and time.time() < s + 10:
@@ -232,8 +233,8 @@ def tes_close(map_):
     a, b = asynchia.util.socketpair()
     
     class Handler(asynchia.Handler):
-        def __init__(self, socket_map, sock=None, container=None):
-            asynchia.Handler.__init__(self, socket_map, sock)
+        def __init__(self, transport, container=None):
+            asynchia.Handler.__init__(self, transport)
             self.container = container
         
         def handle_close(self):
@@ -242,7 +243,7 @@ def tes_close(map_):
     
     mo = map_()
     
-    c = Handler(mo, a, container)
+    c = Handler(asynchia.SocketTransport(mo, a), container)
     b.close()
     s = time.time()
     while not container.done and time.time() < s + 10:
@@ -259,11 +260,11 @@ def tes_close_read(map_):
     a, b = asynchia.util.socketpair()
     
     class Handler(asynchia.Handler):
-        def __init__(self, socket_map, sock=None, container=None):
-            asynchia.Handler.__init__(self, socket_map, sock)
+        def __init__(self, transport, container=None):
+            asynchia.Handler.__init__(self, transport)
             self.container = container
             
-            self.set_readable(True)
+            self.transport.set_readable(True)
         
         def handle_close(self):
             container.done = True
@@ -271,7 +272,7 @@ def tes_close_read(map_):
     
     mo = map_()
     
-    c = Handler(mo, a, container)
+    c = Handler(asynchia.SocketTransport(mo, a), container)
     b.close()
     s = time.time()
     while not container.done and time.time() < s + 10:
@@ -288,11 +289,11 @@ def tes_close_write(map_):
     a, b = asynchia.util.socketpair()
     
     class Handler(asynchia.Handler):
-        def __init__(self, socket_map, sock=None, container=None):
-            asynchia.Handler.__init__(self, socket_map, sock)
+        def __init__(self, transport, container=None):
+            asynchia.Handler.__init__(self, transport)
             self.container = container
             
-            self.set_writeable(True)
+            self.transport.set_writeable(True)
         
         def handle_close(self):
             container.done = True
@@ -300,7 +301,7 @@ def tes_close_write(map_):
     
     mo = map_()
     
-    c = Handler(mo, a, container)
+    c = Handler(asynchia.SocketTransport(mo, a), container)
     b.close()
     s = time.time()
     while not container.done and time.time() < s + 10:
@@ -314,17 +315,17 @@ def tes_connfailed(map_):
     container.done = False
     
     class Handler(asynchia.Handler):
-        def __init__(self, socket_map, sock=None, container=None):
-            asynchia.Handler.__init__(self, socket_map, sock)
+        def __init__(self, transport, container=None):
+            asynchia.Handler.__init__(self, transport)
             self.container = container
         
         def handle_connect_failed(self, err):
             container.done = True
     
     mo = map_()
-    c = Handler(mo, None, container)
+    c = Handler(asynchia.SocketTransport(mo), container)
     try:
-        c.connect(('wrong.invalid', 81))
+        c.transport.connect(('wrong.invalid', 81))
     except socket.error:
         container.done = True
         
@@ -339,8 +340,8 @@ def tes_connfailed2(map_):
     container.done = False
     
     class Handler(asynchia.Handler):
-        def __init__(self, socket_map, sock=None, container=None):
-            asynchia.Handler.__init__(self, socket_map, sock)
+        def __init__(self, transport, container=None):
+            asynchia.Handler.__init__(self, transport)
             self.container = container
         
         def handle_connect_failed(self, err):
@@ -401,9 +402,9 @@ def test_error():
     
     class Serv(asynchia.Server):
         def __init__(
-            self, socket_map, sock=None, handlercls=asynchia.Handler
+            self, transport, handlercls=asynchia.Handler
             ):
-            asynchia.Server.__init__(self, socket_map, sock, handlercls)
+            asynchia.Server.__init__(self, transport, handlercls)
             self.clients = []
         
         def new_connection(self, handler, addr):
@@ -411,8 +412,8 @@ def test_error():
     
     
     class Handler(asynchia.Handler):
-        def __init__(self, socket_map, sock=None, container=None):
-            asynchia.Handler.__init__(self, socket_map, sock)
+        def __init__(self, transport, container=None):
+            asynchia.Handler.__init__(self, transport)
             self.container = container
         
         def handle_write(self):
@@ -423,15 +424,15 @@ def test_error():
             self.container.done = True
     
     mo = asynchia.maps.DefaultSocketMap()
-    s = Serv(mo)
-    s.bind(('127.0.0.1', 0))
+    s = Serv(asynchia.SocketTransport(mo))
+    s.transport.bind(('127.0.0.1', 0))
     # We know we'll only get one connection.
-    s.listen(1)
+    s.transport.listen(1)
     
-    c = Handler(mo, None, container)
-    c.connect(s.socket.getsockname())
+    c = Handler(asynchia.SocketTransport(mo), container)
+    c.transport.connect(s.transport.socket.getsockname())
     
-    c.set_writeable(True)
+    c.transport.set_writeable(True)
     
     s = time.time()
     while not container.done and time.time() < s + 10:
@@ -442,11 +443,11 @@ def test_error():
 def test_pingpong():
     mo = asynchia.maps.DefaultSocketMap()
     a, b = asynchia.util.socketpair()
-    ha = asynchia.Handler(mo, a)
-    hb = asynchia.Handler(mo, b)
+    ha = asynchia.Handler(asynchia.SocketTransport(mo, a))
+    hb = asynchia.Handler(asynchia.SocketTransport(mo, b))
     
-    ha.set_writeable(True)
-    hb.set_readable(True)
+    ha.transport.set_writeable(True)
+    hb.transport.set_readable(True)
     
     ha.handle_write = lambda: ha.send("Foo")
     hb.handle_read = lambda: eq_(hb.recv(3), 'Foo')

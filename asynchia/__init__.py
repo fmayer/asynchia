@@ -35,13 +35,13 @@ class SocketMap:
             notifier = Notifier()
         self.notifier = notifier
     
-    def add_handler(self, obj):
+    def add_transport(self, obj):
         """ Add handler to the socket-map. This gives the SocketMap
         the responsibility to call its handle_read, handle_write,
         handle_close and handle_connect upon new I/O events. """
         raise NotImplementedError
     
-    def del_handler(self, obj):
+    def del_transport(self, obj):
         """ Remove handler from the socket-map. It will no longer have its
         handle_read, handle_write, handle_close and handle_connect methods
         called upon new I/O events. """
@@ -259,7 +259,7 @@ class SocketTransport(Transport):
     
     def close(self):
         """ Close the socket. """
-        self.socket_map.del_handler(self)
+        self.socket_map.del_transport(self)
         self.connected = False
         try:
             self.socket.close()
@@ -282,7 +282,7 @@ class SocketTransport(Transport):
         if self.socket:
             # If we had a socket before, we are still in the SocketMap.
             # Remove us out of it.
-            self.socket_map.del_handler(self)
+            self.socket_map.del_transport(self)
         
         sock.setblocking(0)
         try:
@@ -301,7 +301,7 @@ class SocketTransport(Transport):
             self.handle_connect()
         
         self.socket = sock
-        self.socket_map.add_handler(self)
+        self.socket_map.add_transport(self)
         if await:
             self.await_connect()
     
@@ -581,13 +581,15 @@ class AcceptHandler(Handler):
 class Server(AcceptHandler):
     """ Automatically create an instance of handlercls for every
     connection. """
-    def __init__(self, socket_map, sock=None, handlercls=Handler):
-        AcceptHandler.__init__(self, socket_map, sock)
+    def __init__(self, transport, handlercls=Handler):
+        AcceptHandler.__init__(self, transport)
         self.handlercls = handlercls
     
     def handle_accept(self, sock, addr):
         """ Instantiate the handler class. """
-        handler = self.handlercls(self.socket_map, sock)
+        handler = self.handlercls(
+            SocketTransport(self.transport.socket_map, sock)
+        )
         self.new_connection(handler, addr)
         return handler
     
