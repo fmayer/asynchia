@@ -193,6 +193,8 @@ class SelectSocketMap(FragileSocketMap):
                                           self.socket_list, timeout)
         for obj in read:
             if obj is not self.controlreceiver:
+                # This seems to be the only way to find hangup-events with
+                # select.
                 try:
                     if obj.connected:
                         obj.socket.send('')
