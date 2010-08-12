@@ -348,6 +348,9 @@ def tes_connfailed2(map_):
             if err != errno.ECONNREFUSED:
                 eq_(True, False)
             container.done = True
+        
+        def handle_connect(self):
+            eq_(True, False)
     
     mo = map_()
     c = Handler(asynchia.SocketTransport(mo), container)
@@ -357,13 +360,13 @@ def tes_connfailed2(map_):
     acceptor.bind(('127.0.0.1', 0))
     # We know we'll only get one connection.
     acceptor.listen(1)
-
-    one = socket.socket()
-    one.connect(acceptor.getsockname())
     
-    other = acceptor.accept()[0]
+    name = acceptor.getsockname()
+    
+    acceptor.close()
+    
     try:
-        c.transport.connect(acceptor.getsockname())
+        c.transport.connect(name)
     except socket.error:
         container.done = True
     
