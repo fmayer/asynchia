@@ -504,34 +504,35 @@ class SocketTransport(Transport):
 class SendallTrait(object):
     def __init__(self, *args, **kwargs):
         super(SendallTrait, self).__init__(*args, **kwargs)
-        self.buf = ''
-        self.savewriteable = None
+        self.__buf = ''
+        self.__savewriteable = None
     
     def set_writeable(self, value):
-        if not self.buf:
+        if not self.__buf:
             super(SendallTrait, self).set_writeable(value)
         else:
-            self.savewriteable = value
+            self.__savewriteable = value
     
     def get_writeable(self):
         return super(SendallTrait, self).get_writeable()
     
     def sendall(self, data):
-        if not self.buf:
+        if not self.__buf:
             self.savewritable = self.writeable
         self.set_writeable(True)
-        self.buf += data
+        self.__buf += data
     
     def handle_write(self):
-        if self.savewritable is not None:
-            super(SendallTrait, self).set_writeable(self.savewriteable)
-            self.savewriteable = None
+        if not self.__buf:
+            if self.savewritable is not None:
+                super(SendallTrait, self).set_writeable(self.__savewriteable)
+                self.__savewriteable = None
         
-        if not self.buf and self.handler is not None and self.writeable:
-            super(SendallTrait, self).handle_write()
-        
-        sent = super(SendallTrait, self).send(self.buf)
-        self.buf = self.buf[sent:]
+            if self.handler is not None and self.writeable:
+                super(SendallTrait, self).handle_write()
+        else:
+            sent = super(SendallTrait, self).send(self.__buf)
+            self.__buf = self.__buf[sent:]
     
     writeable = property(get_writeable, set_writeable)
 
