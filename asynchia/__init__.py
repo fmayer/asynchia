@@ -524,14 +524,14 @@ class SendallTrait(object):
     def sendall(self, data):
         """ Send all of data, if necessary in multiple steps. """
         if not self.__buf:
-            self.savewritable = self.writeable
+            self.__savewritable = self.writeable
         self.set_writeable(True)
         self.__buf += data
     
     def handle_write(self):
         """ Internal. """
         if not self.__buf:
-            if self.savewritable is not None:
+            if self.__savewritable is not None:
                 super(SendallTrait, self).set_writeable(self.__savewriteable)
                 self.__savewriteable = None
         
