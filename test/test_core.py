@@ -347,6 +347,9 @@ def tes_connfailed2(map_):
             if err != errno.ECONNREFUSED:
                 eq_(True, False)
             container.done = True
+        
+        def handle_connect(self):
+            eq_(True, False)
     
     mo = map_()
     c = Handler(mo, None, container)
@@ -356,13 +359,13 @@ def tes_connfailed2(map_):
     acceptor.bind(('127.0.0.1', 0))
     # We know we'll only get one connection.
     acceptor.listen(1)
-
-    one = socket.socket()
-    one.connect(acceptor.getsockname())
     
-    other = acceptor.accept()[0]
+    name = acceptor.getsockname()
+    
+    acceptor.close()
+    
     try:
-        c.connect(acceptor.getsockname())
+        c.connect(name)
     except socket.error:
         container.done = True
     
@@ -387,7 +390,7 @@ def test_maps():
     tests = [
         tes_interrupt, t_changeflag(ctx), t_changeflag(std),
         tes_remove, tes_remove2, tes_close, tes_close_read,
-        tes_close_write, tes_connfailed
+        tes_close_write, tes_connfailed, tes_connfailed2
     ]
     
     for m in maps:
