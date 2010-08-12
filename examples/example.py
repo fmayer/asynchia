@@ -27,21 +27,24 @@ import asynchia
 import asynchia.maps
 import asynchia.protocols
 
+class SendAllTransport(asynchia.SendallTrait, asynchia.SocketTransport):
+    pass
 
-class EchoClient(asynchia.IOHandler):
+
+class EchoClient(asynchia.Handler):
     def handle_connect(self):
-        self.send("Foo\n")
+        self.transport.sendall("Foo\n")
 
 
-class Echo(asynchia.IOHandler):
-    def __init__(self, socket_map, sock):
-        asynchia.IOHandler.__init__(self, socket_map, sock)
-        if not self.readable:
-            self.set_readable(True)
-        self.set_writeable(False)
+class Echo(asynchia.Handler):
+    def __init__(self, transport=None):
+        asynchia.Handler.__init__(self, transport)
+        if not self.transport.readable:
+            self.transport.set_readable(True)
+        self.transport.set_writeable(False)
         
     def handle_read(self):
-        read = self.recv(4096)
+        read = self.transport.recv(4096)
         sys.stdout.write(read)
         sys.stdout.flush()
     
@@ -51,24 +54,30 @@ class Echo(asynchia.IOHandler):
 
 class EchoAcceptor(asynchia.AcceptHandler):
     def handle_accept(self, sock, addr):
-        Echo(self.socket_map, sock)
+        Echo(
+            asynchia.SocketTransport(
+                self.transport.socket_map, sock
+            )
+        )
 
 
 if __name__ == '__main__':
     # This should show "Foo" in your console.
     # When you close this program, it should print "Goodbye".
     m = asynchia.maps.DefaultSocketMap()
-    a = EchoAcceptor(m, socket.socket())
-    a.reuse_addr()
-    a.bind(('127.0.0.1', 25000))
-    a.listen(0)
+    a = EchoAcceptor(asynchia.SocketTransport(m))
+    a.transport.reuse_addr()
+    a.transport.bind(('127.0.0.1', 25000))
+    a.transport.listen(0)
     
-    a.set_writeable(False)
+    h = EchoAcceptor(a)
     
-    c = EchoClient(m, socket.socket())
-    c.connect(('127.0.0.1', 25000))
+    a.transport.set_writeable(False)
     
-    c.set_writeable(False)
+    c = EchoClient(SendAllTransport(m))
+    c.transport.connect(('127.0.0.1', 25000))
+    
+    c.transport.set_writeable(False)
     
     try:
         print m.run()

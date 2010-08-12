@@ -29,7 +29,7 @@ from PyQt4 import QtCore, QtGui
 class SocketNotifier(QtCore.QSocketNotifier):
     """ Notificate about socket I/O using Qt facilities """
     def __init__(self, watched, notifier, type_ ):
-        QtCore.QSocketNotifier.__init__(self, watched.fileno(), type_)
+        QtCore.QSocketNotifier.__init__(self, watched.transport.fileno(), type_)
         self.watched = watched
         self.notifier = notifier
         self.fun = None
@@ -84,8 +84,8 @@ class QSocketMap(asynchia.SocketMap):
         asynchia.SocketMap.__init__(self, notifier)
         self.handler_map = {}
     
-    def add_handler(self, handler):
-        """ See asynchia.SocketMap.add_handler """
+    def add_transport(self, handler):
+        """ See asynchia.SocketMap.add_transport """
         read = SocketNotifier(
             handler, self.notifier, QtCore.QSocketNotifier.Read
         )
@@ -113,8 +113,8 @@ class QSocketMap(asynchia.SocketMap):
             'exception': exception
         }
     
-    def del_handler(self, handler):
-        """ See asynchia.SocketMap.del_handler """
+    def del_transport(self, handler):
+        """ See asynchia.SocketMap.del_transport """
         for notifier in self.handler_map[handler].iteritems():
             notifier.shutdown()
         del self.handler_map[handler]

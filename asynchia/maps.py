@@ -148,8 +148,8 @@ class SelectSocketMap(FragileSocketMap):
         
         self.socket_list.append(self.controlreceiver)
     
-    def add_handler(self, handler):
-        """ See SocketMap.add_handler. """
+    def add_transport(self, handler):
+        """ See SocketMap.add_transport. """
         if handler in self.socket_list:
             raise ValueError("Handler %r already in socket map!" % handler)
         self.socket_list.append(handler)
@@ -158,8 +158,8 @@ class SelectSocketMap(FragileSocketMap):
         if handler.writeable:
             self.add_writer(handler)
     
-    def del_handler(self, handler):
-        """ See SocketMap.del_handler. """
+    def del_transport(self, handler):
+        """ See SocketMap.del_transport. """
         self.socket_list.remove(handler)
         if handler.readable:
             self.del_reader(handler)
@@ -240,8 +240,8 @@ class PollSocketMap(RobustSocketMap):
         self.controlfd = self.controlreceiver.fileno()
         self.poller.register(self.controlfd, select.POLLIN | select.POLLPRI)
     
-    def add_handler(self, handler):
-        """ See SocketMap.add_handler. """
+    def add_transport(self, handler):
+        """ See SocketMap.add_transport. """
         fileno = handler.fileno()
         if fileno in self.socket_list:
             raise ValueError("Socket with fileno %d already "
@@ -249,8 +249,8 @@ class PollSocketMap(RobustSocketMap):
         self.socket_list[fileno] = handler
         self.poller.register(fileno, self.create_flags(handler))
     
-    def del_handler(self, handler):
-        """ See SocketMap.del_handler. """
+    def del_transport(self, handler):
+        """ See SocketMap.del_transport. """
         fileno = handler.fileno()
         del self.socket_list[fileno]
         self.poller.unregister(fileno)
@@ -324,8 +324,8 @@ class EPollSocketMap(RockSolidSocketMap):
         self.controlfd = self.controlreceiver.fileno()
         self.poller.register(self.controlfd, select.EPOLLIN | select.EPOLLPRI)
     
-    def add_handler(self, handler):
-        """ See SocketMap.add_handler. """
+    def add_transport(self, handler):
+        """ See SocketMap.add_transport. """
         fileno = handler.fileno()
         if fileno in self.socket_list:
             raise ValueError("Socket with fileno %d already "
@@ -333,8 +333,8 @@ class EPollSocketMap(RockSolidSocketMap):
         self.socket_list[fileno] = handler
         self.poller.register(fileno, self.create_flags(handler))
     
-    def del_handler(self, handler):
-        """ See SocketMap.del_handler. """
+    def del_transport(self, handler):
+        """ See SocketMap.del_transport. """
         fileno = handler.fileno()
         del self.socket_list[fileno]
         self.poller.unregister(fileno)
@@ -423,8 +423,8 @@ class KQueueSocketMap(RockSolidSocketMap):
                            select.KQ_EV_ADD)], 0
         )
     
-    def add_handler(self, handler):
-        """ See SocketMap.add_handler. """
+    def add_transport(self, handler):
+        """ See SocketMap.add_transport. """
         if handler in self.socket_list:
             raise ValueError("Handler %r already in socket map!" % handler)
         self.socket_list[handler.fileno()] = handler
@@ -439,8 +439,8 @@ class KQueueSocketMap(RockSolidSocketMap):
         if handler.writeable:
             self.add_writer(handler)
     
-    def del_handler(self, handler):
-        """ See SocketMap.del_handler. """
+    def del_transport(self, handler):
+        """ See SocketMap.del_transport. """
         self.socket_list.pop(handler.fileno())
         
         self.queue.control(
