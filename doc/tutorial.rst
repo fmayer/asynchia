@@ -22,6 +22,10 @@ Handler
 -------
 A Handler manages the I/O of a socket. Consult the API documentation for more details.
 
+Transport
+---------
+All I/O that is done is done through a transport. These allows the handlers to work with different transports without the need of changing them.
+
 Example application
 ===================
 This tutorial guides you through the development of a simple application. First we will write a server that prints everything it receives to stdout.
@@ -36,14 +40,14 @@ Afterwards we write a handler that will be used to handle I/O for every socket t
     import sys
     
     BUFFERSIZE = 4096
-    class EchoHandler(asynchia.IOHandler):
-        def __init__(self, socket_map, sock=None):
-            asynchia.IOHandler.__init__(self, socket_map, sock)
+    class EchoHandler(asynchia.Handler):
+        def __init__(self, transport):
+            asynchia.IOHandler.__init__(self, transport)
             
             self.set_readable(True)
     
         def handle_read(self):
-            sys.stdout.write(self.read(BUFFERSIZE))
+            sys.stdout.write(self.transport.read(BUFFERSIZE))
             sys.stdout.flush()
     
         def handle_close(self):
@@ -53,35 +57,36 @@ So much for that; this may be nice, but we also need to code the server. To do s
 
     class EchoAcceptor(asynchia.AcceptHandler):
         def handle_accept(self, sock, addr):
-            Echo(self.socket_map, sock)
+            Echo(asynchia.SocketTransport(self.socket_map, sock))
 
 Now we only need to get the server up and running. We first create a socket-map, which is responsible for deciding which Handler's handle_* methods should be called when. The port chosen (25000) is completely arbitrary. ::
 
     def servermain():
         socketmap = asynchia.maps.DefaultSocketMap()
-        server = EchoAcceptor(socketmap)
-        server.reuse_addr()
-        server.bind(('127.0.0.1', 25000))
-        server.listen(0)
+        server = EchoAcceptor(asynchia.SocketTransport(socketmap))
+        server.transport.reuse_addr()
+        server.transport.bind(('127.0.0.1', 25000))
+        server.transport.listen(0)
         socketmap.run()
 
 The server is done, now let's get to the client. Again, import asynchia. But now we will also import asynchia.protocols. ::
 
     import asynchia
     import asynchia.maps
-    import asynchia.protocols
-
-Our client will be a sub-class of BufferedWriteHandler found in asynchia.protocols. This allows us to use sendall, which spares us of the task of having to manually manage buffering. ::
-
-    class EchoClient(asynchia.protocols.BufferedWriteHandler):
+    class EchoClient(asynchia.Handler):
         def handle_connect(self):
             self.sendall("Hello from the echo-client\n")
+
+To ease the task of sending data through the transport we enhance it by mixing in the SendallTrait. This is done to reduce redundancy because Sendall trait can be used with any transport that supplies .send and .recv. ::
+
+    class SendallSocketTransport(asynchia.SendallTrait, asynchia.SocketTransport):
+        pass
 
 Now we have to connect to the server and we're done for now. ::
 
     def clientmain():
         socketmap = asynchia.DefaultSocketMap()
-        client = EchoClient(socketmap)
+        client = EchoClient(SendallSocketTransport(socketmap))
         client.connect(('127.0.0.1', 25000))
         socketmap.run()
 

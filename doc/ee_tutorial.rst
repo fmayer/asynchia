@@ -63,24 +63,24 @@ We can instantly write an EchoAcceptor as the EchoHandler is not needed. asynchi
     class EchoAcceptor(asynchia.AcceptHandler):
         def handle_accept(self, sock, addr):
             collector = asynchia.ee.FileCollector(sys.stdout, False)
-            asynchia.ee.Handler(self.socket_map, sock, collector)
+            asynchia.ee.Handler(asynchia.SocketTransport(self.socket_map, sock, collector))
 
 Now we can go straight to starting up the server. ::
 
     def servermain():
         socketmap = asynchia.maps.DefaultSocketMap()
-        server = EchoAcceptor(socketmap)
-        server.reuse_addr()
-        server.bind(('127.0.0.1', 25000))
-        server.listen(0)
+        server = EchoAcceptor(asynchia.SocketTransport(socketmap))
+        server.transport.reuse_addr()
+        server.transport.bind(('127.0.0.1', 25000))
+        server.transport.listen(0)
         socketmap.run()
 
 And the code for the client is simply. client.send_str(...) is a convenience method for client.send_input(asynchia.ee.StringInput(...)) ::
 
     def clientmain():
         socketmap = asynchia.maps.DefaultSocketMap()
-        client = asynchia.ee.Handler(socketmap)
-        client.connect(('127.0.0.1', 25000))
+        client = asynchia.ee.Handler(asynchia.SocketTransport(socketmap))
+        client.transport.connect(('127.0.0.1', 25000))
         client.send_str("Hello from the enterprisey client!\n")
         socketmap.run()
 
