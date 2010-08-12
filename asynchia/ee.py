@@ -559,7 +559,7 @@ class Handler(asynchia.Handler):
         if not noclose and self.collector is not None:
             self.collector.close()
         self.collector = collector
-        if not self.readable:
+        if not self.transport.readable:
             self.transport.set_readable(True)
     
     def send_input(self, inp):

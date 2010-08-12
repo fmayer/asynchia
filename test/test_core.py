@@ -350,7 +350,7 @@ def tes_connfailed2(map_):
             container.done = True
     
     mo = map_()
-    c = Handler(mo, None, container)
+    c = Handler(asynchia.SocketTransport(mo), container)
     
     acceptor = socket.socket()
     # Random port. Only accept local connections.
@@ -363,12 +363,12 @@ def tes_connfailed2(map_):
     
     other = acceptor.accept()[0]
     try:
-        c.connect(acceptor.getsockname())
+        c.transport.connect(acceptor.getsockname())
     except socket.error:
         container.done = True
     
     s = time.time()
-    while not container.done and time.time() < s + 10:
+    while not container.done and time.time() < s + 30:
         mo.poll(abs(10 - (time.time() - s)))
     eq_(container.done, True)
 
@@ -388,7 +388,7 @@ def test_maps():
     tests = [
         tes_interrupt, t_changeflag(ctx), t_changeflag(std),
         tes_remove, tes_remove2, tes_close, tes_close_read,
-        tes_close_write, tes_connfailed
+        tes_close_write, tes_connfailed, tes_connfailed2
     ]
     
     for m in maps:

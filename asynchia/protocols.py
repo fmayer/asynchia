@@ -25,10 +25,10 @@ class LineHandler(asynchia.Handler):
     delimiter = None
     buffer_size = 4096
     def __init__(self, transport):
-        BufferedSendHandler.__init__(self, transport)
+        asynchia.Handler.__init__(self, transport)
         self.read_buffer = ''
-        if not self.readable:
-            self.set_readable(True)
+        if not self.transport.readable:
+            self.transport.set_readable(True)
     
     def split_buffer(self):
         """ Split buffer into the different lines. """
@@ -45,12 +45,12 @@ class LineHandler(asynchia.Handler):
     def handle_read(self):
         """ We got inbound data. Extend our buffer and see if we have
         got lines in it. """
-        self.read_buffer += self.recv(self.buffer_size)
+        self.read_buffer += self.transport.recv(self.buffer_size)
         self.parse_buffer()
     
     def send_line(self, line):
         """ Send line. """
-        self.sendall(line + self.delimiter)
+        self.transport.sendall(line + self.delimiter)
     
     def line_received(self, line):
         """ Override. """

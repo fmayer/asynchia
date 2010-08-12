@@ -223,7 +223,7 @@ class Transport(object):
     def handle_connect_failed(self, err):
         """ Connection couldn't be established. """
         if self.handler is not None:
-            self.handler.handle_connect_failed()
+            self.handler.handle_connect_failed(err)
     
     def handle_close(self):
         """ Connection closed. Note that this is only called if the
@@ -618,12 +618,12 @@ class Server(AcceptHandler):
     
     def serve_forever(self, addr, num):
         """ Serve a maximum of num connections at a time at addr. """
-        self.bind(addr)
-        self.listen(num)
+        self.transport.bind(addr)
+        self.transport.listen(num)
         try:
-            self.socket_map.run()
+            self.transport.socket_map.run()
         finally:
-            self.close()
+            self.transport.close()
 
 
 trylater = (errno.EAGAIN,)
