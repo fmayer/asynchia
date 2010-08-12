@@ -311,7 +311,8 @@ class EPollSocketMap(RockSolidSocketMap):
     """ Decide which sockets have I/O to do using select.epoll. 
     
     Do not refer to this class without explicitely checking for its existance
-    first, it may not exist on some platforms (it is known not to on Windows).
+    first, it may not exist on some platforms (it is known not to on Windows
+    and BSD).
     """
     def __init__(self, notifier=None):
         RockSolidSocketMap.__init__(self, notifier)
@@ -401,6 +402,11 @@ class EPollSocketMap(RockSolidSocketMap):
 #     received on a socket.
 # Thus we need not call notifier.except_obj in this socket-map.
 class KQueueSocketMap(RockSolidSocketMap):
+    """ Decide which sockets have I/O to do using select.kqueue. 
+    
+    Do not refer to this class without explicitely checking for its existance
+    first, it may not exist on some platforms (it only exists on BSD).
+    """
     def __init__(self, nevents=100, notifier=None):
         RockSolidSocketMap.__init__(self, notifier)
         self.socket_list = {}
