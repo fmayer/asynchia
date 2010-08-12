@@ -505,15 +505,35 @@ class SendallTrait(object):
     def __init__(self, *args, **kwargs):
         super(SendallTrait, self).__init__(*args, **kwargs)
         self.buf = ''
+        self.savewriteable = None
+    
+    def set_writeable(self, value):
+        if not self.buf:
+            super(SendallTrait, self).set_writeable(value)
+        else:
+            self.savewriteable = value
+    
+    def get_writeable(self):
+        return super(SendallTrait, self).get_writeable()
     
     def sendall(self, data):
+        if not self.buf:
+            self.savewritable = self.writeable
+        self.set_writeable(True)
         self.buf += data
     
     def handle_write(self):
-        if not self.buf and self.handler is not None:
+        if self.savewritable is not None:
+            super(SendallTrait, self).set_writeable(self.savewriteable)
+            self.savewriteable = None
+        
+        if not self.buf and self.handler is not None and self.writeable:
             super(SendallTrait, self).handle_write()
-        sent = self.send(self.buf)
+        
+        sent = super(SendallTrait, self).send(self.buf)
         self.buf = self.buf[sent:]
+    
+    writeable = property(get_writeable, set_writeable)
 
 
 class Handler(object):

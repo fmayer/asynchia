@@ -20,38 +20,12 @@
 
 import asynchia
 
-
-class BufferedSendHandler(asynchia.Handler):
-    """ Buffer the data that's sent if it couldn't be sent as
-    one piece. """
-    def __init__(self, socket_map, sock=None):
-        asynchia.Handler.__init__(self, socket_map, sock)
-        self.write_buffer = ''
-    
-    def sendall(self, data):
-        """ Write data, if necessary, over multiple send calls. """
-        self.write_buffer += data
-        if data and not self.writeable:
-            self.set_writeable(True)
-    
-    def handle_write(self):
-        """ Do not override. """
-        sent = self.send(self.write_buffer)
-        self.write_buffer = self.write_buffer[sent:]
-        if not self.write_buffer and self.writeable:
-            self.set_writeable(False)
-            self.buffer_empty()
-    
-    def buffer_empty(self):
-        """ Callback that is called when the buffer becomes empty. """
-
-
-class LineHandler(BufferedSendHandler):
+class LineHandler(asynchia.Handler):
     """ Use this for line-based protocols. """
     delimiter = None
     buffer_size = 4096
-    def __init__(self, socket_map, sock=None):
-        BufferedSendHandler.__init__(self, socket_map, sock)
+    def __init__(self, transport):
+        BufferedSendHandler.__init__(self, transport)
         self.read_buffer = ''
         if not self.readable:
             self.set_readable(True)

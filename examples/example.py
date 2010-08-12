@@ -27,10 +27,13 @@ import asynchia
 import asynchia.maps
 import asynchia.protocols
 
+class SendAllTransport(asynchia.SendallTrait, asynchia.SocketTransport):
+    pass
+
 
 class EchoClient(asynchia.Handler):
     def handle_connect(self):
-        self.transport.send("Foo\n")
+        self.transport.sendall("Foo\n")
 
 
 class Echo(asynchia.Handler):
@@ -71,7 +74,7 @@ if __name__ == '__main__':
     
     a.transport.set_writeable(False)
     
-    c = EchoClient(asynchia.SocketTransport(m))
+    c = EchoClient(SendAllTransport(m))
     c.transport.connect(('127.0.0.1', 25000))
     
     c.transport.set_writeable(False)
