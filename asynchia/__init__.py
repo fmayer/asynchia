@@ -502,27 +502,34 @@ class SocketTransport(Transport):
 
 
 class SendallTrait(object):
+    """ Enhance Transport with sendall that buffers data and sends it all,
+    if necessary in multiple steps. """
     def __init__(self, *args, **kwargs):
         super(SendallTrait, self).__init__(*args, **kwargs)
         self.__buf = ''
         self.__savewriteable = None
     
     def set_writeable(self, value):
+        """ If sendall is active, save the value passed and set it to that
+        after sendall is finished. """
         if not self.__buf:
             super(SendallTrait, self).set_writeable(value)
         else:
             self.__savewriteable = value
     
     def get_writeable(self):
+        """ Necessary for the property. """
         return super(SendallTrait, self).get_writeable()
     
     def sendall(self, data):
+        """ Send all of data, if necessary in multiple steps. """
         if not self.__buf:
             self.savewritable = self.writeable
         self.set_writeable(True)
         self.__buf += data
     
     def handle_write(self):
+        """ Internal. """
         if not self.__buf:
             if self.savewritable is not None:
                 super(SendallTrait, self).set_writeable(self.__savewriteable)
