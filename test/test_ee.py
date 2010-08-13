@@ -39,13 +39,13 @@ def until_done(fun):
 class TestEE(unittest.TestCase):
     def test_inputqueue(self):
         m = asynchia.ee.MockHandler()
-        a = asynchia.ee.StringInput('a' * 5)
-        b = asynchia.ee.StringInput('b' * 5)
-        c = asynchia.ee.StringInput('c' * 5)
+        a = asynchia.ee.StringInput(b('a') * 5)
+        b = asynchia.ee.StringInput(b('b') * 5)
+        c = asynchia.ee.StringInput(b('c') * 5)
         q = asynchia.ee.InputQueue([a, b, c])
         
         until_done(lambda: q.tick(m))
-        self.assertEqual(m.outbuf, 'a' * 5 + 'b' * 5 + 'c' * 5)
+        self.assertEqual(m.outbuf, b('a') * 5 + b('b') * 5 + b('c') * 5)
     
     
     def test_stringinput(self):
@@ -133,11 +133,11 @@ class TestEE(unittest.TestCase):
         
         q = asynchia.ee.CollectorQueue([a, b, c])
         
-        m = asynchia.ee.MockHandler(inbuf='a' * 5 + 'b' * 4 + 'c' * 3)
+        m = asynchia.ee.MockHandler(inbuf=b('a') * 5 + b('b') * 4 + b('c') * 3)
         until_done(lambda: q.add_data(m, 5))
-        self.assertEqual(a.collector.value, 'a' * 5)
-        self.assertEqual(b.collector.value, 'b' * 4)
-        self.assertEqual(c.collector.value, 'c' * 3)
+        self.assertEqual(a.collector.value, b('a') * 5)
+        self.assertEqual(b.collector.value, b('b') * 4)
+        self.assertEqual(c.collector.value, b('c') * 3)
     
     
     def test_factorycollector(self):
@@ -150,7 +150,8 @@ class TestEE(unittest.TestCase):
         c = asynchia.ee.FactoryCollector(
             asynchia.ee.FactoryCollector.wrap_iterator(itr.next)
             )
-        m = asynchia.ee.MockHandler(inbuf='a' * 5 + 'b' * 5 + 'c' * 5 + 'd')
+        m = asynchia.ee.MockHandler(
+            inbuf=b('a') * 5 + b('b') * 5 + b('c') * 5 + b('d'))
         until_done(lambda: c.add_data(m, 5))
         self.assertEqual(c.add_data(m, 1)[0], True)
         
@@ -163,27 +164,26 @@ class TestEE(unittest.TestCase):
             )
         m = asynchia.ee.MockHandler()
         until_done(lambda: c.tick(m))
-        self.assertEqual(m.outbuf, 'a' * 5 + 'b' * 5 + 'c' * 5)
+        self.assertEqual(m.outbuf, b('a') * 5 + b('b') * 5 + b('c') * 5)
         self.assertEqual(c.tick(m)[0], True)
     
     
     def test_close(self):
         c = asynchia.ee.DelimitedCollector(asynchia.ee.StringCollector(), 5)
-        m = asynchia.ee.MockHandler('abcde')
+        m = asynchia.ee.MockHandler(b('abcde'))
         c.add_data(m, 10)
-        # As of now, the collector is only closed at the next call.
         self.assertEqual(c.closed, True)
     
     
     def test_inputadd(self):
         m = asynchia.ee.MockHandler()
-        q = asynchia.ee.StringInput('a') + asynchia.ee.StringInput('b')
+        q = asynchia.ee.StringInput(b('a')) + asynchia.ee.StringInput(b('b'))
         id1 = id(q)
-        q += asynchia.ee.StringInput('c')
+        q += asynchia.ee.StringInput(b('c'))
         id2 = id(q)
         self.assertEqual(id1, id2)
         until_done(lambda: q.tick(m))
-        self.assertEqual(m.outbuf, 'abc')
+        self.assertEqual(m.outbuf, b('abc'))
     
     
     def test_closeinqueue(self):
@@ -195,7 +195,7 @@ class TestEE(unittest.TestCase):
     
     
     def test_lenpredict(self):
-        strings = ['a' * i for i in xrange(1, 20)]
+        strings = [b('a') * i for i in xrange(1, 20)]
         for string in strings:
             fd = tempfile.NamedTemporaryFile(delete=True)
             try:
@@ -210,7 +210,7 @@ class TestEE(unittest.TestCase):
     
     def test_fromfilename(self):
         strings = [
-            ('a' + '\n') * i + ('b' + '\r\n') * j
+            b('a' + '\n') * i + b('b' + '\r\n') * j
             for i in xrange(1, 20)
             for j in xrange(1, 20)
         ]
@@ -231,10 +231,10 @@ class TestEE(unittest.TestCase):
         b = del_strcoll(6)
         
         q = a + b
-        m = asynchia.ee.MockHandler('a' * 5 + 'b' * 6)
+        m = asynchia.ee.MockHandler(b('a') * 5 + b('b') * 6)
         until_done(lambda: q.add_data(m, 2))
-        self.assertEqual(a.collector.value, 'a' * 5)
-        self.assertEqual(b.collector.value, 'b' * 6)
+        self.assertEqual(a.collector.value, b('a') * 5)
+        self.assertEqual(b.collector.value, b('b') * 6)
     
     
     def test_autoflush(self):

@@ -57,7 +57,9 @@ class TestDSL(unittest.TestCase):
     
     def test_LFLSE(self):
         e = b.L() + b.B() + LFLSE(-1)
-        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        m = asynchia.ee.MockHandler(
+            inbuf=e.produce((5, 1, b('ABCDE'))) + b('FG')
+        )
         a = e(None)
         until_done(lambda: a.add_data(m, 120))
         
@@ -67,12 +69,16 @@ class TestDSL(unittest.TestCase):
     def test_two_instances(self):
         e = b.L() + b.B() + LFLSE(-1)
         a = e()
-        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        m = asynchia.ee.MockHandler(
+            inbuf=e.produce((5, 1, b('ABCDE'))) + b('FG')
+        )
         until_done(lambda: a.add_data(m, 120))
         
         self.assertEqual(tuple(a.value), (5, 1, 'A'))
         c = e()
-        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        m = asynchia.ee.MockHandler(
+            inbuf=e.produce((5, 1, b('ABCDE'))) + b('FG')
+        )
         until_done(lambda: c.add_data(m, 120))
         
         self.assertEqual(tuple(a.value), (5, 1, 'A'))
@@ -81,14 +87,16 @@ class TestDSL(unittest.TestCase):
     def test_example(self):
         e = b.L() + b.B() + LFLSE(0)
         a = e(None)
-        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        m = asynchia.ee.MockHandler(
+            inbuf=e.produce((5, 1, b('ABCDE'))) + b('FG')
+        )
         until_done(lambda: a.add_data(m, 120))
         
-        self.assertEqual(tuple(a.value), (5, 1, 'ABCDE'))
+        self.assertEqual(tuple(a.value), (5, 1, b('ABCDE')))
     
     
     def test_nested(self):
-        i = [2, 'AB', [5, 'ABCDE'], [5, 'ABCDE']]
+        i = [2, b('AB'), [5, b('ABCDE')], [5, b('ABCDE')]]
         
         a = b.B() + LFLSE(0)
         c = b.B() + LFLSE(0) + a + a
@@ -97,7 +105,7 @@ class TestDSL(unittest.TestCase):
         
         p = c(None)
         
-        m = asynchia.ee.MockHandler(inbuf=d + 'FG')
+        m = asynchia.ee.MockHandler(inbuf=d + b('FG'))
         until_done(lambda: p.add_data(m, 120))
         
         self.assertEqual(exhaust(iter(p.value)), i)
@@ -107,37 +115,41 @@ class TestDSL(unittest.TestCase):
         e = b.L()['size'] + b.B()['blub'] + FLSE(lookback('size'))['string']
         
         a = e(None)
-        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        m = asynchia.ee.MockHandler(
+            inbuf=e.produce((5, 1, b('ABCDE'))) + b('FG')
+        )
         until_done(lambda: a.add_data(m, 120))
         
-        self.assertEqual(tuple(a.value), (5, 1, 'ABCDE'))
-        self.assertEqual(m.inbuf, 'FG')
+        self.assertEqual(tuple(a.value), (5, 1, b('ABCDE')))
+        self.assertEqual(m.inbuf, b('FG'))
     
     
     def test_tonamed(self):
         e = b.L()['size'] + b.B()['blub'] + FLSE(lookback('size'))['string']
         
         a = e(None)
-        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        m = asynchia.ee.MockHandler(
+            inbuf=e.produce((5, 1, b('ABCDE'))) + b('FG')
+        )
         until_done(lambda: a.add_data(m, 120))
         
         d = e.tonamed(a.value)
         self.assertEqual(d['size'], 5)
         self.assertEqual(d['blub'], 1)
-        self.assertEqual(d['string'], 'ABCDE')
+        self.assertEqual(d['string'], b('ABCDE'))
     
     
     def test_tonamed2(self):
         e = b.L()['size'] + b.L()['blub'] + FLSE(lookback('size'))['string']
         
         a = e(None)
-        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, b('ABCDE'))) + b('FG'))
         until_done(lambda: a.add_data(m, 120))
         
         d = e.tonamed(a.value)
         self.assertEqual(d['size'], 5)
         self.assertEqual(d['blub'], 1)
-        self.assertEqual(d['string'], 'ABCDE')
+        self.assertEqual(d['string'], b('ABCDE'))
 
 if __name__ == '__main__':
     unittest.main()

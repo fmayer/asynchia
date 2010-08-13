@@ -20,9 +20,11 @@ import unittest
 
 import asynchia.util
 
+b = asynchia.util.b
+
 class TestUtil(unittest.TestCase):
     def test_socketpair(self):
-        data = 'a'
+        data = b('a')
         a, b = asynchia.util.socketpair()
         a.send(data)
         # One byte must at least be received.

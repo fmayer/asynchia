@@ -25,6 +25,8 @@ import asynchia
 import asynchia.maps
 import asynchia.util
 
+b = asynchia.util.b
+
 import unittest
 
 unittest.TestCase.assertEqual
@@ -431,8 +433,8 @@ class TestCore(unittest.TestCase):
         ha.transport.set_writeable(True)
         hb.transport.set_readable(True)
         
-        ha.handle_write = lambda: ha.send("Foo")
-        hb.handle_read = lambda: self.assertEqual(hb.recv(3), 'Foo')
+        ha.handle_write = lambda: ha.send(b("Foo"))
+        hb.handle_read = lambda: self.assertEqual(hb.recv(3), b('Foo'))
 
 def _genfun(map_, test):
     def _fun(self):
