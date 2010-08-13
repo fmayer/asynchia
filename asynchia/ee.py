@@ -148,12 +148,8 @@ class FileInput(Input):
     def __init__(self, fd, length=None, buffer_size=9096, closing=True,
                  onclose=None):
         Input.__init__(self, onclose)
-        if length is None:
-            pos = fd.tell()
-            fd.seek(0, 2)
-            newpos = fd.tell()
-            length = newpos - pos
-            fd.seek(pos)
+        
+        self.cachedlen = length
         
         self.fd = fd
         self.buffer_size = buffer_size
@@ -190,15 +186,28 @@ class FileInput(Input):
     @classmethod
     def from_filename(cls, filename, mode='rb', *args, **kwargs):
         """ Same as cls(fd, size, *args, **kwargs) while fd and size
-        get constructed from the filename. """
-        stat = os.stat(filename)
+        get constructed from the filename. If the mode attribute
+        does not equal 'rb', the size cannot be determined
+        efficienty. """
+        if mode == 'rb':
+            size = os.stat(filename).st_size
+        else:
+            size = None
         # FIXME: This could possibly break if file LF does not equal Unix
         # LF and the file is opened in another mode than 'rb'.
         fd = open(filename, mode)
-        return cls(fd, stat.st_size, *args, **kwargs)
+        return cls(fd, size, *args, **kwargs)
     
     def __len__(self):
-        return self.length
+        if self.cachedlen is not None:
+            return self.cachedlen
+        else:
+            pos = self.fd.tell()
+            self.fd.seek(0, 2)
+            newpos = self.fd.tell()
+            self.cachedlen = newpos - pos
+            self.fd.seek(pos)
+            return self.cachedlen
 
 
 class AutoFileInput(FileInput):

@@ -203,7 +203,25 @@ def test_lenpredict():
             fd.flush()
             fd.seek(0)
             c = asynchia.ee.FileInput(fd)
-            eq_(c.length, len(string))
+            eq_(len(c), len(string))
+        finally:
+            fd.close()
+
+
+def test_fromfilename():
+    strings = [
+        ('a' + '\n') * i + ('b' + '\r\n') * j
+        for i in xrange(1, 20)
+        for j in xrange(1, 20)
+    ]
+    for string in strings:
+        fd = tempfile.NamedTemporaryFile(delete=True)
+        try:
+            fd.write(string)
+            fd.flush()
+            fd.seek(0)
+            c = asynchia.ee.FileInput.from_filename(fd.name, 'r')
+            eq_(len(c), len(string))
         finally:
             fd.close()
 
@@ -239,4 +257,3 @@ def test_strucollector():
     m = asynchia.ee.MockHandler(s.pack(14, 25))
     until_done(lambda: c.add_data(m, 2))
     eq_(c.value, (14, 25))
-    
