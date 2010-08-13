@@ -22,6 +22,7 @@ import struct
 import tempfile
 
 import asynchia.ee
+from asynchia.util import b
 
 import unittest
 

@@ -24,7 +24,9 @@ import unittest
 import asynchia.ee
 import asynchia.dsl
 
-from asynchia.dsl import b, LFLSE, lookback, FLSE
+from asynchia.util import b
+from asynchia.dsl import LFLSE, lookback, FLSE
+from asynchia.dsl import b as db
 
 StringInput = None
 
@@ -56,7 +58,7 @@ class TestDSL(unittest.TestCase):
         asynchia.ee.StringInput = StringInput
     
     def test_LFLSE(self):
-        e = b.L() + b.B() + LFLSE(-1)
+        e = db.L() + db.B() + LFLSE(-1)
         m = asynchia.ee.MockHandler(
             inbuf=e.produce((5, 1, b('ABCDE'))) + b('FG')
         )
@@ -67,7 +69,7 @@ class TestDSL(unittest.TestCase):
     
         
     def test_two_instances(self):
-        e = b.L() + b.B() + LFLSE(-1)
+        e = db.L() + db.B() + LFLSE(-1)
         a = e()
         m = asynchia.ee.MockHandler(
             inbuf=e.produce((5, 1, b('ABCDE'))) + b('FG')
@@ -85,7 +87,7 @@ class TestDSL(unittest.TestCase):
     
     
     def test_example(self):
-        e = b.L() + b.B() + LFLSE(0)
+        e = db.L() + db.B() + LFLSE(0)
         a = e(None)
         m = asynchia.ee.MockHandler(
             inbuf=e.produce((5, 1, b('ABCDE'))) + b('FG')
@@ -98,8 +100,8 @@ class TestDSL(unittest.TestCase):
     def test_nested(self):
         i = [2, b('AB'), [5, b('ABCDE')], [5, b('ABCDE')]]
         
-        a = b.B() + LFLSE(0)
-        c = b.B() + LFLSE(0) + a + a
+        a = db.B() + LFLSE(0)
+        c = db.B() + LFLSE(0) + a + a
         
         d = c.produce(i)
         
@@ -112,7 +114,7 @@ class TestDSL(unittest.TestCase):
     
     
     def test_named(self):
-        e = b.L()['size'] + b.B()['blub'] + FLSE(lookback('size'))['string']
+        e = db.L()['size'] + db.B()['blub'] + FLSE(lookback('size'))['string']
         
         a = e(None)
         m = asynchia.ee.MockHandler(
@@ -125,7 +127,7 @@ class TestDSL(unittest.TestCase):
     
     
     def test_tonamed(self):
-        e = b.L()['size'] + b.B()['blub'] + FLSE(lookback('size'))['string']
+        e = db.L()['size'] + db.B()['blub'] + FLSE(lookback('size'))['string']
         
         a = e(None)
         m = asynchia.ee.MockHandler(
@@ -140,10 +142,12 @@ class TestDSL(unittest.TestCase):
     
     
     def test_tonamed2(self):
-        e = b.L()['size'] + b.L()['blub'] + FLSE(lookback('size'))['string']
+        e = db.L()['size'] + db.L()['blub'] + FLSE(lookback('size'))['string']
         
         a = e(None)
-        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, b('ABCDE'))) + b('FG'))
+        m = asynchia.ee.MockHandler(
+            inbuf=e.produce((5, 1, b('ABCDE'))) + b('FG')
+        )
         until_done(lambda: a.add_data(m, 120))
         
         d = e.tonamed(a.value)
