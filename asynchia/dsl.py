@@ -340,7 +340,3 @@ def _single_binary(symbol):
 
 for symbol in FRMT_CHARS:
     setattr(b, symbol, _single_binary("!" + symbol))
-
-if __name__ == '__main__':
-    # Actual debug here.
-    e = b.L['size'] + b.B['blub'] + LFLSE(0)['string']
