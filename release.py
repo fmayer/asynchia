@@ -45,7 +45,7 @@ GIT = 'git'
 
 def git(*args):
     proc = subprocess.Popen((GIT,) + args, stdout=subprocess.PIPE)
-    return proc.stdout.read().strip()
+    return proc.wait(), proc.stdout.read().strip()
 
 
 def buffered_write(dest, src, buffer_size):
