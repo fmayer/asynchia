@@ -135,5 +135,14 @@ def parse_ip(string, default_port=-1):
 
 
 def goodsize(maxsize):
-    """ Return biggest power of two that is less or equal to maxsize. """
+    """ Return biggest power of two that is less or equal to maxsize.
+    
+    Powers of two are considered good values to be passed to the recv
+    method of sockets. To quote the python documentation of the socket
+    module:
+
+        For best match with hardware and network realities,
+        the value of bufsize should be a relatively small power of 2,
+        for example, 4096.
+"""
     return 2 ** math.floor(math.log(maxsize, 2))
