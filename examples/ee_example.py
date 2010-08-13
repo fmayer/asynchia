@@ -33,7 +33,7 @@ from asynchia.util import b, byte_std
 
 class EchoAcceptor(asynchia.AcceptHandler):
     def handle_accept(self, sock, addr):
-        collector = asynchia.ee.FileCollector(byte_std(sys.stdout), False)
+        collector = asynchia.ee.FileCollector(byte_std(sys.stdout), False, True)
         asynchia.ee.Handler(
             asynchia.SocketTransport(
                 self.transport.socket_map, sock
