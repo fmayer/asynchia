@@ -51,7 +51,7 @@ Attributes can be named by passing the name in square brackets. It is
 also possible to refer to expressions by the name given to them in
 lookbacks. ::
 
-    e = b.L()['size'] + b.B()['blub'] + LFLSE('size')['string']
+    e = s.L()['size'] + s.B()['blub'] + LFLSE('size')['string']
 
 The tuple of values collected can be converted into a dictionary that
 maps the name of the expression to the respective value by calling the
@@ -72,8 +72,8 @@ try to write your own types of expressions).
 
 Let us henceforth consider the following simple example::
     
-    from asynchia.dsl import b, SBLFLSE
-    e = b.L() + b.B() + LFLSE(0)
+    from asynchia.dsl import s, SBLFLSE
+    e = s.L() + s.B() + LFLSE(0)
 
 This might appear utterly complicated at first glance, but it is not. The
 first statement imports b (which is a container for binary numeric types)
@@ -113,6 +113,7 @@ string, as the system does not derive it from the length of the string
 import struct
 
 import asynchia.ee
+from asynchia.util import b
 
 class Container(object):
     """ Container to hold members, which are also exposed through getitem.
@@ -360,7 +361,7 @@ def LFLSE(ind, fun=(lambda x: x.value)):
 
 FRMT_CHARS = ('x', 'c', 'b', 'B', '?', 'h', 'H', 'i', 'I', 'l',
               'L', 'q', 'Q', 'f', 'd', 's', 'p', 'P')
-b = Container()
+s = Container()
 
 def _single_binary(symbol):
     def _fun():
@@ -368,4 +369,4 @@ def _single_binary(symbol):
     return _fun
 
 for symbol in FRMT_CHARS:
-    setattr(b, symbol, _single_binary("!" + symbol))
+    setattr(s, symbol, _single_binary("!" + symbol))

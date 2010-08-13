@@ -26,7 +26,7 @@ import asynchia.dsl
 
 from asynchia.util import b
 from asynchia.dsl import LFLSE, lookback, FLSE
-from asynchia.dsl import b as db
+from asynchia.dsl import s as db
 
 StringInput = None
 
