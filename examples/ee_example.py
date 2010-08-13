@@ -28,10 +28,12 @@ import asynchia.ee
 import asynchia.maps
 import asynchia.protocols
 
+from asynchia.util import b, byte_std
+
 
 class EchoAcceptor(asynchia.AcceptHandler):
     def handle_accept(self, sock, addr):
-        collector = asynchia.ee.FileCollector(sys.stdout, False)
+        collector = asynchia.ee.FileCollector(byte_std(sys.stdout), False)
         asynchia.ee.Handler(
             asynchia.SocketTransport(
                 self.transport.socket_map, sock
@@ -52,7 +54,7 @@ if __name__ == '__main__':
     
     c = asynchia.ee.Handler(asynchia.SocketTransport(m))
     c.transport.connect(('127.0.0.1', 25000))
-    c.send_input(asynchia.ee.StringInput("Foo\n"))
+    c.send_input(asynchia.ee.StringInput(b("Foo\n")))
     
     try:
         m.run()

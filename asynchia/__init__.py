@@ -24,7 +24,7 @@ import socket
 
 import traceback
 
-from asynchia.util import b, EMPTY_BYTES
+from asynchia.util import EMPTY_BYTES
 
 __version__ = '0.1a1'
 

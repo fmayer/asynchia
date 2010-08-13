@@ -27,13 +27,15 @@ import asynchia
 import asynchia.maps
 import asynchia.protocols
 
+from asynchia.util import b, byte_std
+
 class SendAllTransport(asynchia.SendallTrait, asynchia.SocketTransport):
     pass
 
 
 class EchoClient(asynchia.Handler):
     def handle_connect(self):
-        self.transport.sendall("Foo\n")
+        self.transport.sendall(b("Foo\n"))
 
 
 class Echo(asynchia.Handler):
@@ -45,8 +47,8 @@ class Echo(asynchia.Handler):
         
     def handle_read(self):
         read = self.transport.recv(4096)
-        sys.stdout.write(read)
-        sys.stdout.flush()
+        byte_std(sys.stdout).write(read)
+        byte_std(sys.stdout).flush()
     
     def handle_cleanup(self):
         print "Goodbye"

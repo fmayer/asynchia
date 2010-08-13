@@ -18,6 +18,7 @@
 
 """ Auxiliary functions. """
 
+import sys
 import math
 import socket
 
@@ -156,3 +157,10 @@ else:
 
 
 EMPTY_BYTES = b('')
+
+if sys.version_info >= (3, 0):
+    def byte_std(stream):
+        return stream.buffer
+else:
+    def byte_std(stream):
+        return stream
