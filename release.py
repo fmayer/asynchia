@@ -135,7 +135,7 @@ def main():
     else:
         major = options.major
     
-    release(args[0], force=options.force,
+    release(args[0], major, force=options.force,
             setup=options.setup, commit=options.commit,
             packages=options.packages, branch=options.branch)
     return 0
