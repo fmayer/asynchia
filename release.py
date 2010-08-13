@@ -90,7 +90,7 @@ def release(version, force=False, setup=True, commit=True,
         if commit:
             git('commit', '-a', '-m', 'Release version %s' % version)
     if branch:
-        git('branch', '%s-maintenance')
+        git('branch', '%s-maintenance' % version)
     if packages:
         if not os.path.exists(RELEASE_DIR):
             os.mkdir(RELEASE_DIR)
