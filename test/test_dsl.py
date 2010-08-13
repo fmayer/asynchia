@@ -19,7 +19,7 @@
 import itertools
 import inspect
 
-from nose.tools import eq_, assert_raises
+import unittest
 
 import asynchia.ee
 import asynchia.dsl
@@ -27,17 +27,6 @@ import asynchia.dsl
 from asynchia.dsl import b, LFLSE, lookback, FLSE
 
 StringInput = None
-
-
-def setup():
-    global StringInput
-    StringInput = asynchia.ee.StringInput 
-    asynchia.ee.StringInput = lambda x: x
-
-
-def teardown():
-    asynchia.ee.StringInput = StringInput
-
 
 def exhaust(itr):
     result = []
@@ -54,88 +43,101 @@ def until_done(fun):
         d, s = fun()
         if d:
             break
+    
 
+class TestDSL(unittest.TestCase):
+    def setUp(self):
+        global StringInput
+        StringInput = asynchia.ee.StringInput 
+        asynchia.ee.StringInput = lambda x: x
+    
+    
+    def tearDown(self):
+        asynchia.ee.StringInput = StringInput
+    
+    def test_LFLSE(self):
+        e = b.L() + b.B() + LFLSE(-1)
+        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        a = e(None)
+        until_done(lambda: a.add_data(m, 120))
+        
+        self.assertEqual(tuple(a.value), (5, 1, 'A'))
+    
+        
+    def test_two_instances(self):
+        e = b.L() + b.B() + LFLSE(-1)
+        a = e()
+        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        until_done(lambda: a.add_data(m, 120))
+        
+        self.assertEqual(tuple(a.value), (5, 1, 'A'))
+        c = e()
+        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        until_done(lambda: c.add_data(m, 120))
+        
+        self.assertEqual(tuple(a.value), (5, 1, 'A'))
+    
+    
+    def test_example(self):
+        e = b.L() + b.B() + LFLSE(0)
+        a = e(None)
+        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        until_done(lambda: a.add_data(m, 120))
+        
+        self.assertEqual(tuple(a.value), (5, 1, 'ABCDE'))
+    
+    
+    def test_nested(self):
+        i = [2, 'AB', [5, 'ABCDE'], [5, 'ABCDE']]
+        
+        a = b.B() + LFLSE(0)
+        c = b.B() + LFLSE(0) + a + a
+        
+        d = c.produce(i)
+        
+        p = c(None)
+        
+        m = asynchia.ee.MockHandler(inbuf=d + 'FG')
+        until_done(lambda: p.add_data(m, 120))
+        
+        self.assertEqual(exhaust(iter(p.value)), i)
+    
+    
+    def test_named(self):
+        e = b.L()['size'] + b.B()['blub'] + FLSE(lookback('size'))['string']
+        
+        a = e(None)
+        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        until_done(lambda: a.add_data(m, 120))
+        
+        self.assertEqual(tuple(a.value), (5, 1, 'ABCDE'))
+        self.assertEqual(m.inbuf, 'FG')
+    
+    
+    def test_tonamed(self):
+        e = b.L()['size'] + b.B()['blub'] + FLSE(lookback('size'))['string']
+        
+        a = e(None)
+        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        until_done(lambda: a.add_data(m, 120))
+        
+        d = e.tonamed(a.value)
+        self.assertEqual(d['size'], 5)
+        self.assertEqual(d['blub'], 1)
+        self.assertEqual(d['string'], 'ABCDE')
+    
+    
+    def test_tonamed2(self):
+        e = b.L()['size'] + b.L()['blub'] + FLSE(lookback('size'))['string']
+        
+        a = e(None)
+        m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
+        until_done(lambda: a.add_data(m, 120))
+        
+        d = e.tonamed(a.value)
+        self.assertEqual(d['size'], 5)
+        self.assertEqual(d['blub'], 1)
+        self.assertEqual(d['string'], 'ABCDE')
 
-def test_LFLSE():
-    e = b.L() + b.B() + LFLSE(-1)
-    m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
-    a = e(None)
-    until_done(lambda: a.add_data(m, 120))
-    
-    eq_(tuple(a.value), (5, 1, 'A'))
-
-    
-def test_two_instances():
-    e = b.L() + b.B() + LFLSE(-1)
-    a = e()
-    m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
-    until_done(lambda: a.add_data(m, 120))
-    
-    eq_(tuple(a.value), (5, 1, 'A'))
-    c = e()
-    m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
-    until_done(lambda: c.add_data(m, 120))
-    
-    eq_(tuple(a.value), (5, 1, 'A'))
-
-
-def test_example():
-    e = b.L() + b.B() + LFLSE(0)
-    a = e(None)
-    m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
-    until_done(lambda: a.add_data(m, 120))
-    
-    eq_(tuple(a.value), (5, 1, 'ABCDE'))
-
-
-def test_nested():
-    i = [2, 'AB', [5, 'ABCDE'], [5, 'ABCDE']]
-    
-    a = b.B() + LFLSE(0)
-    c = b.B() + LFLSE(0) + a + a
-    
-    d = c.produce(i)
-    
-    p = c(None)
-    
-    m = asynchia.ee.MockHandler(inbuf=d + 'FG')
-    until_done(lambda: p.add_data(m, 120))
-    
-    eq_(exhaust(iter(p.value)), i)
-
-
-def test_named():
-    e = b.L()['size'] + b.B()['blub'] + FLSE(lookback('size'))['string']
-    
-    a = e(None)
-    m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
-    until_done(lambda: a.add_data(m, 120))
-    
-    eq_(tuple(a.value), (5, 1, 'ABCDE'))
-    eq_(m.inbuf, 'FG')
-
-
-def test_tonamed():
-    e = b.L()['size'] + b.B()['blub'] + FLSE(lookback('size'))['string']
-    
-    a = e(None)
-    m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
-    until_done(lambda: a.add_data(m, 120))
-    
-    d = e.tonamed(a.value)
-    eq_(d['size'], 5)
-    eq_(d['blub'], 1)
-    eq_(d['string'], 'ABCDE')
-
-
-def test_tonamed2():
-    e = b.L()['size'] + b.L()['blub'] + FLSE(lookback('size'))['string']
-    
-    a = e(None)
-    m = asynchia.ee.MockHandler(inbuf=e.produce((5, 1, 'ABCDE')) + 'FG')
-    until_done(lambda: a.add_data(m, 120))
-    
-    d = e.tonamed(a.value)
-    eq_(d['size'], 5)
-    eq_(d['blub'], 1)
-    eq_(d['string'], 'ABCDE')
+if __name__ == '__main__':
+    unittest.main()
