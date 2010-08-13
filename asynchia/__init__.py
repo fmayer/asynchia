@@ -24,6 +24,8 @@ import socket
 
 import traceback
 
+from asynchia.util import b, EMPTY_BYTES
+
 __version__ = '0.1a1'
 
 
@@ -479,7 +481,7 @@ class SocketTransport(Transport):
             # FIXME: Is this wise?
             if err.args[0] in connection_lost:
                 self.socket_map.notifier.close_obj(self)
-                return ''
+                return EMPTY_BYTES
             else:
                 raise
     
@@ -515,7 +517,7 @@ class SendallTrait(object):
     """
     def __init__(self, *args, **kwargs):
         super(SendallTrait, self).__init__(*args, **kwargs)
-        self.__buf = ''
+        self.__buf = EMPTY_BYTES
         self.__savewriteable = None
     
     def set_writeable(self, value):

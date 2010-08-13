@@ -19,6 +19,7 @@
 import os
 
 import asynchia
+from asynchia.util import EMPTY_BYTES
 
 # FIXME: Make up a nomenclature.
 # When a Collector raises CollectorFull, it can savely be assumed that it
@@ -156,7 +157,7 @@ class FileInput(Input):
         self.length = length
         self.closing = closing
         
-        self.buf = ''        
+        self.buf = EMPTY_BYTES
         self.eof = False
     
     def tick(self, sock):
@@ -312,7 +313,7 @@ class StringCollector(Collector):
     def __init__(self, onclose=None):
         Collector.__init__(self, onclose)
         
-        self.intvalue = ''
+        self.intvalue = EMPTY_BYTES
     
     def add_data(self, prot, nbytes):
         """ Write at most nbytes bytes from prot to string. """
@@ -613,7 +614,7 @@ class MockHandler(object):
     """ This mocks a handler by writing everything that's passed
     to its send method to outbuf, while reading data from inbuf
     upon recv calls. """
-    def __init__(self, inbuf='', outbuf=''):
+    def __init__(self, inbuf=EMPTY_BYTES, outbuf=EMPTY_BYTES):
         self.outbuf = outbuf
         self.inbuf = inbuf
     
@@ -621,7 +622,7 @@ class MockHandler(object):
         """ Return up to bufsize bytes from inbuf. Raise ValueError
         when inbuf is empty. """
         if not self.inbuf:
-            return ''
+            return EMPTY_BYTES
         i = min(bufsize, len(self.inbuf))
         data = self.inbuf[:i]
         self.inbuf = self.inbuf[i:]

@@ -38,7 +38,7 @@ import socket
 import errno
 
 import asynchia
-import asynchia.util
+from asynchia.util import socketpair, b, EMPTY_BYTES
 
 class InterruptContextManager(object):
     """ Allow with socketmap.interrupt() """
@@ -59,7 +59,7 @@ class ControlSocketSocketMap(asynchia.SocketMap):
     def __init__(self, notifier):
         asynchia.SocketMap.__init__(self, notifier)
         # IMPORTANT! These have to be blocking!
-        self.controlsender, self.controlreceiver = asynchia.util.socketpair()
+        self.controlsender, self.controlreceiver = socketpair()
     
     def interrupt(self, changeflags=False):
         """ Return context manager for the interruption of this
@@ -72,7 +72,7 @@ class ControlSocketSocketMap(asynchia.SocketMap):
         # Read the "s" that started the interrupt
         self.controlreceiver.recv(1)
         # Send the "i" that signals the interrupt succeeded.
-        self.controlreceiver.send("i")
+        self.controlreceiver.send(b('i'))
         # Read the "e" that will end the interrupt.
         self.controlreceiver.recv(1)
 
@@ -82,12 +82,12 @@ class FragileSocketMap(ControlSocketSocketMap):
     changed. """
     def start_interrupt(self, changeflags=False):
         """ See SocketMap.start_interrupt. """
-        self.controlsender.send('s')
+        self.controlsender.send(b('s'))
         self.controlsender.recv(1)
     
     def end_interrupt(self, changeflags=False):
         """ See SocketMap.end_interrupt. """
-        self.controlsender.send('e')
+        self.controlsender.send(b('e'))
 
 
 class RobustSocketMap(ControlSocketSocketMap):
@@ -101,7 +101,7 @@ class RobustSocketMap(ControlSocketSocketMap):
         """ See SocketMap.start_interrupt. """
         if not changeflags:
             # Same as FragileSocketMap.start_interrupt.
-            self.controlsender.send('s')
+            self.controlsender.send(b('s'))
             self.controlsender.recv(1)
         else:
             self.needresp = True
@@ -110,18 +110,18 @@ class RobustSocketMap(ControlSocketSocketMap):
         """ See SocketMap.end_interrupt. """
         if not changeflags:
             # Same as FragileSocketMap.end_interrupt.
-            self.controlsender.send('e')
+            self.controlsender.send(b('e'))
         else:
-            self.controlsender.send('s')
+            self.controlsender.send(b('s'))
             self.controlsender.recv(1)
-            self.controlsender.send('e')
+            self.controlsender.send(b('e'))
     
     def close(self):
         """ Signal the interrupt is finished to any thread that may be
         waiting, as the program, waiting for the thread to finish,
         would not be able to exit otherwise. """
         if self.needresp:
-            self.controlreceiver.send('i')
+            self.controlreceiver.send(b('i'))
             self.needresp = False
         
 
@@ -133,14 +133,14 @@ class RockSolidSocketMap(ControlSocketSocketMap):
         """ See SocketMap.start_interrupt. """
         if not changeflags:
             # Same as FragileSocketMap.start_interrupt.
-            self.controlsender.send('s')
+            self.controlsender.send(b('s'))
             self.controlsender.recv(1)
     
     def end_interrupt(self, changeflags=False):
         """ See SocketMap.end_interrupt. """
         if not changeflags:
             # Same as FragileSocketMap.end_interrupt.
-            self.controlsender.send('e')
+            self.controlsender.send(b('e'))
 
 
 class SelectSocketMap(FragileSocketMap):
@@ -201,9 +201,9 @@ class SelectSocketMap(FragileSocketMap):
                 # select.
                 try:
                     if obj.connected:
-                        obj.socket.send('')
+                        obj.socket.send(EMPTY_BYTES)
                 except socket.error, err:
-                    if err.errno == errno.EPIPE:
+                    if err.args[0] == errno.EPIPE:
                         self.notifier.close_obj(obj)
                     else:
                         raise

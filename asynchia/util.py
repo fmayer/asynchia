@@ -146,3 +146,13 @@ def goodsize(maxsize):
         for example, 4096.
 """
     return 2 ** math.floor(math.log(maxsize, 2))
+
+
+if sys.version_info >= (3, 0):
+    def b(s):
+        return s.encode('utf-8')
+else:
+    b = str
+
+
+EMPTY_BYTES = b('')
