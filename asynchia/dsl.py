@@ -88,7 +88,7 @@ is the third part which describes a fixed-length string with the length equal
 to the first element in the expression (which is referred to by its index 0):
 the unsigned long.
 
-The expression can now be used to parse and to produce pacets according to the
+The expression can now be used to parse and to produce packets according to the
 given format. An asynchia.ee collector can be created by calling the
 expression ::
 
