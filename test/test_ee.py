@@ -103,7 +103,7 @@ class TestEE(unittest.TestCase):
         r = b('')
         while len(r) < 10:
             r += c.value.read(10 - len(r))
-        self.assertEqual(r, string.ascii_letters[:10])
+        self.assertEqual(r, b(string.ascii_letters[:10]))
     
     
     def test_delimited(self):
@@ -144,7 +144,7 @@ class TestEE(unittest.TestCase):
     def test_factorycollector(self):
         def make_eq(i):
             def eq(c):
-                return self.assertEqual(c.value, 5 * string.ascii_letters[i])
+                return self.assertEqual(c.value, b(5 * string.ascii_letters[i]))
             return eq
         itr = (asynchia.ee.DelimitedCollector(
             asynchia.ee.StringCollector(make_eq(i)), 5) for i in xrange(3))
