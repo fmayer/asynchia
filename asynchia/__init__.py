@@ -508,7 +508,11 @@ class SocketTransport(Transport):
 
 class SendallTrait(object):
     """ Enhance Transport with sendall that buffers data and sends it all,
-    if necessary in multiple steps. """
+    if necessary in multiple steps. Mix into the transport to use.
+    
+        class SendAllTransport(asynchia.SendallTrait, asynchia.SocketTransport):
+            pass
+    """
     def __init__(self, *args, **kwargs):
         super(SendallTrait, self).__init__(*args, **kwargs)
         self.__buf = ''
