@@ -41,9 +41,9 @@ class TestEE(unittest.TestCase):
     def test_inputqueue(self):
         m = asynchia.ee.MockHandler()
         a = asynchia.ee.StringInput(b('a') * 5)
-        b = asynchia.ee.StringInput(b('b') * 5)
-        c = asynchia.ee.StringInput(b('c') * 5)
-        q = asynchia.ee.InputQueue([a, b, c])
+        c = asynchia.ee.StringInput(b('b') * 5)
+        d = asynchia.ee.StringInput(b('c') * 5)
+        q = asynchia.ee.InputQueue([a, c, d])
         
         until_done(lambda: q.tick(m))
         self.assertEqual(m.outbuf, b('a') * 5 + b('b') * 5 + b('c') * 5)
@@ -125,20 +125,20 @@ class TestEE(unittest.TestCase):
         a = asynchia.ee.DelimitedCollector(
             asynchia.ee.StringCollector(), 5
         )
-        b = asynchia.ee.DelimitedCollector(
+        c = asynchia.ee.DelimitedCollector(
             asynchia.ee.StringCollector(), 4
         )
-        c = asynchia.ee.DelimitedCollector(
+        d = asynchia.ee.DelimitedCollector(
             asynchia.ee.StringCollector(), 3
         )
         
-        q = asynchia.ee.CollectorQueue([a, b, c])
+        q = asynchia.ee.CollectorQueue([a, c, d])
         
         m = asynchia.ee.MockHandler(inbuf=b('a') * 5 + b('b') * 4 + b('c') * 3)
         until_done(lambda: q.add_data(m, 5))
         self.assertEqual(a.collector.value, b('a') * 5)
-        self.assertEqual(b.collector.value, b('b') * 4)
-        self.assertEqual(c.collector.value, b('c') * 3)
+        self.assertEqual(c.collector.value, b('b') * 4)
+        self.assertEqual(d.collector.value, b('c') * 3)
     
     
     def test_factorycollector(self):
@@ -229,13 +229,13 @@ class TestEE(unittest.TestCase):
     
     def test_collectoradd(self):
         a = del_strcoll(5)
-        b = del_strcoll(6)
+        c = del_strcoll(6)
         
-        q = a + b
+        q = a + c
         m = asynchia.ee.MockHandler(b('a') * 5 + b('b') * 6)
         until_done(lambda: q.add_data(m, 2))
         self.assertEqual(a.collector.value, b('a') * 5)
-        self.assertEqual(b.collector.value, b('b') * 6)
+        self.assertEqual(c.collector.value, b('b') * 6)
     
     
     def test_autoflush(self):

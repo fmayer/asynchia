@@ -25,10 +25,10 @@ b = asynchia.util.b
 class TestUtil(unittest.TestCase):
     def test_socketpair(self):
         data = b('a')
-        a, b = asynchia.util.socketpair()
+        a, c = asynchia.util.socketpair()
         a.send(data)
         # One byte must at least be received.
-        self.assertEqual(b.recv(len(data)), data)
+        self.assertEqual(c.recv(len(data)), data)
     
     
     def test_idpool(self):
