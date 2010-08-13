@@ -26,6 +26,19 @@ from asynchia.util import b
 
 import unittest
 
+def get_named_tempfile(delete):
+    try:
+        return tempfile.NamedTemporaryFile(delete=delete)
+    except TypeError:
+        f = tempfile.NamedTemporaryFile()
+        if not delete and os.name != "nt":
+            def close():
+                f.close_called = True
+                f.file.close()
+                f.close = close
+        return f
+
+
 def del_strcoll(size):
     return asynchia.ee.DelimitedCollector(
         asynchia.ee.StringCollector(), size
@@ -82,7 +95,7 @@ class TestEE(unittest.TestCase):
     
     def test_filecollector_closing(self):
         c = asynchia.ee.FileCollector(
-            tempfile.NamedTemporaryFile(delete=False)
+            get_named_tempfile(delete=False)
         )
         m = asynchia.ee.MockHandler(inbuf=b(string.ascii_letters))
         c.add_data(m, 10)
@@ -93,7 +106,7 @@ class TestEE(unittest.TestCase):
     
     def test_filecollector_notclosing(self):
         c = asynchia.ee.FileCollector(
-            tempfile.NamedTemporaryFile(delete=False),
+            get_named_tempfile(delete=False),
             False
         )
         m = asynchia.ee.MockHandler(inbuf=b(string.ascii_letters))
@@ -198,7 +211,7 @@ class TestEE(unittest.TestCase):
     def test_lenpredict(self):
         strings = [b('a') * i for i in xrange(1, 20)]
         for string in strings:
-            fd = tempfile.NamedTemporaryFile(delete=True)
+            fd = get_named_tempfile(delete=True)
             try:
                 fd.write(string)
                 fd.flush()
@@ -216,7 +229,7 @@ class TestEE(unittest.TestCase):
             for j in xrange(1, 20)
         ]
         for string in strings:
-            fd = tempfile.NamedTemporaryFile(delete=True)
+            fd = get_named_tempfile(delete=True)
             try:
                 fd.write(string)
                 fd.flush()
@@ -239,7 +252,7 @@ class TestEE(unittest.TestCase):
     
     
     def test_autoflush(self):
-        fd = tempfile.NamedTemporaryFile(delete=True)
+        fd = get_named_tempfile(delete=True)
         fc = asynchia.ee.FileCollector(fd, autoflush=True)
         
         i = 0

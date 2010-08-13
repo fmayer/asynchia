@@ -30,10 +30,18 @@ from asynchia.dsl import s as db
 
 StringInput = None
 
+try:
+    from inspect import isgenerator
+except ImportError:
+    from types import GeneratorType
+    def isgenerator(obj):
+        return isinstance(obj, GeneratorType)
+
+
 def exhaust(itr):
     result = []
     for elem in itr:
-        if inspect.isgenerator(elem):
+        if isgenerator(elem):
             result.append(exhaust(iter(elem)))
         else:
             result.append(elem)
