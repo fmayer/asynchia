@@ -637,4 +637,3 @@ class Server(AcceptHandler):
 trylater = (errno.EAGAIN,)
 connection_lost = (errno.ECONNRESET, errno.ECONNABORTED)
 defaultsocket_factory = socket.socket
-defaulttransport_factory = SocketTransport
