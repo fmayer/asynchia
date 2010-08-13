@@ -77,7 +77,7 @@ class TestEE(unittest.TestCase):
         i = asynchia.ee.FileInput.from_filename(__file__, closing=False)
         i.close()
         # Verify file is not closed.
-        self.assertEqual(i.fd.read(0), '')
+        self.assertEqual(i.fd.read(0), b(''))
     
     
     def test_filecollector_closing(self):
