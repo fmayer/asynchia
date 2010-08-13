@@ -115,11 +115,15 @@ import struct
 import asynchia.ee
 
 class Container(object):
+    """ Container to hold members, which are also exposed through getitem.
+    Used as a container for the preconstruced SingleBinaryExpressions. """
     def __getitem__(self, item):
         return getattr(self, item)
 
 
 class State(object):
+    """ State of the collection done by ExprCollectorQueue. Used to enable
+    lookbacks. """
     def __init__(self):
         self.tbl = {}
         self.ind = 0
@@ -127,6 +131,7 @@ class State(object):
 
 
 class Expr(object):
+    """ Baseclass for all expressions. """
     def __init__(self):
         self.name = None
     
@@ -139,6 +144,8 @@ class Expr(object):
 
 
 class ExprCollectorQueue(asynchia.ee.Collector):
+    """ Queue to collect the data specified by the list of expressions
+    passed to it. """
     def __init__(self, exprs, onclose=None):
         asynchia.ee.Collector.__init__(self, onclose)
         
@@ -214,6 +221,7 @@ class ExprAdd(Expr):
 
 
 class BinaryExpr(Expr):
+    """ Represents data that can be expressed by a Struct. """
     def __init__(self, pattern):
         Expr.__init__(self)
         self.pattern = pattern
@@ -231,6 +239,8 @@ class BinaryExpr(Expr):
 
 
 class SingleBinaryExpr(Expr):
+    """ Represents data that can be expressed by a Struct with a single
+    member. """
     def __init__(self, pattern):
         Expr.__init__(self)
         self.pattern = pattern
@@ -248,6 +258,9 @@ class SingleBinaryExpr(Expr):
 
 
 class FileExpr(Expr):
+    """ Data that should be collected in an fd. Should be combined with a
+    FixedLengthExpression, lest it greedily collects all data from the
+    moment it is created until no data is available. """
     def __init__(self, fd, closing=False, autoflush=True):
         Expr.__init__(self)
         self.fd = fd
@@ -265,6 +278,9 @@ class FileExpr(Expr):
 
 
 class StringExpr(Expr):
+    """ Data that should be collected in a string. Should be combined with a
+    FixedLengthExpression, lest it greedily collects all data from the
+    moment it is created until no data is available. """
     def __call__(self, state, onclose=None):
         return asynchia.ee.StringCollector(onclose)
     
@@ -274,6 +290,9 @@ class StringExpr(Expr):
 
 
 class FixedLenExpr(Expr):
+    """ Restrict the length of the expression contained to the value retuned
+    by calling glen upon construction of the collector for said expression.
+    """
     def __init__(self, glen, expr):
         Expr.__init__(self)
         self.glen = glen
@@ -289,6 +308,13 @@ class FixedLenExpr(Expr):
 
 
 def lookback(ind, fun=(lambda x: x.value)):
+    """ Can be passed to expressions that expect a lookback.
+    ind can either be a string, thus referring to the result of the expression
+    with the specified name or an int referring to the result of the
+    expression with the specified index.
+    
+    Fun can be altered to change the way the data is extracted from the 
+    collector. Defaults to returning .value."""
     if isinstance(ind, basestring):
         def _fun(state):
             return fun(state.nametbl[ind])
@@ -299,10 +325,13 @@ def lookback(ind, fun=(lambda x: x.value)):
 
 
 def binarylookback(ind, item=0):
+    """ Convenience function for lookback(ind, lambda x: x.value[item]). """
     return lookback(ind, lambda x: x.value[item])
 
 
 def const(value):
+    """ Can be passed to expressions that expect a lookback and always
+    returns the value passed to it. """
     def _fun(state):
         return value
     return _fun
