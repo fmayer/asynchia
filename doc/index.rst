@@ -15,7 +15,7 @@ Why would you want to use asynchia then? It is a middle-way between bloat and in
 If this warning did not put you off, the best way to start with asynchia is
 reading the two tutorials below and then consulting the examples/ directory.
 Good luck, have fun and -- most importantly -- do not forget to report any bugs
-and inconveniences at http://bitbucket.org/segfaulthunter/asynchia-mainline/issues/.
+and inconveniences at http://github.com/segfaulthunter/asynchia/issues.
 
 Contents:
 
@@ -24,6 +24,7 @@ Contents:
 
    tutorial
    ee_tutorial
+   dsl_tutorial
 
 Indices and tables
 ==================
