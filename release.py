@@ -83,14 +83,14 @@ def update_setup(version):
         init.write(new)
 
 
-def release(version, force=False, setup=True, commit=True,
+def release(version, major, force=False, setup=True, commit=True,
             packages=True, branch=True):
     if setup:
         update_setup(version)
         if commit:
             git('commit', '-a', '-m', 'Release version %s' % version)
     if branch:
-        git('branch', '%s-maintenance' % version)
+        git('branch', '%s-maintenance' % major)
     if packages:
         if not os.path.exists(RELEASE_DIR):
             os.mkdir(RELEASE_DIR)
@@ -122,10 +122,19 @@ def main():
                       dest="packages", default=True,
                       help="Do not create archives.")
     
+    parser.add_option("-m", "--major", action="store", default=None,
+                      type="str", dest="major", metavar="MAJOR",
+                      help="release MAJOR version. Used for branchname.")
     options, args = parser.parse_args()
     if len(args) != 1:
         print "Invalid number of arguments"
         return 2
+    
+    if options.major is None:
+        major = args[0]
+    else:
+        major = options.major
+    
     release(args[0], force=options.force,
             setup=options.setup, commit=options.commit,
             packages=options.packages, branch=options.branch)
