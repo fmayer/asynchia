@@ -51,9 +51,9 @@ class TestEE(unittest.TestCase):
     
     def test_stringinput(self):
         m = asynchia.ee.MockHandler()
-        i = asynchia.ee.StringInput(string.ascii_letters)
+        i = asynchia.ee.StringInput(b(string.ascii_letters))
         i.tick(m)
-        self.assertEqual(m.outbuf, string.ascii_letters)
+        self.assertEqual(m.outbuf, b(string.ascii_letters))
     
     
     def test_fileinput(self):
@@ -84,7 +84,7 @@ class TestEE(unittest.TestCase):
         c = asynchia.ee.FileCollector(
             tempfile.NamedTemporaryFile(delete=False)
         )
-        m = asynchia.ee.MockHandler(inbuf=string.ascii_letters)
+        m = asynchia.ee.MockHandler(inbuf=b(string.ascii_letters))
         c.add_data(m, 10)
         c.close()
         # I/O operation on closed file.
@@ -96,7 +96,7 @@ class TestEE(unittest.TestCase):
             tempfile.NamedTemporaryFile(delete=False),
             False
         )
-        m = asynchia.ee.MockHandler(inbuf=string.ascii_letters)
+        m = asynchia.ee.MockHandler(inbuf=b(string.ascii_letters))
         c.add_data(m, 10)
         c.close()
         c.value.seek(0)
@@ -110,15 +110,15 @@ class TestEE(unittest.TestCase):
         c = asynchia.ee.DelimitedCollector(
             asynchia.ee.StringCollector(), 5
         )
-        m = asynchia.ee.MockHandler(inbuf=string.ascii_letters)
+        m = asynchia.ee.MockHandler(inbuf=b(string.ascii_letters))
         n = c.add_data(m, 10)
         self.assertEqual(n[1], 5)
         # As we are using a MockHandler, we can be sure the collector
         # collected all 5 bytes it was supposed to.
         self.assertEqual(c.add_data(m, 10)[0], True)
         # The collector
-        self.assertEqual(c.collector.value, string.ascii_letters[:5])
-        self.assertEqual(m.inbuf, string.ascii_letters[5:])
+        self.assertEqual(c.collector.value, b(string.ascii_letters[:5]))
+        self.assertEqual(m.inbuf, b(string.ascii_letters[5:]))
         
     
     def test_collectorqueue(self):

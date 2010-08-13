@@ -207,7 +207,7 @@ class ExprAdd(Expr):
         return self
     
     def produce(self, value):
-        result = asynchia.ee.StringInput("")
+        result = asynchia.ee.StringInput(b(""))
         for expr, elem in zip(self.exprs, value):
             result += expr.produce(elem)
         return result
