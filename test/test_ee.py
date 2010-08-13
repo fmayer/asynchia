@@ -100,7 +100,7 @@ class TestEE(unittest.TestCase):
         c.add_data(m, 10)
         c.close()
         c.value.seek(0)
-        r = ''
+        r = b('')
         while len(r) < 10:
             r += c.value.read(10 - len(r))
         self.assertEqual(r, string.ascii_letters[:10])
@@ -158,7 +158,7 @@ class TestEE(unittest.TestCase):
         
     
     def test_factoryinput(self):
-        itr = (asynchia.ee.StringInput(5 * string.ascii_letters[i])
+        itr = (asynchia.ee.StringInput(b(5 * string.ascii_letters[i]))
                for i in xrange(3))
         c = asynchia.ee.FactoryInput(
             asynchia.ee.FactoryInput.wrap_iterator(itr.next)
