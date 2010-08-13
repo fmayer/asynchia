@@ -242,7 +242,7 @@ class TestEE(unittest.TestCase):
         fc = asynchia.ee.FileCollector(fd, autoflush=True)
         
         i = 0
-        m = asynchia.ee.MockHandler('a' * 20000000)
+        m = asynchia.ee.MockHandler(b('a') * 20000000)
         
         while m.inbuf:
             d, n = fc.add_data(m, 8000000)
