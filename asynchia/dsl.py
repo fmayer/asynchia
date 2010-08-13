@@ -82,7 +82,7 @@ and LFLSE which expands to lookback fixed-length string-expression.
 The expression (which is the second statement) describes a packet which
 contains three parts. The first part is an unsigned long (which is named by its
 name in the struct module) in network byte-order (all binary types contained
-in `b` assume network byte-order (so b.L expands to the struct format "!L");
+in `s` assume network byte-order (so s.L expands to the struct format "!L");
 the second part is an unsigned byte; the interesting thing in the expression
 is the third part which describes a fixed-length string with the length equal
 to the first element in the expression (which is referred to by its index 0):

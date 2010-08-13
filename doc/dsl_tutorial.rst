@@ -17,7 +17,7 @@ try to write your own types of expressions).
 Let us henceforth consider the following simple example::
     
     from asynchia.dsl import b, SBLFLSE
-    e = b.L() + b.B() + LFLSE(0)
+    e = s.L() + s.B() + LFLSE(0)
 
 This might appear utterly complicated at first glance, but it is not. The
 first statement imports b (which is a container for binary numeric types)
@@ -26,7 +26,7 @@ and LFLSE which expands to lookback fixed-length string-expression.
 The expression (which is the second statement) describes a packet which
 contains three parts. The first part is an unsigned long (which is named by its
 name in the struct module) in network byte-order (all binary types contained
-in `b` assume network byte-order (so b.L expands to the struct format "!L");
+in `s` assume network byte-order (so s.L expands to the struct format "!L");
 the second part is an unsigned byte; the interesting thing in the expression
 is the third part which describes a fixed-length string with the length equal
 to the first element in the expression (which is referred to by its index 0):
@@ -57,7 +57,7 @@ Attributes can be named by passing the name in square brackets. It is
 also possible to refer to expressions by the name given to them in
 lookbacks. The following expression is indentical to the one initially considered. ::
 
-    e = b.L()['size'] + b.B()['blub'] + LFLSE('size')['string']
+    e = s.L()['size'] + s.B()['blub'] + LFLSE('size')['string']
 
 The tuple of values collected can be converted into a dictionary that
 maps the name of the expression to the respective value by calling the
