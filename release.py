@@ -16,6 +16,7 @@
 
 from __future__ import with_statement
 
+import subprocess
 import tarfile
 import bz2
 import gzip
@@ -28,8 +29,6 @@ from contextlib import closing
 from StringIO import StringIO
 from optparse import OptionParser
 
-from mercurial.dispatch import dispatch
-
 
 s_path = os.path.abspath(os.path.dirname(__file__))
 
@@ -41,6 +40,12 @@ SRC_PATH = os.path.abspath(s_path)
 PKG_DIR = os.path.join(SRC_PATH, 'asynchia')
 VERSION_REGEX = re.compile("^VERSION = (.+?)$", re.MULTILINE)
 INIT_VERSION_REGEX = re.compile("^__version__ = (.+?)$", re.MULTILINE)
+
+GIT = 'git'
+
+def git(*args):
+    proc = subprocess.Popen((GIT,) + args, stdout=subprocess.PIPE)
+    return proc.stdout.read().strip()
 
 
 def buffered_write(dest, src, buffer_size):
@@ -78,22 +83,14 @@ def update_setup(version):
         init.write(new)
 
 
-def hg_commit(msg):
-    dispatch(['commit', '-m', msg])
-
-
-def hg_tag(name):
-    dispatch(['tag', name])
-
-
 def release(version, force=False, setup=True, commit=True,
-            tag=True, packages=True):
+            packages=True, branch=True):
     if setup:
         update_setup(version)
         if commit:
-            hg_commit('Release version %s' % version)
-    if tag:
-        hg_tag(version)
+            git('commit', '-a', 'm', 'Release version %s' % version)
+    if branch:
+        git('branch', '%s-maintenance')
     if packages:
         if not os.path.exists(RELEASE_DIR):
             os.mkdir(RELEASE_DIR)
@@ -109,9 +106,10 @@ def main():
     
     parser.add_option("-f", "--force", action="store_true", dest="force",
                       default=False, help="Ignore non-critical problems.")
-    
-    parser.add_option("-t", "--no-tag", action="store_false",
-                      dest="tag", default=True, help="Don't run unittests.")
+
+    parser.add_option("-b", "--no-branch", action="store_false",
+                      dest="branch", default=True,
+                      help="Don't create a maintenance branch.")
     
     parser.add_option("-c", "--no-commit", action="store_false",
                       dest="commit", default=True, help="Do not commit.")
@@ -130,7 +128,7 @@ def main():
         return 2
     release(args[0], force=options.force,
             setup=options.setup, commit=options.commit,
-            tag=options.tag, packages=options.packages)
+            packages=options.packages, branch=options.branch)
     return 0
 
 
