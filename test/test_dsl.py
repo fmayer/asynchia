@@ -65,7 +65,7 @@ class TestDSL(unittest.TestCase):
         a = e(None)
         until_done(lambda: a.add_data(m, 120))
         
-        self.assertEqual(tuple(a.value), (5, 1, 'A'))
+        self.assertEqual(tuple(a.value), (5, 1, b('A')))
     
         
     def test_two_instances(self):
@@ -76,14 +76,14 @@ class TestDSL(unittest.TestCase):
         )
         until_done(lambda: a.add_data(m, 120))
         
-        self.assertEqual(tuple(a.value), (5, 1, 'A'))
+        self.assertEqual(tuple(a.value), (5, 1, b('A')))
         c = e()
         m = asynchia.ee.MockHandler(
             inbuf=e.produce((5, 1, b('ABCDE'))) + b('FG')
         )
         until_done(lambda: c.add_data(m, 120))
         
-        self.assertEqual(tuple(a.value), (5, 1, 'A'))
+        self.assertEqual(tuple(a.value), (5, 1, b('A')))
     
     
     def test_example(self):
