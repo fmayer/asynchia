@@ -315,12 +315,12 @@ def lookback(ind, fun=(lambda x: x.value)):
     
     Fun can be altered to change the way the data is extracted from the 
     collector. Defaults to returning .value."""
-    if isinstance(ind, basestring):
-        def _fun(state):
-            return fun(state.nametbl[ind])
-    else:
+    if isinstance(ind, (long, int)):
         def _fun(state):
             return fun(state.tbl[ind])
+    else:
+        def _fun(state):
+            return fun(state.nametbl[ind])
     return _fun
 
 
