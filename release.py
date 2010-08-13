@@ -88,7 +88,7 @@ def release(version, force=False, setup=True, commit=True,
     if setup:
         update_setup(version)
         if commit:
-            git('commit', '-a', 'm', 'Release version %s' % version)
+            git('commit', '-a', '-m', 'Release version %s' % version)
     if branch:
         git('branch', '%s-maintenance')
     if packages:
