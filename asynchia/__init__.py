@@ -185,13 +185,17 @@ class Notifier:
 
 
 class Transport(object):
+    """ All I/O is done over Transports. This enables Handlers to be written
+    in a generic way and used with different transports. """
     def __init__(self, handler=None):
         self.handler = None
     
-    def recv(self, nbytes):
+    def recv(self, nbytes, *args):
+        """ Override. """
         raise NotImplementedError
     
-    def send(self, string):
+    def send(self, string, *args):
+        """ Override. """
         raise NotImplementedError
     
     def handle_read(self):
@@ -240,6 +244,7 @@ class Transport(object):
 
 
 class SocketTransport(Transport):
+    """ A transport that uses a socket to send and receive data. """
     def __init__(self, socket_map, sock=None, handler=None):
         super(SocketTransport, self).__init__(handler)
         # Make no assumptions on what we want to do with the handler.
@@ -547,9 +552,7 @@ class SendallTrait(object):
 class Handler(object):
     """ Handle a socket object. Call this objects handle_* methods upon I/O """
     # Dummy handlers.
-    def __init__(self, transport=None):
-        if transport is None:
-            transport = defaulttransport_factory()
+    def __init__(self, transport):
         self.transport = transport
         
         self.transport.handler = self

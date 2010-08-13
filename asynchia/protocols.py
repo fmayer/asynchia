@@ -49,7 +49,8 @@ class LineHandler(asynchia.Handler):
         self.parse_buffer()
     
     def send_line(self, line):
-        """ Send line. """
+        """ Send line. To use this SendallTrait must be mixed into
+        your transport! """
         self.transport.sendall(line + self.delimiter)
     
     def line_received(self, line):
