@@ -27,6 +27,10 @@ SelectSocketMap.
 If select.epoll is available, you will have EPollSocketMap available and
 also assigned to DefaultSocketMap, which otherwise defaults to either
 PollSocketMap or SelectSocketMap.
+
+If select.kqueue is available, you will have KQueueSocketMap available and
+also assigned to DefaultSocketMap, which otherwise defaults to one
+of the other three.
 """
 
 import select
