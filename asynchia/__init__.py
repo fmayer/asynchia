@@ -29,7 +29,7 @@ from asynchia.util import EMPTY_BYTES
 __version__ = '0.1a1'
 
 
-class SocketMap:
+class SocketMap(object):
     """ Decide which sockets have I/O to be done and tell the notifier
     to call the appropriate methods of their Handle objects. """
     def __init__(self, notifier=None):
@@ -88,7 +88,7 @@ class SocketMap:
         raise NotImplementedError
 
 
-class Notifier:
+class Notifier(object):
     """ Call handle functions of the object with error handling. """
     @staticmethod
     def read_obj(obj):
