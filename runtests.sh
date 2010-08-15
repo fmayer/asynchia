@@ -32,14 +32,18 @@ export PYTHONPATH="$SCRIPTDIR":"$PYTHONPATH"
 
 while getopts p:l: option
 do
-case $option in
-p)
-PYTHON=$OPTARG
-;;
-l)
-LOGFILE=$OPTARG
-;;
-esac
+	case $option in
+		p)
+			PYTHON=$OPTARG
+		;;
+		l)
+			LOGFILE=$OPTARG
+		;;
+		[?])
+			echo "-p [PYTHON INTERPRETER]\n-l [LOGFILE]"
+			exit
+		;;
+	esac
 done
 
 "$PYTHON" "$TESTMAIN" 2>&1 | tee "$LOGFILE"
