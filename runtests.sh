@@ -45,13 +45,9 @@ do
 		l)
 			LOGFILE=$OPTARG
 		;;
-		[?])
+		*)
 			printhelp
 		;;
-		h)
-			printhelp
-		;;
-			
 	esac
 done
 
