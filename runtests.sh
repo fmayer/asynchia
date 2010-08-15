@@ -23,6 +23,12 @@
 # To put it in a nutshell: Use this file to run the tests to minimize
 # error-sources.
 
+printhelp() {
+	echo "-p [PYTHON INTERPRETER]\n-l [LOGFILE]"
+	exit
+}
+
+
 SCRIPTDIR=`dirname "$0"`
 LOGFILE="$SCRIPTDIR/runtests.log"
 TESTMAIN="$SCRIPTDIR/test/main.py"
@@ -30,7 +36,7 @@ PYTHON=`which python`
 
 export PYTHONPATH="$SCRIPTDIR":"$PYTHONPATH"
 
-while getopts p:l: option
+while getopts p:l:h option
 do
 	case $option in
 		p)
@@ -40,9 +46,12 @@ do
 			LOGFILE=$OPTARG
 		;;
 		[?])
-			echo "-p [PYTHON INTERPRETER]\n-l [LOGFILE]"
-			exit
+			printhelp
 		;;
+		h)
+			printhelp
+		;;
+			
 	esac
 done
 
