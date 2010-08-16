@@ -436,7 +436,7 @@ class KQueueSocketMap(RockSolidSocketMap):
         self.socket_list[handler.fileno()] = handler
         
         self.queue.control(
-            [select.kevent(handler, select.KQ_FILTER_WRITE, select.KQ_EV_ADD)],
+            [select.kevent(handler, select.KQ_FILTER_READ, select.KQ_EV_ADD)],
             0
         )
         
@@ -451,7 +451,7 @@ class KQueueSocketMap(RockSolidSocketMap):
         
         self.queue.control(
             [select.kevent(
-                handler, select.KQ_FILTER_WRITE, select.KQ_EV_DELETE)
+                handler, select.KQ_FILTER_READ, select.KQ_EV_DELETE)
              ],
             0
         )
@@ -461,26 +461,26 @@ class KQueueSocketMap(RockSolidSocketMap):
         if handler.writeable or handler.awaiting_connect:
             self.del_writer(handler)
     
-    def add_writer(self, handler):
-        """ See SocketMap.add_writer. """
-        pass
-    
-    def del_writer(self, handler):
-        """ See SocketMap.del_writer. """
-        pass
-    
     def add_reader(self, handler):
         """ See SocketMap.add_reader. """
-        self.queue.control(
-            [select.kevent(handler, select.KQ_FILTER_READ, select.KQ_EV_ADD)],
-            0
-        )
+        pass
     
     def del_reader(self, handler):
         """ See SocketMap.del_reader. """
+        pass
+    
+    def add_writer(self, handler):
+        """ See SocketMap.add_writer. """
+        self.queue.control(
+            [select.kevent(handler, select.KQ_FILTER_WRITE, select.KQ_EV_ADD)],
+            0
+        )
+    
+    def del_writer(self, handler):
+        """ See SocketMap.del_writer. """
         self.queue.control(
             [select.kevent(
-                handler, select.KQ_FILTER_READ, select.KQ_EV_DELETE)
+                handler, select.KQ_FILTER_WRITE, select.KQ_EV_DELETE)
              ],
             0
         )
