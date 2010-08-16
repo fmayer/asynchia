@@ -22,6 +22,8 @@ import sys
 import math
 import socket
 
+import asynchia.const
+
 class IDPool(object):
     """
     Pool that returns unique identifiers.
@@ -147,6 +149,24 @@ def goodsize(maxsize):
         for example, 4096.
 """
     return 2 ** math.floor(math.log(maxsize, 2))
+
+
+def is_closed(sock):
+    """ Find out whether a socked is closed or not. """
+    try:
+        sock.setblocking(False)
+        try:
+            rcv = sock.recv(1, socket.MSG_PEEK)
+        except socket.error, err:
+            if err.args[0] in asynchia.const.trylater:
+                return False
+            else:
+                raise
+        else:
+            if not rcv:
+                return True
+    finally:
+        sock.setblocking(True)
 
 
 if sys.version_info >= (3, 0):

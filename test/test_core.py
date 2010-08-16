@@ -31,10 +31,21 @@ b = asynchia.util.b
 
 import unittest
 
-unittest.TestCase.assertEqual
+def _override_socketpair(fun):
+    def _fun(*args, **kwargs):
+        bu = getattr(socket, 'socketpair', None)
+        del socket.socketpair
+        try:
+            return fun(*args, **kwargs)
+        finally:
+            if bu is not None:
+                socket.socketpair = bu
+    return _fun
+
 
 class Container(object):
     pass
+
 
 def dnr_interrupt(self, map_):
     container = Container()
@@ -437,6 +448,9 @@ class TestCore(unittest.TestCase):
         
         ha.handle_write = lambda: ha.send(b("Foo"))
         hb.handle_read = lambda: self.assertEqual(hb.recv(3), b('Foo'))
+    
+    if hasattr(socket, 'socketpair'):
+        test_pingpong2 = _override_socketpair(test_pingpong)
 
 def _genfun(map_, test):
     def _fun(self):
@@ -454,11 +468,18 @@ maps = \
       if hasattr(asynchia.maps, name)
       )
 
+wsocketpair = [
+    dnr_close, dnr_close_read,dnr_close_write, dnr_connfailed,
+    dnr_connfailed2
+]
+
 tests = [
     dnr_interrupt, t_changeflag(ctx), t_changeflag(std),
-    dnr_remove, dnr_remove2, dnr_close, dnr_close_read,
-    dnr_close_write, dnr_connfailed, dnr_connfailed2
-]
+    dnr_remove, dnr_remove2
+] + wsocketpair
+
+if hasattr(socket, 'socketpair'):
+    tests += map(_override_socketpair, wsocketpair)
 
 i = 0
 

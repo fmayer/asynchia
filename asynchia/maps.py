@@ -38,7 +38,7 @@ import socket
 import errno
 
 import asynchia
-from asynchia.util import socketpair, b, EMPTY_BYTES
+from asynchia.util import socketpair, b, EMPTY_BYTES, is_closed
 
 class InterruptContextManager(object):
     """ Allow with socketmap.interrupt() """
@@ -199,14 +199,8 @@ class SelectSocketMap(FragileSocketMap):
             if obj is not self.controlreceiver:
                 # This seems to be the only way to find hangup-events with
                 # select.
-                try:
-                    if obj.connected:
-                        obj.socket.send(EMPTY_BYTES)
-                except socket.error, err:
-                    if err.args[0] == errno.EPIPE:
-                        self.notifier.close_obj(obj)
-                    else:
-                        raise
+                if obj.connected and is_closed(obj.socket):
+                    self.notifier.close_obj(obj)
                 else:
                     self.notifier.read_obj(obj)
             else:
@@ -269,12 +263,15 @@ class PollSocketMap(RobustSocketMap):
                 continue
             obj = self.socket_list[fileno]
             if flags & (select.POLLIN | select.POLLPRI):
-                self.notifier.read_obj(obj)
+                if obj.connected and is_closed(obj.socket):
+                    self.notifier.close_obj(obj)
+                else:
+                    self.notifier.read_obj(obj)
             if flags & select.POLLOUT:
                 self.notifier.write_obj(obj)
-            if flags & (select.POLLERR | select.POLLNVAL):
+            if flags & select.POLLPRI:
                 self.notifier.except_obj(obj)
-            if flags & select.POLLHUP:
+            if flags & (select.POLLHUP | select.POLLERR | select.POLLNVAL):
                 self.notifier.close_obj(obj)
         if interrupted:
             self.do_interrupt()
@@ -299,9 +296,10 @@ class PollSocketMap(RobustSocketMap):
         """ Generate appropriate flags for handler. These flags will
         represent the current state of the handler (if it is readable,
         the flags say so too). """
-        flags = select.POLLERR | select.POLLHUP | select.POLLNVAL
-        if handler.readable:
-            flags |= select.POLLIN | select.POLLPRI
+        flags = (
+            select.POLLERR | select.POLLHUP | select.POLLNVAL |
+            select.POLLIN | select.POLLPRI
+        )
         if handler.writeable or handler.awaiting_connect:
             flags |= select.POLLOUT
         return flags
@@ -358,12 +356,15 @@ class EPollSocketMap(RockSolidSocketMap):
                 continue
             obj = self.socket_list[fileno]
             if flags & (select.EPOLLIN | select.EPOLLPRI):
-                self.notifier.read_obj(obj)
+                if obj.connected and is_closed(obj.socket):
+                    self.notifier.close_obj(obj)
+                else:
+                    self.notifier.read_obj(obj)
             if flags & select.EPOLLOUT:
                 self.notifier.write_obj(obj)
-            if flags & select.EPOLLERR:
+            if flags & select.EPOLLPRI:
                 self.notifier.except_obj(obj)
-            if flags & select.EPOLLHUP:
+            if flags & (select.POLLHUP | select.POLLERR | select.POLLNVAL):
                 self.notifier.close_obj(obj)
         if interrupted:
             self.do_interrupt()
@@ -386,9 +387,10 @@ class EPollSocketMap(RockSolidSocketMap):
         """ Generate appropriate flags for handler. These flags will
         represent the current state of the handler (if it is readable,
         the flags say so too). """
-        flags = select.EPOLLERR | select.EPOLLHUP
-        if handler.readable:
-            flags |= select.EPOLLIN | select.EPOLLPRI
+        flags = (
+            select.EPOLLERR | select.EPOLLHUP | select.POLLNVAL |
+            select.EPOLLIN | select.EPOLLPRI
+        )
         if handler.writeable or handler.awaiting_connect:
             flags |= select.EPOLLOUT
         return flags

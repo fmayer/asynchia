@@ -25,8 +25,27 @@ import socket
 import traceback
 
 from asynchia.util import EMPTY_BYTES
+from asynchia.const import trylater, connection_lost
 
 __version__ = '0.1a1'
+
+def _unawait_conn(obj):
+    """ Helper function for Notifier. """
+    obj.stop_awaiting_connect()
+    obj.connected = True
+    # Errno of the asynchronous connect function.
+    err = obj.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+    if err:
+        try:
+            obj.connected = False
+            obj.handle_connect_failed(err)
+        except Exception:
+            obj.handle_error()
+    else:
+        try:
+            obj.handle_connect()
+        except Exception:
+            obj.handle_error()
 
 
 class SocketMap(object):
@@ -109,21 +128,7 @@ class Notifier(object):
         call handle_error of the object. If it is the first write event call
         the handle_connect method. """
         if obj.awaiting_connect:
-            obj.stop_awaiting_connect()
-            obj.connected = True
-            # Errno of the asynchronous connect function.
-            err = obj.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
-            if err:
-                try:
-                    obj.connected = False
-                    obj.handle_connect_failed(err)
-                except Exception:
-                    obj.handle_error()
-            else:
-                try:
-                    obj.handle_connect()
-                except Exception:
-                    obj.handle_error()
+            _unawait_conn(obj)
         
         if not obj.writeable:
             # This should only be happening if the object was just connected.
@@ -137,24 +142,6 @@ class Notifier(object):
     def except_obj(obj):
         """ Call handle_except of the object. If any error occurs within it,
         call handle_error of the object.  """
-        if obj.awaiting_connect:
-            obj.stop_awaiting_connect()
-            obj.connected = True
-            # Errno of the asynchronous connect function.
-            err = obj.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
-            if err:
-                try:
-                    obj.connected = False
-                    obj.handle_connect_failed(err)
-                except Exception:
-                    obj.handle_error()
-            else:
-                try:
-                    obj.handle_connect()
-                except Exception:
-                    obj.handle_error()
-            # We should not report the same error twice!
-            return
         try:
             obj.handle_except(
                 obj.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
@@ -166,6 +153,8 @@ class Notifier(object):
     def close_obj(obj):
         """ Call handle_close of the object. If any error occurs within it,
         call handle_error of the object.  """
+        if obj.awaiting_connect:
+            _unawait_conn(obj)
         try:
             obj.handle_close()
         except Exception:
@@ -642,7 +631,4 @@ class Server(AcceptHandler):
         finally:
             self.transport.close()
 
-
-trylater = (errno.EAGAIN,)
-connection_lost = (errno.ECONNRESET, errno.ECONNABORTED)
 defaultsocket_factory = socket.socket
