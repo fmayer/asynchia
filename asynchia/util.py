@@ -163,8 +163,7 @@ def is_closed(sock):
             else:
                 raise
         else:
-            if not rcv:
-                return True
+            return not rcv
     finally:
         sock.setblocking(True)
 
