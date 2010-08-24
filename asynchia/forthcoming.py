@@ -39,7 +39,7 @@ Example:
     a.submit('blub')
 """
 
-import Queue
+import threading
 
 import asynchia
 
@@ -119,12 +119,20 @@ class Coroutine(object):
 class DataNotifier(object):
     """ Call registered callbacks and send data to registered coroutines
     at submission of data. """
-    def __init__(self):
+    def __init__(self, socket_map):
         self.dcallbacks = []
         self.rcallbacks = []
         self.coroutines = []
         self.finished = False
         self.data = None
+        
+        self.event = threading.Event()
+        
+        self.wakeup, other = asynchia.util.socketpair()
+        self.handler = ThreadedDataHandler(
+            asynchia.SocketTransport(socket_map, other),
+            self
+        )
     
     def add_coroutine(self, coroutine):
         """ Add coroutine that waits for the submission of this data. """
@@ -158,7 +166,21 @@ class DataNotifier(object):
             coroutine.send(data)
         # Good idea?
         self.coroutines[:] = []
+        
+        self.event.set()
+        self.data = None
+        
         self.finished = True
+    
+    def inject(self, data):
+        self.injected = data
+        self.wakeup.send('a')
+    
+    def wait(self, timeout=None):
+        """ Block execution of current thread until the data is available.
+        Return requested data. """
+        self.event.wait(timeout)
+        return self.data
 
 
 class ThreadedDataHandler(asynchia.Handler):
@@ -177,27 +199,11 @@ class ThreadedDataNotifier(DataNotifier):
     """ Extend DataNotifier to be feasible for threaded programming. """
     def __init__(self, socket_map):
         DataNotifier.__init__(self)
-        self.queue = Queue.Queue()
-        
-        self.wakeup, other = asynchia.util.socketpair()
-        self.handler = ThreadedDataHandler(
-            asynchia.SocketTransport(socket_map, other),
-            self
-        )
-    
-    def wait(self, timeout=None):
-        """ Block execution of current thread until the data is available.
-        Return requested data. """
-        return self.queue.get(timeout=timeout)
     
     def submit(self, data):
         """ See DataNotifier.submit. """
         DataNotifier.submit(self, data)
         self.queue.put(data)
-    
-    def inject(self, data):
-        self.injected = data
-        self.wakeup.send('a')
     
 
 if __name__ == '__main__':

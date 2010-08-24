@@ -27,6 +27,8 @@ import asynchia
 import asynchia.maps
 import asynchia.util
 
+import asynchia.forthcoming
+
 b = asynchia.util.b
 
 import unittest
@@ -51,7 +53,7 @@ def dnr_forthcoming_wakeup(self, map_):
     container = Container()
     container.flag = False
     
-    m = map_()
+    mo = map_()
     
     mainthread = threading.current_thread()
     
@@ -65,12 +67,14 @@ def dnr_forthcoming_wakeup(self, map_):
         
         container.flag = True
     
-    nf = ThreadedDataNotifier(m)
+    nf = asynchia.forthcoming.DataNotifier(mo)
     nf.add_databack(callb)
     th = threading.Thread(target=thr, args=(nf,))
     th.start()
     
-    m.poll(5)
+    s = time.time()
+    while not container.flag and time.time() < s + 10:
+        mo.poll(abs(10 - (time.time() - s)))
     self.assertEquals(container.flag, True)
 
 
@@ -497,7 +501,7 @@ maps = \
 
 wsocketpair = [
     dnr_close, dnr_close_read,dnr_close_write, dnr_connfailed,
-    dnr_connfailed2
+    dnr_connfailed2, dnr_forthcoming_wakeup
 ]
 
 tests = [
