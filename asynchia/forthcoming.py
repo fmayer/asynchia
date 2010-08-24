@@ -41,6 +41,8 @@ Example:
 
 import Queue
 
+import asynchia
+
 class PauseContext(object):
     """ Collection of Coroutines which are currently paused but not waiting
     for any data. They are paused to prevent too much time to be spent in
@@ -159,11 +161,29 @@ class DataNotifier(object):
         self.finished = True
 
 
+class ThreadedDataHandler(asynchia.Handler):
+    def __init__(self, transport, datanotifier):
+        asynchia.Handler.__init__(self, transport)
+        self.transport.set_readable(True)
+        
+        self.datanotifier = datanotifier
+    
+    def handle_read(self):
+        self.transport.recv(1)
+        self.datanotifier.submit(self.datanotifier.injected)
+
+
 class ThreadedDataNotifier(DataNotifier):
     """ Extend DataNotifier to be feasible for threaded programming. """
-    def __init__(self):
+    def __init__(self, socket_map):
         DataNotifier.__init__(self)
         self.queue = Queue.Queue()
+        
+        self.wakeup, other = asynchia.util.socketpair()
+        self.handler = ThreadedDataHandler(
+            asynchia.SocketTransport(socket_map, other),
+            self
+        )
     
     def wait(self, timeout=None):
         """ Block execution of current thread until the data is available.
@@ -174,3 +194,34 @@ class ThreadedDataNotifier(DataNotifier):
         """ See DataNotifier.submit. """
         DataNotifier.submit(self, data)
         self.queue.put(data)
+    
+    def inject(self, data):
+        self.injected = data
+        self.wakeup.send('a')
+    
+
+if __name__ == '__main__':
+    import asynchia
+    import asynchia.maps
+    
+    import time
+    import threading
+    
+    m = asynchia.maps.DefaultSocketMap()
+    
+    mainthread = threading.current_thread()
+    
+    def thr(nf):
+        time.sleep(2)
+        nf.inject(12)
+    
+    def callb(data):
+        print data == 12
+        print threading.current_thread() == mainthread
+    
+    nf = ThreadedDataNotifier(m)
+    nf.add_databack(callb)
+    th = threading.Thread(target=thr, args=(nf,))
+    th.start()
+    
+    m.run()

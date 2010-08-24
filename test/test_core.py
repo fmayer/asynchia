@@ -47,6 +47,33 @@ class Container(object):
     pass
 
 
+def dnr_forthcoming_wakeup(self, map_):
+    container = Container()
+    container.flag = False
+    
+    m = map_()
+    
+    mainthread = threading.current_thread()
+    
+    def thr(nf):
+        time.sleep(2)
+        nf.inject(12)
+    
+    def callb(data):
+        self.assertEquals(data, 12)
+        self.assertEquals(threading.current_thread(), mainthread)
+        
+        container.flag = True
+    
+    nf = ThreadedDataNotifier(m)
+    nf.add_databack(callb)
+    th = threading.Thread(target=thr, args=(nf,))
+    th.start()
+    
+    m.poll(5)
+    self.assertEquals(container.flag, True)
+
+
 def dnr_interrupt(self, map_):
     container = Container()
     container.flag = False

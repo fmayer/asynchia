@@ -192,9 +192,17 @@ class SelectSocketMap(FragileSocketMap):
     def poll(self, timeout):
         """ Poll for I/O. """
         interrupted = False
-        read, write, expt = select.select(self.socket_list,
-                                          self.writers,
-                                          self.socket_list, timeout)
+        
+        try:
+            read, write, expt = select.select(self.socket_list,
+                                              self.writers,
+                                              self.socket_list, timeout)
+        except IOError, err:
+            if err.args[0] == errno.EINTR:
+                return
+            else:
+                raise
+
         for obj in read:
             if obj is not self.controlreceiver:
                 # This seems to be the only way to find hangup-events with
@@ -256,7 +264,15 @@ class PollSocketMap(RobustSocketMap):
     def poll(self, timeout):
         """ Poll for I/O. """
         interrupted = False
-        active = self.poller.poll(timeout)
+        
+        try:
+            active = self.poller.poll(timeout)
+        except IOError, err:
+            if err.args[0] == errno.EINTR:
+                return
+            else:
+                raise
+        
         for fileno, flags in active:
             if fileno == self.controlfd:
                 interrupted = True
@@ -349,7 +365,15 @@ class EPollSocketMap(RockSolidSocketMap):
             timeout = -1
         
         interrupted = False
-        active = self.poller.poll(timeout)
+        
+        try:
+            active = self.poller.poll(timeout)
+        except IOError, err:
+            if err.args[0] == errno.EINTR:
+                return
+            else:
+                raise
+        
         for fileno, flags in active:
             if fileno == self.controlfd:
                 interrupted = True
@@ -488,7 +512,13 @@ class KQueueSocketMap(RockSolidSocketMap):
     def poll(self, timeout=None):
         interrupted = False
         
-        res = self.queue.control(None, self.nevents, timeout)
+        try:
+            res = self.queue.control(None, self.nevents, timeout)
+        except IOError, err:
+            if err.args[0] == errno.EINTR:
+                return
+            else:
+                raise
         
         for event in res:
             if event.ident == self.controlfd:
