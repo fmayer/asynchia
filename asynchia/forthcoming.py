@@ -193,17 +193,6 @@ class ThreadedDataHandler(asynchia.Handler):
     def handle_read(self):
         self.transport.recv(1)
         self.datanotifier.submit(self.datanotifier.injected)
-
-
-class ThreadedDataNotifier(DataNotifier):
-    """ Extend DataNotifier to be feasible for threaded programming. """
-    def __init__(self, socket_map):
-        DataNotifier.__init__(self)
-    
-    def submit(self, data):
-        """ See DataNotifier.submit. """
-        DataNotifier.submit(self, data)
-        self.queue.put(data)
     
 
 if __name__ == '__main__':
