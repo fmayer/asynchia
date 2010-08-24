@@ -42,6 +42,7 @@ Example:
 import threading
 
 import asynchia
+from asynchia.util import b
 
 class PauseContext(object):
     """ Collection of Coroutines which are currently paused but not waiting
@@ -129,7 +130,7 @@ class DataNotifier(object):
         self.event = threading.Event()
         
         self.wakeup, other = asynchia.util.socketpair()
-        self.handler = ThreadedDataHandler(
+        self.handler = _ThreadedDataHandler(
             asynchia.SocketTransport(socket_map, other),
             self
         )
@@ -174,7 +175,7 @@ class DataNotifier(object):
     
     def inject(self, data):
         self.injected = data
-        self.wakeup.send('a')
+        self.wakeup.send(b('a'))
     
     def wait(self, timeout=None):
         """ Block execution of current thread until the data is available.
@@ -183,7 +184,8 @@ class DataNotifier(object):
         return self.data
 
 
-class ThreadedDataHandler(asynchia.Handler):
+class _ThreadedDataHandler(asynchia.Handler):
+    """ Implementation detail. """
     def __init__(self, transport, datanotifier):
         asynchia.Handler.__init__(self, transport)
         self.transport.set_readable(True)
@@ -191,5 +193,6 @@ class ThreadedDataHandler(asynchia.Handler):
         self.datanotifier = datanotifier
     
     def handle_read(self):
+        """ Implementation detail. """
         self.transport.recv(1)
         self.datanotifier.submit(self.datanotifier.injected)
