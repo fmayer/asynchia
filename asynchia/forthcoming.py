@@ -193,30 +193,3 @@ class ThreadedDataHandler(asynchia.Handler):
     def handle_read(self):
         self.transport.recv(1)
         self.datanotifier.submit(self.datanotifier.injected)
-    
-
-if __name__ == '__main__':
-    import asynchia
-    import asynchia.maps
-    
-    import time
-    import threading
-    
-    m = asynchia.maps.DefaultSocketMap()
-    
-    mainthread = threading.current_thread()
-    
-    def thr(nf):
-        time.sleep(2)
-        nf.inject(12)
-    
-    def callb(data):
-        print data == 12
-        print threading.current_thread() == mainthread
-    
-    nf = ThreadedDataNotifier(m)
-    nf.add_databack(callb)
-    th = threading.Thread(target=thr, args=(nf,))
-    th.start()
-    
-    m.run()
