@@ -531,7 +531,7 @@ class SendallTrait(object):
     def handle_write(self):
         """ Internal. """
         if not self.__buf:
-            if self.__savewritable is not None:
+            if self.__savewriteable is not None:
                 super(SendallTrait, self).set_writeable(self.__savewriteable)
                 self.__savewriteable = None
         
