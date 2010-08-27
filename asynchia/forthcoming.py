@@ -137,17 +137,26 @@ class DataNotifier(object):
     
     def add_coroutine(self, coroutine):
         """ Add coroutine that waits for the submission of this data. """
-        self.coroutines.append(coroutine)
+        if self.data is None:
+            self.coroutines.append(coroutine)
+        else:
+            coroutine.send(self.data)
     
     def add_databack(self, callback):
         """ Add databack (function that receives the the data-notifier data
         upon submission as arguments). """
-        self.dcallbacks.append(callback)
+        if self.data is None:
+            self.dcallbacks.append(callback)
+        else:
+            callback(data)
     
     def add_callback(self, callback):
         """ Add callback (function that only receives the data upon
         submission as an argument). """
-        self.rcallbacks.append(callback)
+        if self.data is None:
+            self.rcallbacks.append(callback)
+        else:
+            callback(self, data)
     
     # Good idea?
     def poll(self):
@@ -167,9 +176,11 @@ class DataNotifier(object):
             coroutine.send(data)
         # Good idea?
         self.coroutines[:] = []
+        self.rcallbacks[:] = []
+        self.dcallbacks[:] = []
         
+        # Wake up threads waiting for the data.
         self.event.set()
-        self.data = None
         
         self.finished = True
     
