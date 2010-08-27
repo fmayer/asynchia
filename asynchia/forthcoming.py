@@ -185,6 +185,8 @@ class DataNotifier(object):
         self.finished = True
     
     def inject(self, data):
+        """ Submit data and ensure their callbacks are called in the main
+        thread. """
         self.injected = data
         self.wakeup.send(b('a'))
     
@@ -196,10 +198,13 @@ class DataNotifier(object):
     
     @staticmethod
     def _coroutine(datanotifier, fun, args, kwargs):
+        """ Implementation detail. """
         datanotifier.inject(fun(*args, **kwargs))
     
     @classmethod
     def threaded_coroutine(cls, socket_map, fun, *args, **kwargs):
+        """ Run fun(*args, **kwargs) in a thread and return a DataNotifier
+        notifying upon availability of the return value of the function. """
         datanot = cls(socket_map)
         threading.Thread(
             target=cls._coroutine, args=(datanot, fun, args, kwargs)
