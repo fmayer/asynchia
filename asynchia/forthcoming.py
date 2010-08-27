@@ -148,7 +148,7 @@ class DataNotifier(object):
         if self.data is None:
             self.dcallbacks.append(callback)
         else:
-            callback(data)
+            callback(self.data)
     
     def add_callback(self, callback):
         """ Add callback (function that only receives the data upon
@@ -156,7 +156,7 @@ class DataNotifier(object):
         if self.data is None:
             self.rcallbacks.append(callback)
         else:
-            callback(self, data)
+            callback(self, self.data)
     
     # Good idea?
     def poll(self):
