@@ -70,7 +70,7 @@ class TestEE(unittest.TestCase):
     
     
     def test_fileinput(self):
-        data = open(__file__).read()
+        data = open(__file__, 'rb').read()
         m = asynchia.ee.MockHandler()
         i = asynchia.ee.FileInput.from_filename(__file__)
         self.assertEqual(len(i), len(data))
