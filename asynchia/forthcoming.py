@@ -182,6 +182,18 @@ class DataNotifier(object):
         Return requested data. """
         self.event.wait(timeout)
         return self.data
+    
+    @staticmethod
+    def _coroutine(datanotifier, fun, args, kwargs):
+        datanotifier.inject(fun(*args, **kwargs))
+    
+    @classmethod
+    def threaded_coroutine(cls, socket_map, fun, *args, **kwargs):
+        datanot = cls(socket_map)
+        threading.Thread(
+            target=cls._coroutine, args=(datanot, fun, args, kwargs)
+        )
+        return datanot
 
 
 class _ThreadedDataHandler(asynchia.Handler):
