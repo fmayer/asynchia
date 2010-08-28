@@ -208,20 +208,17 @@ def goodsize(maxsize):
 
 
 def is_closed(sock):
-    """ Find out whether a socked is closed or not. """
+    """ Find out whether a socked is closed or not.
+    Does only work on non-blocking sockets! """
     try:
-        sock.setblocking(False)
-        try:
-            rcv = sock.recv(1, socket.MSG_PEEK)
-        except socket.error, err:
-            if err.args[0] in asynchia.const.trylater:
-                return False
-            else:
-                raise
+        rcv = sock.recv(1, socket.MSG_PEEK)
+    except socket.error, err:
+        if err.args[0] in asynchia.const.trylater:
+            return False
         else:
-            return not rcv
-    finally:
-        sock.setblocking(True)
+            raise
+    else:
+        return not rcv
 
 
 if sys.version_info >= (3, 0):
