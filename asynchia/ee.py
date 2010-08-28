@@ -215,20 +215,19 @@ class AutoFileInput(FileInput):
     """ Same as FileInput, only that it stores samples to guess how big
     the buffer should be. """
     def __init__(self, fd, length=None, buffer_size=9096, closing=True,
-                 samples=100, onclose=None):
+                 samples=None, onclose=None):
         FileInput.__init__(self, fd, length, buffer_size, closing, onclose)
         
-        self.samples = samples
-        self.sample = []
+        if samples is None:
+            self.average = asynchia.util.GradualAverage()
+        else:
+            self.average = asynchia.util.LimitedAverage(samples)
     
     def tick(self, sock):
         """ See FileInput.tick. """
         sent = FileInput.tick(self, sock)
-        if len(self.sample) == self.samples:
-            # Replace oldest sample with new one.
-            self.sample.pop(0)
-        self.sample.append(sent)
-        self.buffer_size = int(round(sum(self.sample) / len(self.sample)))
+        self.average.add_value(sent)
+        self.buffer_size = int(round(self.average.avg))
         return sent
 
 

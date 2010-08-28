@@ -21,8 +21,64 @@
 import sys
 import math
 import socket
+import collections
 
 import asynchia.const
+
+class GradualAverage(object):
+    def __init__(self, values=None):
+        if values is None:
+            self.avg = self.len = 0.0
+        else:
+            self.len = float(len(values))
+            self.avg = sum(values) / self.len
+    
+    def add_value(self, value):
+        self.avg = (self.avg * self.len + value) / (self.len + 1)
+        self.len += 1
+    
+    def add_values(self, values):
+        self.avg = (
+            self.avg * self.len + sum(values)
+            ) / (self.len + len(values))
+        self.len += len(values)
+
+
+class LimitedAverage(object):
+    def __init__(self, samples, values=None):
+        self.cache = None
+        
+        self.samples = samples
+        if values is None:
+            self.values = collections.deque()
+        else:
+            self.values = collections.deque(values)
+        
+            for _ in xrange(len(values) - samples):
+                self.values.popleft()
+    
+    def add_value(self, value):
+        # Invalidate possibly existing cache.
+        self.cache = None
+        if len(self.values) == self.samples:
+            self.values.popleft()
+        self.values.append(value)
+    
+    def add_values(self, values):
+        # Invalidate possibly existing cache.
+        self.cache = None
+        self.values.extend(values)
+        for _ in xrange(len(values) - samples):
+            self.values.popleft()
+    
+    @property
+    def avg(self):
+        if self.cache is not None:
+            return self.cache
+        else:
+            self.cache = sum(self.values) / float(len(self.values))
+            return self.cache
+
 
 class IDPool(object):
     """
