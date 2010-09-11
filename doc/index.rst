@@ -16,6 +16,7 @@ If this warning did not put you off, the best way to start with asynchia is
 reading the two tutorials below and then consulting the examples/ directory.
 Good luck, have fun and -- most importantly -- do not forget to report any bugs
 and inconveniences at http://github.com/segfaulthunter/asynchia/issues.
+You can download the releases at http://github.com/segfaulthunter/asynchia/downloads.
 
 Contents:
 
