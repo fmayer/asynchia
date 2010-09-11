@@ -313,7 +313,6 @@ class SocketTransport(Transport):
     
     def set_readable(self, value):
         """ Set whether handler wants to read data. """
-        # FIXME: Is this wise?
         if self._readable == value:
             # The state hasn't changed. Calling the SocketMap's handlers
             # again might confuse it.
@@ -331,7 +330,6 @@ class SocketTransport(Transport):
     
     def set_writeable(self, value):
         """ Set whether handler wants to write data. """
-        # FIXME: Is this wise?
         if self._writeable == value:
             # The state hasn't changed. Calling the SocketMap's handlers
             # again might confuse it.
@@ -442,7 +440,6 @@ class SocketTransport(Transport):
             if err.args[0] in trylater:
                 return 0
             elif err.args[0] == errno.EPIPE:
-                # FIXME: Is this wise?
                 self.socket_map.notifier.close_obj(self)
                 return 0
             else:
