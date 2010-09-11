@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 ============================================
-Welcome to the asynchia 0.1a1 documentation!
+Welcome to the asynchia 0.1.0a documentation!
 ============================================
 First of all, you are reminded that both asynchia and this documentation are
 in an alpha phase. This is the first asynchia release so bugs are to be

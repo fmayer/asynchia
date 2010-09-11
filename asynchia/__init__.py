@@ -27,7 +27,7 @@ import traceback
 from asynchia.util import EMPTY_BYTES
 from asynchia.const import trylater, connection_lost
 
-__version__ = '0.1a1'
+__version__ = '0.1.0a'
 
 def _unawait_conn(obj):
     """ Helper function for Notifier. """
