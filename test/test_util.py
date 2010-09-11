@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+import random
 
 import asynchia.util
 
@@ -78,6 +79,33 @@ class TestUtil(unittest.TestCase):
                 ),
             ('2001:0db8:85a3:08d3:1319:8a2e:0370:7344', 443)
         )
+    
+    def test_gradualaverage(self):
+        avg = asynchia.util.GradualAverage()
+        avg2 = asynchia.util.GradualAverage()
+        
+        s = [random.randint(0, 2000) for _ in xrange(random.randint(0, 20))]
+        
+        avg.add_values(s)
+        for x in s:
+            avg2.add_value(x)
+        
+        self.assertEqual(avg.avg, avg2.avg)
+        self.assertEqual(avg.avg, sum(s) / float(len(s)))
+
+    def test_limitedaverage(self):
+        avg = asynchia.util.LimitedAverage(10)
+        avg2 = asynchia.util.LimitedAverage(10)
+        
+        s = [random.randint(0, 2000) for _ in xrange(random.randint(12, 20))]
+        
+        avg.add_values(s)
+        for x in s:
+            avg2.add_value(x)
+        
+        self.assertEqual(avg.avg, avg2.avg)
+        self.assertEqual(avg.avg, sum(s[-10:]) / float(len(s[-10:])))
+
 
 if __name__ == '__main__':
     unittest.main()
