@@ -55,7 +55,7 @@ def dnr_forthcoming_wakeup(self, map_):
     
     mo = map_()
     
-    mainthread = threading.current_thread()
+    mainthread = threading.currentThread()
     
     def thr(nf):
         time.sleep(2)
@@ -63,7 +63,7 @@ def dnr_forthcoming_wakeup(self, map_):
     
     def callb(data):
         self.assertEquals(data, 12)
-        self.assertEquals(threading.current_thread(), mainthread)
+        self.assertEquals(threading.currentThread(), mainthread)
         
         container.flag = True
     
