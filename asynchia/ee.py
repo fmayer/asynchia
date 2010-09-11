@@ -28,7 +28,6 @@ class Depleted(Exception):
 class Input(object):
     """ Base-class for all Inputs. It implements __add__ to return an
     InputQueue consisting of the two operants. """
-    # FIXME: Implicit __radd__ with str?
     def __init__(self, onclose=None):
         self.closed = self.inited = False
         self.onclose = onclose
@@ -334,19 +333,10 @@ class FileCollector(Collector):
         Collector.add_data(self, prot, nbytes)
         
         received = prot.recv(nbytes)
-        try:
-            self.intvalue.write(received)
-        # FIXME: Reconsider how to handle following exceptional case.
-        except ValueError:
-            # I/O operation on closed file. This shouldn't be happening.
-            if not self.closed:
-                # No use closing the file when handling a
-                # "I/O operation on closed file" exception.
-                Collector.close(self)
-            return True, 0
-        else:
-            if self.autoflush:
-                self.intvalue.flush()
+        # Let the error propagate lest it is silently ignored.
+        self.intvalue.write(received)
+        if self.autoflush:
+            self.intvalue.flush()
         return False, len(received)
     
     def close(self):
