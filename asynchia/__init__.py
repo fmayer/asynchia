@@ -180,6 +180,8 @@ class Transport(object):
     in a generic way and used with different transports. """
     def __init__(self, handler=None):
         self.handler = None
+        
+        self.closed = False
     
     def recv(self, nbytes, *args):
         """ Override. """
@@ -223,8 +225,12 @@ class Transport(object):
     def handle_close(self):
         """ Connection closed. Note that this is only called if the
         connection is closed by the remote end! """
-        if self.handler is not None:
+        # Ensure the handler is only called once, even if multiple connection
+        # closed events should be fired (which could happen due to the code
+        # in SocketTransport.send).
+        if self.handler is not None and not self.closed:
             self.handler.handle_close()
+        self.closed = True
     
     def handle_cleanup(self):
         """ Called whenever the Handler is voided, for whatever reason.
@@ -467,7 +473,6 @@ class SocketTransport(Transport):
                 self.socket_map.notifier.close_obj(self)
             return data
         except socket.error, err:
-            # FIXME: Is this wise?
             if err.args[0] in connection_lost:
                 self.socket_map.notifier.close_obj(self)
                 return EMPTY_BYTES
