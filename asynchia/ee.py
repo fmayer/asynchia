@@ -194,8 +194,6 @@ class FileInput(Input):
             size = os.stat(filename).st_size
         else:
             size = None
-        # FIXME: This could possibly break if file LF does not equal Unix
-        # LF and the file is opened in another mode than 'rb'.
         fd = open(filename, mode)
         return cls(fd, size, *args, **kwargs)
     
