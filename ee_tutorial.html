@@ -1,0 +1,203 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asynchia.ee Tutorial &mdash; asynchia v0.1.0a documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.0a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="asynchia v0.1.0a documentation" href="index.html" />
+    <link rel="next" title="asynchia.dsl Tutorial" href="dsl_tutorial.html" />
+    <link rel="prev" title="asynchia Tutorial" href="tutorial.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="dsl_tutorial.html" title="asynchia.dsl Tutorial"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="asynchia Tutorial"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">asynchia v0.1.0a documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="asynchia-ee-tutorial">
+<h1>asynchia.ee Tutorial<a class="headerlink" href="#asynchia-ee-tutorial" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="what-s-asynchia-ee">
+<h2>What&#8217;s asynchia.ee<a class="headerlink" href="#what-s-asynchia-ee" title="Permalink to this headline">¶</a></h2>
+<p>asynchia.ee contains facilities that ease parsing binary TCP protocols. Roughly
+speaking there are two types of objects: Inputs and Collectors. Inputs provide
+data to be sent while Collectors provide the space where incoming data is put.
+The callable passed to onclose of either of the two is executed when the Input
+or Collector is closed.</p>
+<div class="section" id="inputs">
+<h3>Inputs<a class="headerlink" href="#inputs" title="Permalink to this headline">¶</a></h3>
+<p>Inputs are objects with a tick method, which takes any object with a send
+method that returns the bytes sent, which sends as much as possible over said
+object.</p>
+</div>
+<div class="section" id="collectors">
+<h3>Collectors<a class="headerlink" href="#collectors" title="Permalink to this headline">¶</a></h3>
+<p>Collectors are objects with an add_data method which takes an object
+with a recv method and the maximum amount of data to be read from selfsame.
+A DelimitedCollector limits the maximum amount of bytes to be received into
+the Collector passed to it. This is an excellent way of splitting messages
+of known size.</p>
+<p>An excellent combination to parse protocols where the size of the message in a
+fixed-length format is sent prior to the message itself is a DelimitedCollector,
+a StructCollector and any Collector in which you want to store the result.
+This expects the size of the message to be sent as an unsigned integer, consult
+the documentation of the struct module for more information</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">msg_header</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">Struct</span><span class="p">(</span><span class="s">&#39;I&#39;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">MessageCollector</span><span class="p">(</span><span class="n">asynchia</span><span class="o">.</span><span class="n">ee</span><span class="o">.</span><span class="n">CollectorQueue</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messagecollector</span><span class="p">,</span> <span class="n">onclose</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">asynchia</span><span class="o">.</span><span class="n">ee</span><span class="o">.</span><span class="n">CollectorQueue</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">onclose</span><span class="o">=</span><span class="n">onclose</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_collector</span><span class="p">(</span>
+            <span class="n">asynchia</span><span class="o">.</span><span class="n">ee</span><span class="o">.</span><span class="n">StructCollector</span><span class="p">(</span><span class="n">msg_header</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">header_close</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">messagecollector</span> <span class="o">=</span> <span class="n">messagecollector</span>
+
+    <span class="k">def</span> <span class="nf">header_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coll</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_collector</span><span class="p">(</span><span class="n">asynchia</span><span class="o">.</span><span class="n">ee</span><span class="o">.</span><span class="n">DelimitedCollector</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">messagecollector</span><span class="p">,</span> <span class="n">coll</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>Both Inputs and Collectors can be queued with InputQueue and CollectorQueue,
+respectively.</p>
+</div>
+</div>
+<div class="section" id="example-application">
+<h2>Example Application<a class="headerlink" href="#example-application" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s implement exactly the same application we have using asynchia using asynchia.ee. You will instantly notice its benefits.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">asynchia</span>
+<span class="kn">import</span> <span class="nn">asynchia.maps</span>
+<span class="kn">import</span> <span class="nn">asynchia.ee</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+</pre></div>
+</div>
+<p>We can instantly write an EchoAcceptor as the EchoHandler is not needed. asynchia.ee.FileCollector(sys.stdout, False) creates a collector which writes everything that is put into it to stdout. The False needs to be passed to prevent it from closing the fd to stdout (which would have dramatic consequences) once the collector is closed.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">EchoAcceptor</span><span class="p">(</span><span class="n">asynchia</span><span class="o">.</span><span class="n">AcceptHandler</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle_accept</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+        <span class="n">collector</span> <span class="o">=</span> <span class="n">asynchia</span><span class="o">.</span><span class="n">ee</span><span class="o">.</span><span class="n">FileCollector</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="n">asynchia</span><span class="o">.</span><span class="n">ee</span><span class="o">.</span><span class="n">Handler</span><span class="p">(</span><span class="n">asynchia</span><span class="o">.</span><span class="n">SocketTransport</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">socket_map</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">collector</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Now we can go straight to starting up the server.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">servermain</span><span class="p">():</span>
+    <span class="n">socketmap</span> <span class="o">=</span> <span class="n">asynchia</span><span class="o">.</span><span class="n">maps</span><span class="o">.</span><span class="n">DefaultSocketMap</span><span class="p">()</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">EchoAcceptor</span><span class="p">(</span><span class="n">asynchia</span><span class="o">.</span><span class="n">SocketTransport</span><span class="p">(</span><span class="n">socketmap</span><span class="p">))</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">reuse_addr</span><span class="p">()</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">25000</span><span class="p">))</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">listen</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">socketmap</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>And the code for the client is simply. client.send_str(...) is a convenience method for client.send_input(asynchia.ee.StringInput(...))</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">clientmain</span><span class="p">():</span>
+    <span class="n">socketmap</span> <span class="o">=</span> <span class="n">asynchia</span><span class="o">.</span><span class="n">maps</span><span class="o">.</span><span class="n">DefaultSocketMap</span><span class="p">()</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">asynchia</span><span class="o">.</span><span class="n">ee</span><span class="o">.</span><span class="n">Handler</span><span class="p">(</span><span class="n">asynchia</span><span class="o">.</span><span class="n">SocketTransport</span><span class="p">(</span><span class="n">socketmap</span><span class="p">))</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">25000</span><span class="p">))</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">send_str</span><span class="p">(</span><span class="s">&quot;Hello from the enterprisey client!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+    <span class="n">socketmap</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">asynchia.ee Tutorial</a><ul>
+<li><a class="reference internal" href="#what-s-asynchia-ee">What&#8217;s asynchia.ee</a><ul>
+<li><a class="reference internal" href="#inputs">Inputs</a></li>
+<li><a class="reference internal" href="#collectors">Collectors</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#example-application">Example Application</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tutorial.html"
+                        title="previous chapter">asynchia Tutorial</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="dsl_tutorial.html"
+                        title="next chapter">asynchia.dsl Tutorial</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ee_tutorial.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="dsl_tutorial.html" title="asynchia.dsl Tutorial"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="asynchia Tutorial"
+             >previous</a> |</li>
+        <li><a href="index.html">asynchia v0.1.0a documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009, Florian Mayer.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

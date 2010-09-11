@@ -1,0 +1,661 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>asynchia.dsl</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="asynchia-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="asynchia-module.html">Package&nbsp;asynchia</a> ::
+        Module&nbsp;dsl
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="asynchia.dsl-module.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== MODULE DESCRIPTION ==================== -->
+<h1 class="epydoc">Module dsl</h1><p class="nomargin-top"><span class="codelink"><a href="asynchia.dsl-pysrc.html">source&nbsp;code</a></span></p>
+<p>A domain-specific language to conveniently define the structure of 
+  packets in binary protocols.</p>
+  <p>An elementary expression is an object implementing the Expr interface 
+  (which is preferably an interface of a subclass of Expr and thus 
+  consistenly integrates with other Exprs). It needs to implement the 
+  __call__(state) and the produce(value) methods where __call__ returns the
+  appropriate collector to collect the data described by the expression and
+  produce returns the input that encodes the value passed to it according 
+  to the expression.</p>
+  <p>By default the following expressions are defined by the module:</p>
+<pre class="literalblock">
+   - BinaryExpr (BE)
+   - SingleBinaryExpr (SBE)
+   - StringExpr (SE)
+   - FixedLenExpr (FLE)
+   - FileExpression (FE)
+</pre>
+  <p>Two methods are provided to lookback data earlier collected in order 
+  to construct the collector. binarylookback(ind, item=0) (also exported as
+  bl) gets the item specified from the binary data parsed from the 
+  expression at the index ind (zero-index) of the ExprAdd the respective 
+  expression is contained within. It is also possible to use positions 
+  relative to the current one (-1 is the element before the one the 
+  lookback is passed to). singlebinarylookback (also exported as sbl) does 
+  likewise for SingleBinaryExpr (and is arguably more useful, see the 
+  Example section). The only Expr in this module that takes a lookback as a
+  parameter is FixedLenExpr which limits whichever expression is contained 
+  in it to the number of bytes aquired by the lookback function.</p>
+  <p>Attributes can be named by passing the name in square brackets. It is 
+  also possible to refer to expressions by the name given to them in 
+  lookbacks. :</p>
+<pre class="literalblock">
+   e = s.L()['size'] + s.B()['blub'] + LFLSE('size')['string']
+</pre>
+  <p>The tuple of values collected can be converted into a dictionary that 
+  maps the name of the expression to the respective value by calling the 
+  tonamed method of the ExprAdd. :</p>
+<pre class="literalblock">
+   a = e()
+   [Collecting of data takes place]
+   tup = a.values
+   dic = e.tonamed(tup)
+</pre>
+  <h1 class="heading">Example</h1>
+    <p>Packets are described by expressions which can be converted to 
+    collectors whenever a packet of that type should be parsed. Complex 
+    expressions can be created by adding expressions, resulting in ExprAdds
+    (but that is semi- internal API which you do not necessarily need to 
+    care about, unless you try to write your own types of expressions).</p>
+    <p>Let us henceforth consider the following simple example:</p>
+<pre class="literalblock">
+   from asynchia.dsl import s, SBLFLSE
+   e = s.L() + s.B() + LFLSE(0)
+</pre>
+    <p>This might appear utterly complicated at first glance, but it is 
+    not. The first statement imports s (which is a container for binary 
+    numeric types) and LFLSE which expands to lookback fixed-length 
+    string-expression.</p>
+    <p>The expression (which is the second statement) describes a packet 
+    which contains three parts. The first part is an unsigned long (which 
+    is named by its name in the struct module) in network byte-order (all 
+    binary types contained in `s` assume network byte-order (so s.L expands
+    to the struct format &quot;!L&quot;); the second part is an unsigned 
+    byte; the interesting thing in the expression is the third part which 
+    describes a fixed-length string with the length equal to the first 
+    element in the expression (which is referred to by its index 0): the 
+    unsigned long.</p>
+    <p>The expression can now be used to parse and to produce packets 
+    according to the given format. An asynchia.ee collector can be created 
+    by calling the expression :</p>
+<pre class="literalblock">
+   collector = e()
+</pre>
+    <p>You can now pass the protocol to the add_data method of the 
+    collector and it will collect the data as specified. Any other data 
+    (which appears after the whole packet has been read) is left in the 
+    protocol.</p>
+    <p>To create a packet you need to call the expression's produce method 
+    and pass a tuple of the data you want to construct a package of. This 
+    operation returns an asynchia.ee.Input that can directly be passed to 
+    be sent by an asynchia.Handler. :</p>
+<pre class="literalblock">
+   data = e.produce((5, 2, 'ABCDE'))
+</pre>
+    <p>In this case it is important that the first number equals the length
+    of the string, as the system does not derive it from the length of the 
+    string (though you are advised to do so in your client code).</p>
+
+<!-- ==================== CLASSES ==================== -->
+<a name="section-Classes"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Classes</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Classes"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.Container-class.html" class="summary-name">Container</a><br />
+      Container to hold members, which are also exposed through getitem.
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.State-class.html" class="summary-name">State</a><br />
+      State of the collection done by ExprCollectorQueue.
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.Expr-class.html" class="summary-name">Expr</a><br />
+      Baseclass for all expressions.
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.ExprCollectorQueue-class.html" class="summary-name">ExprCollectorQueue</a><br />
+      Queue to collect the data specified by the list of expressions 
+        passed to it.
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.ExprAdd-class.html" class="summary-name">ExprAdd</a>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.BinaryExpr-class.html" class="summary-name">BinaryExpr</a><br />
+      Represents data that can be expressed by a Struct.
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.SingleBinaryExpr-class.html" class="summary-name">SingleBinaryExpr</a><br />
+      Represents data that can be expressed by a Struct with a single 
+        member.
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.FileExpr-class.html" class="summary-name">FileExpr</a><br />
+      Data that should be collected in an fd.
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.StringExpr-class.html" class="summary-name">StringExpr</a><br />
+      Data that should be collected in a string.
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.FixedLenExpr-class.html" class="summary-name">FixedLenExpr</a><br />
+      Restrict the length of the expression contained to the value 
+        retuned by calling glen upon construction of the collector for said
+        expression.
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.FixedLenExpr-class.html" class="summary-name">FLE</a><br />
+      Restrict the length of the expression contained to the value 
+        retuned by calling glen upon construction of the collector for said
+        expression.
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.StringExpr-class.html" class="summary-name">SE</a><br />
+      Data that should be collected in a string.
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.BinaryExpr-class.html" class="summary-name">BE</a><br />
+      Represents data that can be expressed by a Struct.
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.SingleBinaryExpr-class.html" class="summary-name">SBE</a><br />
+      Represents data that can be expressed by a Struct with a single 
+        member.
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl.FileExpr-class.html" class="summary-name">FE</a><br />
+      Data that should be collected in an fd.
+    </td>
+  </tr>
+</table>
+<!-- ==================== FUNCTIONS ==================== -->
+<a name="section-Functions"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Functions</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Functions"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="asynchia.dsl-module.html#lookback" class="summary-sig-name">lookback</a>(<span class="summary-sig-arg">ind</span>,
+        <span class="summary-sig-arg">fun</span>=<span class="summary-sig-default">&lt;function &lt;lambda&gt; at 0x2f8f410&gt;</span>)</span><br />
+      Can be passed to expressions that expect a lookback.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="asynchia.dsl-pysrc.html#lookback">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="binarylookback"></a><span class="summary-sig-name">binarylookback</span>(<span class="summary-sig-arg">ind</span>,
+        <span class="summary-sig-arg">item</span>=<span class="summary-sig-default">0</span>)</span><br />
+      Convenience function for lookback(ind, lambda x: x.value[item]).</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="asynchia.dsl-pysrc.html#binarylookback">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="const"></a><span class="summary-sig-name">const</span>(<span class="summary-sig-arg">value</span>)</span><br />
+      Can be passed to expressions that expect a lookback and always 
+      returns the value passed to it.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="asynchia.dsl-pysrc.html#const">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="bl"></a><span class="summary-sig-name">bl</span>(<span class="summary-sig-arg">ind</span>,
+        <span class="summary-sig-arg">item</span>=<span class="summary-sig-default">0</span>)</span><br />
+      Convenience function for lookback(ind, lambda x: x.value[item]).</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="asynchia.dsl-pysrc.html#binarylookback">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="asynchia.dsl-module.html#lb" class="summary-sig-name">lb</a>(<span class="summary-sig-arg">ind</span>,
+        <span class="summary-sig-arg">fun</span>=<span class="summary-sig-default">&lt;function &lt;lambda&gt; at 0x2f8f410&gt;</span>)</span><br />
+      Can be passed to expressions that expect a lookback.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="asynchia.dsl-pysrc.html#lookback">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="FLSE"></a><span class="summary-sig-name">FLSE</span>(<span class="summary-sig-arg">glen</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="asynchia.dsl-pysrc.html#FLSE">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="LFLSE"></a><span class="summary-sig-name">LFLSE</span>(<span class="summary-sig-arg">ind</span>,
+        <span class="summary-sig-arg">fun</span>=<span class="summary-sig-default">&lt;function &lt;lambda&gt; at 0x2f91488&gt;</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="asynchia.dsl-pysrc.html#LFLSE">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr class="private">
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="_single_binary"></a><span class="summary-sig-name">_single_binary</span>(<span class="summary-sig-arg">symbol</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="asynchia.dsl-pysrc.html#_single_binary">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+</table>
+<!-- ==================== VARIABLES ==================== -->
+<a name="section-Variables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Variables</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Variables"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="asynchia.dsl-module.html#FRMT_CHARS" class="summary-name">FRMT_CHARS</a> = <code title="('x',
+ 'c',
+ 'b',
+ 'B',
+ '?',
+ 'h',
+ 'H',
+ 'i',
+..."><code class="variable-group">(</code><code class="variable-quote">'</code><code class="variable-string">x</code><code class="variable-quote">'</code><code class="variable-op">, </code><code class="variable-quote">'</code><code class="variable-string">c</code><code class="variable-quote">'</code><code class="variable-op">, </code><code class="variable-quote">'</code><code class="variable-string">b</code><code class="variable-quote">'</code><code class="variable-op">, </code><code class="variable-quote">'</code><code class="variable-string">B</code><code class="variable-quote">'</code><code class="variable-op">, </code><code class="variable-quote">'</code><code class="variable-string">?</code><code class="variable-quote">'</code><code class="variable-op">, </code><code class="variable-quote">'</code><code class="variable-string">h</code><code class="variable-quote">'</code><code class="variable-op">, </code><code class="variable-quote">'</code><code class="variable-string">H</code><code class="variable-quote">'</code><code class="variable-op">, </code><code class="variable-quote">'</code><code class="variable-string">i</code><code class="variable-quote">'</code><code class="variable-op">, </code><code class="variable-quote">'</code><code class="variable-string">I</code><code class="variable-quote">'</code><code class="variable-op">, </code><code class="variable-quote">'</code><code class="variable-string">l</code><code class="variable-quote">'</code><code class="variable-ellipsis">...</code></code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="s"></a><span class="summary-name">s</span> = <code title="Container()">Container()</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="__package__"></a><span class="summary-name">__package__</span> = <code title="'asynchia'"><code class="variable-quote">'</code><code class="variable-string">asynchia</code><code class="variable-quote">'</code></code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="symbol"></a><span class="summary-name">symbol</span> = <code title="'P'"><code class="variable-quote">'</code><code class="variable-string">P</code><code class="variable-quote">'</code></code>
+    </td>
+  </tr>
+</table>
+<!-- ==================== FUNCTION DETAILS ==================== -->
+<a name="section-FunctionDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Function Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-FunctionDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="lookback"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">lookback</span>(<span class="sig-arg">ind</span>,
+        <span class="sig-arg">fun</span>=<span class="sig-default">&lt;function &lt;lambda&gt; at 0x2f8f410&gt;</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="asynchia.dsl-pysrc.html#lookback">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Can be passed to expressions that expect a lookback. ind can either be
+  a string, thus referring to the result of the expression with the 
+  specified name or an int referring to the result of the expression with 
+  the specified index.</p>
+  <p>Fun can be altered to change the way the data is extracted from the 
+  collector. Defaults to returning .value.</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="lb"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">lb</span>(<span class="sig-arg">ind</span>,
+        <span class="sig-arg">fun</span>=<span class="sig-default">&lt;function &lt;lambda&gt; at 0x2f8f410&gt;</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="asynchia.dsl-pysrc.html#lookback">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Can be passed to expressions that expect a lookback. ind can either be
+  a string, thus referring to the result of the expression with the 
+  specified name or an int referring to the result of the expression with 
+  the specified index.</p>
+  <p>Fun can be altered to change the way the data is extracted from the 
+  collector. Defaults to returning .value.</p>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== VARIABLES DETAILS ==================== -->
+<a name="section-VariablesDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Variables Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-VariablesDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="FRMT_CHARS"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <h3 class="epydoc">FRMT_CHARS</h3>
+  
+  <dl class="fields">
+  </dl>
+  <dl class="fields">
+    <dt>Value:</dt>
+      <dd><table><tr><td><pre class="variable">
+<code class="variable-group">(</code><code class="variable-quote">'</code><code class="variable-string">x</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ <code class="variable-quote">'</code><code class="variable-string">c</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ <code class="variable-quote">'</code><code class="variable-string">b</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ <code class="variable-quote">'</code><code class="variable-string">B</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ <code class="variable-quote">'</code><code class="variable-string">?</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ <code class="variable-quote">'</code><code class="variable-string">h</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ <code class="variable-quote">'</code><code class="variable-string">H</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ <code class="variable-quote">'</code><code class="variable-string">i</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+<code class="variable-ellipsis">...</code>
+</pre></td></tr></table>
+</dd>
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="asynchia-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Sat Sep 11 19:25:01 2010
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

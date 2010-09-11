@@ -1,0 +1,169 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asynchia.dsl Tutorial &mdash; asynchia v0.1.0a documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.0a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="asynchia v0.1.0a documentation" href="index.html" />
+    <link rel="prev" title="asynchia.ee Tutorial" href="ee_tutorial.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="ee_tutorial.html" title="asynchia.ee Tutorial"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">asynchia v0.1.0a documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="asynchia-dsl-tutorial">
+<h1>asynchia.dsl Tutorial<a class="headerlink" href="#asynchia-dsl-tutorial" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="what-s-asynchia-dsl">
+<h2>What&#8217;s asynchia.dsl<a class="headerlink" href="#what-s-asynchia-dsl" title="Permalink to this headline">¶</a></h2>
+<p>asynchia.dsl is a module offering a convenient way of expressing binary packets. The specification of a packet can be used both to parse and to produce packets of the specified type.</p>
+</div>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>Packets are described by expressions which can be converted to collectors
+whenever a packet of that type should be parsed. Complex expressions can
+be created by adding expressions, resulting in ExprAdds (but that is semi-
+internal API which you do not necessarily need to care about, unless you
+try to write your own types of expressions).</p>
+<p>Let us henceforth consider the following simple example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">asynchia.dsl</span> <span class="kn">import</span> <span class="n">s</span><span class="p">,</span> <span class="n">SBLFLSE</span>
+<span class="n">e</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">L</span><span class="p">()</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="n">B</span><span class="p">()</span> <span class="o">+</span> <span class="n">LFLSE</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This might appear utterly complicated at first glance, but it is not. The
+first statement imports s (which is a container for binary numeric types)
+and LFLSE which expands to lookback fixed-length string-expression.</p>
+<p>The expression (which is the second statement) describes a packet which
+contains three parts. The first part is an unsigned long (which is named by its
+name in the struct module) in network byte-order (all binary types contained
+in <cite>s</cite> assume network byte-order (so s.L expands to the struct format &#8220;!L&#8221;);
+the second part is an unsigned byte; the interesting thing in the expression
+is the third part which describes a fixed-length string with the length equal
+to the first element in the expression (which is referred to by its index 0):
+the unsigned long.</p>
+<p>The expression can now be used to parse and to produce packets according to the
+given format. An asynchia.ee collector can be created by calling the
+expression</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">collector</span> <span class="o">=</span> <span class="n">e</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>You can now pass the protocol to the add_data method of the collector and it
+will collect the data as specified. Any other data (which appears after the
+whole packet has been read) is left in the protocol.</p>
+<p>To create a packet you need to call the expression&#8217;s produce method and pass
+a tuple of the data you want to construct a package of. This operation
+returns an asynchia.ee.Input that can directly be passed to be sent by
+an asynchia.Handler.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">produce</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;ABCDE&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In this case it is important that the first number equals the length of the
+string, as the system does not derive it from the length of the string
+(though you are advised to do so in your client code).</p>
+<p>Attributes can be named by passing the name in square brackets. It is
+also possible to refer to expressions by the name given to them in
+lookbacks. The following expression is indentical to the one initially considered.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">e</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">L</span><span class="p">()[</span><span class="s">&#39;size&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="n">B</span><span class="p">()[</span><span class="s">&#39;blub&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">LFLSE</span><span class="p">(</span><span class="s">&#39;size&#39;</span><span class="p">)[</span><span class="s">&#39;string&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The tuple of values collected can be converted into a dictionary that
+maps the name of the expression to the respective value by calling the
+tonamed method of the ExprAdd.</p>
+<div class="highlight-python"><pre>a = e()
+[Collecting of data takes place]
+tup = a.values
+dic = e.tonamed(tup)</pre>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">asynchia.dsl Tutorial</a><ul>
+<li><a class="reference internal" href="#what-s-asynchia-dsl">What&#8217;s asynchia.dsl</a></li>
+<li><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="ee_tutorial.html"
+                        title="previous chapter">asynchia.ee Tutorial</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/dsl_tutorial.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="ee_tutorial.html" title="asynchia.ee Tutorial"
+             >previous</a> |</li>
+        <li><a href="index.html">asynchia v0.1.0a documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009, Florian Mayer.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

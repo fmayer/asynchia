@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>asynchia.qtmap</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="asynchia-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="asynchia-module.html">Package&nbsp;asynchia</a> ::
+        Module&nbsp;qtmap
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="asynchia.qtmap-pysrc.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h1 class="epydoc">Source Code for <a href="asynchia.qtmap-module.html">Module asynchia.qtmap</a></h1>
+<pre class="py-src">
+<a name="L1"></a><tt class="py-lineno">  1</tt>  <tt class="py-line"><tt class="py-comment"># -*- coding: us-ascii -*-</tt> </tt>
+<a name="L2"></a><tt class="py-lineno">  2</tt>  <tt class="py-line"> </tt>
+<a name="L3"></a><tt class="py-lineno">  3</tt>  <tt class="py-line"><tt class="py-comment"># asynchia.qtmap - SocketMap for Qt</tt> </tt>
+<a name="L4"></a><tt class="py-lineno">  4</tt>  <tt class="py-line"><tt class="py-comment"># Copyright (C) 2008 Florian Mayer</tt> </tt>
+<a name="L5"></a><tt class="py-lineno">  5</tt>  <tt class="py-line"> </tt>
+<a name="L6"></a><tt class="py-lineno">  6</tt>  <tt class="py-line"><tt class="py-comment"># This program is free software: you can redistribute it and/or modify</tt> </tt>
+<a name="L7"></a><tt class="py-lineno">  7</tt>  <tt class="py-line"><tt class="py-comment"># it under the terms of the GNU General Public License as published by</tt> </tt>
+<a name="L8"></a><tt class="py-lineno">  8</tt>  <tt class="py-line"><tt class="py-comment"># the Free Software Foundation, either version 3 of the License, or</tt> </tt>
+<a name="L9"></a><tt class="py-lineno">  9</tt>  <tt class="py-line"><tt class="py-comment"># (at your option) any later version.</tt> </tt>
+<a name="L10"></a><tt class="py-lineno"> 10</tt>  <tt class="py-line"> </tt>
+<a name="L11"></a><tt class="py-lineno"> 11</tt>  <tt class="py-line"><tt class="py-comment"># This program is distributed in the hope that it will be useful,</tt> </tt>
+<a name="L12"></a><tt class="py-lineno"> 12</tt>  <tt class="py-line"><tt class="py-comment"># but WITHOUT ANY WARRANTY; without even the implied warranty of</tt> </tt>
+<a name="L13"></a><tt class="py-lineno"> 13</tt>  <tt class="py-line"><tt class="py-comment"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</tt> </tt>
+<a name="L14"></a><tt class="py-lineno"> 14</tt>  <tt class="py-line"><tt class="py-comment"># GNU General Public License for more details.</tt> </tt>
+<a name="L15"></a><tt class="py-lineno"> 15</tt>  <tt class="py-line"> </tt>
+<a name="L16"></a><tt class="py-lineno"> 16</tt>  <tt class="py-line"><tt class="py-comment"># You should have received a copy of the GNU General Public License</tt> </tt>
+<a name="L17"></a><tt class="py-lineno"> 17</tt>  <tt class="py-line"><tt class="py-comment"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</tt> </tt>
+<a name="L18"></a><tt class="py-lineno"> 18</tt>  <tt class="py-line"> </tt>
+<a name="L19"></a><tt class="py-lineno"> 19</tt>  <tt class="py-line"><tt class="py-docstring">""" This module is - unlike the rest of asynchia - licensed under the terms</tt> </tt>
+<a name="L20"></a><tt class="py-lineno"> 20</tt>  <tt class="py-line"><tt class="py-docstring">of the GNU GPL! """</tt> </tt>
+<a name="L21"></a><tt class="py-lineno"> 21</tt>  <tt class="py-line"> </tt>
+<a name="L22"></a><tt class="py-lineno"> 22</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt id="link-0" class="py-name" targets="Package asynchia=asynchia-module.html"><a title="asynchia" class="py-name" href="#" onclick="return doclink('link-0', 'asynchia', 'link-0');">asynchia</a></tt> </tt>
+<a name="L23"></a><tt class="py-lineno"> 23</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">socket</tt> </tt>
+<a name="L24"></a><tt class="py-lineno"> 24</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">errno</tt> </tt>
+<a name="L25"></a><tt class="py-lineno"> 25</tt>  <tt class="py-line"> </tt>
+<a name="L26"></a><tt class="py-lineno"> 26</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-name">PyQt4</tt> <tt class="py-keyword">import</tt> <tt class="py-name">QtCore</tt><tt class="py-op">,</tt> <tt class="py-name">QtGui</tt> </tt>
+<a name="L27"></a><tt class="py-lineno"> 27</tt>  <tt class="py-line"> </tt>
+<a name="L28"></a><tt class="py-lineno"> 28</tt>  <tt class="py-line"> </tt>
+<a name="SocketNotifier"></a><div id="SocketNotifier-def"><a name="L29"></a><tt class="py-lineno"> 29</tt> <a class="py-toggle" href="#" id="SocketNotifier-toggle" onclick="return toggle('SocketNotifier');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="asynchia.qtmap.SocketNotifier-class.html">SocketNotifier</a><tt class="py-op">(</tt><tt class="py-base-class">QtCore</tt><tt class="py-op">.</tt><tt class="py-base-class">QSocketNotifier</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="SocketNotifier-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="SocketNotifier-expanded"><a name="L30"></a><tt class="py-lineno"> 30</tt>  <tt class="py-line">    <tt class="py-docstring">""" Notificate about socket I/O using Qt facilities """</tt> </tt>
+<a name="SocketNotifier.__init__"></a><div id="SocketNotifier.__init__-def"><a name="L31"></a><tt class="py-lineno"> 31</tt> <a class="py-toggle" href="#" id="SocketNotifier.__init__-toggle" onclick="return toggle('SocketNotifier.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.SocketNotifier-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">watched</tt><tt class="py-op">,</tt> <tt class="py-param">notifier</tt><tt class="py-op">,</tt> <tt class="py-param">type_</tt> <tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="SocketNotifier.__init__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="SocketNotifier.__init__-expanded"><a name="L32"></a><tt class="py-lineno"> 32</tt>  <tt class="py-line">        <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">QSocketNotifier</tt><tt class="py-op">.</tt><tt id="link-1" class="py-name" targets="Method asynchia.AcceptHandler.__init__()=asynchia.AcceptHandler-class.html#__init__,Method asynchia.Handler.__init__()=asynchia.Handler-class.html#__init__,Method asynchia.SendallTrait.__init__()=asynchia.SendallTrait-class.html#__init__,Method asynchia.Server.__init__()=asynchia.Server-class.html#__init__,Method asynchia.SocketMap.__init__()=asynchia.SocketMap-class.html#__init__,Method asynchia.SocketTransport.__init__()=asynchia.SocketTransport-class.html#__init__,Method asynchia.Transport.__init__()=asynchia.Transport-class.html#__init__,Method asynchia.dsl.BinaryExpr.__init__()=asynchia.dsl.BinaryExpr-class.html#__init__,Method asynchia.dsl.Expr.__init__()=asynchia.dsl.Expr-class.html#__init__,Method asynchia.dsl.ExprAdd.__init__()=asynchia.dsl.ExprAdd-class.html#__init__,Method asynchia.dsl.ExprCollectorQueue.__init__()=asynchia.dsl.ExprCollectorQueue-class.html#__init__,Method asynchia.dsl.FileExpr.__init__()=asynchia.dsl.FileExpr-class.html#__init__,Method asynchia.dsl.FixedLenExpr.__init__()=asynchia.dsl.FixedLenExpr-class.html#__init__,Method asynchia.dsl.SingleBinaryExpr.__init__()=asynchia.dsl.SingleBinaryExpr-class.html#__init__,Method asynchia.dsl.State.__init__()=asynchia.dsl.State-class.html#__init__,Method asynchia.ee.AutoFileInput.__init__()=asynchia.ee.AutoFileInput-class.html#__init__,Method asynchia.ee.Collector.__init__()=asynchia.ee.Collector-class.html#__init__,Method asynchia.ee.CollectorQueue.__init__()=asynchia.ee.CollectorQueue-class.html#__init__,Method asynchia.ee.DelimitedCollector.__init__()=asynchia.ee.DelimitedCollector-class.html#__init__,Method asynchia.ee.FactoryCollector.__init__()=asynchia.ee.FactoryCollector-class.html#__init__,Method asynchia.ee.FactoryInput.__init__()=asynchia.ee.FactoryInput-class.html#__init__,Method asynchia.ee.FileCollector.__init__()=asynchia.ee.FileCollector-class.html#__init__,Method asynchia.ee.FileInput.__init__()=asynchia.ee.FileInput-class.html#__init__,Method asynchia.ee.Handler.__init__()=asynchia.ee.Handler-class.html#__init__,Method asynchia.ee.Input.__init__()=asynchia.ee.Input-class.html#__init__,Method asynchia.ee.InputQueue.__init__()=asynchia.ee.InputQueue-class.html#__init__,Method asynchia.ee.KeepingCollectorQueue.__init__()=asynchia.ee.KeepingCollectorQueue-class.html#__init__,Method asynchia.ee.MockHandler.__init__()=asynchia.ee.MockHandler-class.html#__init__,Method asynchia.ee.StringCollector.__init__()=asynchia.ee.StringCollector-class.html#__init__,Method asynchia.ee.StringInput.__init__()=asynchia.ee.StringInput-class.html#__init__,Method asynchia.ee.StructCollector.__init__()=asynchia.ee.StructCollector-class.html#__init__,Method asynchia.forthcoming.Coroutine.__init__()=asynchia.forthcoming.Coroutine-class.html#__init__,Method asynchia.forthcoming.Coroutine.return_.__init__()=asynchia.forthcoming.Coroutine.return_-class.html#__init__,Method asynchia.forthcoming.DataNotifier.__init__()=asynchia.forthcoming.DataNotifier-class.html#__init__,Method asynchia.forthcoming.PauseContext.__init__()=asynchia.forthcoming.PauseContext-class.html#__init__,Method asynchia.forthcoming._ThreadedDataHandler.__init__()=asynchia.forthcoming._ThreadedDataHandler-class.html#__init__,Method asynchia.maps.ControlSocketSocketMap.__init__()=asynchia.maps.ControlSocketSocketMap-class.html#__init__,Method asynchia.maps.InterruptContextManager.__init__()=asynchia.maps.InterruptContextManager-class.html#__init__,Method asynchia.maps.PollSocketMap.__init__()=asynchia.maps.PollSocketMap-class.html#__init__,Method asynchia.maps.RobustSocketMap.__init__()=asynchia.maps.RobustSocketMap-class.html#__init__,Method asynchia.maps.SelectSocketMap.__init__()=asynchia.maps.SelectSocketMap-class.html#__init__,Method asynchia.protocols.LineHandler.__init__()=asynchia.protocols.LineHandler-class.html#__init__,Method asynchia.qtmap.QSocketMap.__init__()=asynchia.qtmap.QSocketMap-class.html#__init__,Method asynchia.qtmap.SocketNotifier.__init__()=asynchia.qtmap.SocketNotifier-class.html#__init__,Method asynchia.util.GradualAverage.__init__()=asynchia.util.GradualAverage-class.html#__init__,Method asynchia.util.IDPool.__init__()=asynchia.util.IDPool-class.html#__init__,Method asynchia.util.LimitedAverage.__init__()=asynchia.util.LimitedAverage-class.html#__init__"><a title="asynchia.AcceptHandler.__init__
+asynchia.Handler.__init__
+asynchia.SendallTrait.__init__
+asynchia.Server.__init__
+asynchia.SocketMap.__init__
+asynchia.SocketTransport.__init__
+asynchia.Transport.__init__
+asynchia.dsl.BinaryExpr.__init__
+asynchia.dsl.Expr.__init__
+asynchia.dsl.ExprAdd.__init__
+asynchia.dsl.ExprCollectorQueue.__init__
+asynchia.dsl.FileExpr.__init__
+asynchia.dsl.FixedLenExpr.__init__
+asynchia.dsl.SingleBinaryExpr.__init__
+asynchia.dsl.State.__init__
+asynchia.ee.AutoFileInput.__init__
+asynchia.ee.Collector.__init__
+asynchia.ee.CollectorQueue.__init__
+asynchia.ee.DelimitedCollector.__init__
+asynchia.ee.FactoryCollector.__init__
+asynchia.ee.FactoryInput.__init__
+asynchia.ee.FileCollector.__init__
+asynchia.ee.FileInput.__init__
+asynchia.ee.Handler.__init__
+asynchia.ee.Input.__init__
+asynchia.ee.InputQueue.__init__
+asynchia.ee.KeepingCollectorQueue.__init__
+asynchia.ee.MockHandler.__init__
+asynchia.ee.StringCollector.__init__
+asynchia.ee.StringInput.__init__
+asynchia.ee.StructCollector.__init__
+asynchia.forthcoming.Coroutine.__init__
+asynchia.forthcoming.Coroutine.return_.__init__
+asynchia.forthcoming.DataNotifier.__init__
+asynchia.forthcoming.PauseContext.__init__
+asynchia.forthcoming._ThreadedDataHandler.__init__
+asynchia.maps.ControlSocketSocketMap.__init__
+asynchia.maps.InterruptContextManager.__init__
+asynchia.maps.PollSocketMap.__init__
+asynchia.maps.RobustSocketMap.__init__
+asynchia.maps.SelectSocketMap.__init__
+asynchia.protocols.LineHandler.__init__
+asynchia.qtmap.QSocketMap.__init__
+asynchia.qtmap.SocketNotifier.__init__
+asynchia.util.GradualAverage.__init__
+asynchia.util.IDPool.__init__
+asynchia.util.LimitedAverage.__init__" class="py-name" href="#" onclick="return doclink('link-1', '__init__', 'link-1');">__init__</a></tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">,</tt> <tt class="py-name">watched</tt><tt class="py-op">.</tt><tt class="py-name">transport</tt><tt class="py-op">.</tt><tt id="link-2" class="py-name" targets="Method asynchia.SocketTransport.fileno()=asynchia.SocketTransport-class.html#fileno"><a title="asynchia.SocketTransport.fileno" class="py-name" href="#" onclick="return doclink('link-2', 'fileno', 'link-2');">fileno</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> <tt class="py-name">type_</tt><tt class="py-op">)</tt> </tt>
+<a name="L33"></a><tt class="py-lineno"> 33</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">watched</tt> <tt class="py-op">=</tt> <tt class="py-name">watched</tt> </tt>
+<a name="L34"></a><tt class="py-lineno"> 34</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">notifier</tt> <tt class="py-op">=</tt> <tt class="py-name">notifier</tt> </tt>
+<a name="L35"></a><tt class="py-lineno"> 35</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fun</tt> <tt class="py-op">=</tt> <tt class="py-name">None</tt> </tt>
+<a name="L36"></a><tt class="py-lineno"> 36</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">type_</tt> <tt class="py-op">==</tt> <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">QSocketNotifier</tt><tt class="py-op">.</tt><tt class="py-name">Read</tt><tt class="py-op">:</tt> </tt>
+<a name="L37"></a><tt class="py-lineno"> 37</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fun</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-3" class="py-name" targets="Method asynchia.qtmap.SocketNotifier.read()=asynchia.qtmap.SocketNotifier-class.html#read"><a title="asynchia.qtmap.SocketNotifier.read" class="py-name" href="#" onclick="return doclink('link-3', 'read', 'link-3');">read</a></tt> </tt>
+<a name="L38"></a><tt class="py-lineno"> 38</tt>  <tt class="py-line">        <tt class="py-keyword">elif</tt> <tt class="py-name">type_</tt> <tt class="py-op">==</tt> <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">QSocketNotifier</tt><tt class="py-op">.</tt><tt class="py-name">Write</tt><tt class="py-op">:</tt> </tt>
+<a name="L39"></a><tt class="py-lineno"> 39</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fun</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-4" class="py-name" targets="Method asynchia.qtmap.SocketNotifier.write()=asynchia.qtmap.SocketNotifier-class.html#write"><a title="asynchia.qtmap.SocketNotifier.write" class="py-name" href="#" onclick="return doclink('link-4', 'write', 'link-4');">write</a></tt> </tt>
+<a name="L40"></a><tt class="py-lineno"> 40</tt>  <tt class="py-line">        <tt class="py-keyword">elif</tt> <tt class="py-name">type_</tt> <tt class="py-op">==</tt> <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">QSocketNotifier</tt><tt class="py-op">.</tt><tt class="py-name">Exception</tt><tt class="py-op">:</tt> </tt>
+<a name="L41"></a><tt class="py-lineno"> 41</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fun</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-5" class="py-name" targets="Method asynchia.qtmap.SocketNotifier.except_()=asynchia.qtmap.SocketNotifier-class.html#except_"><a title="asynchia.qtmap.SocketNotifier.except_" class="py-name" href="#" onclick="return doclink('link-5', 'except_', 'link-5');">except_</a></tt> </tt>
+<a name="L42"></a><tt class="py-lineno"> 42</tt>  <tt class="py-line">        <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">QObject</tt><tt class="py-op">.</tt><tt id="link-6" class="py-name" targets="Method asynchia.SocketTransport.connect()=asynchia.SocketTransport-class.html#connect"><a title="asynchia.SocketTransport.connect" class="py-name" href="#" onclick="return doclink('link-6', 'connect', 'link-6');">connect</a></tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">,</tt> <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">SIGNAL</tt><tt class="py-op">(</tt><tt class="py-string">"activated(int)"</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fun</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L43"></a><tt class="py-lineno"> 43</tt>  <tt class="py-line">     </tt>
+<a name="SocketNotifier.disable"></a><div id="SocketNotifier.disable-def"><a name="L44"></a><tt class="py-lineno"> 44</tt> <a class="py-toggle" href="#" id="SocketNotifier.disable-toggle" onclick="return toggle('SocketNotifier.disable');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.SocketNotifier-class.html#disable">disable</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="SocketNotifier.disable-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="SocketNotifier.disable-expanded"><a name="L45"></a><tt class="py-lineno"> 45</tt>  <tt class="py-line">        <tt class="py-docstring">""" Temporarily disable notification on I/O. """</tt> </tt>
+<a name="L46"></a><tt class="py-lineno"> 46</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">setEnabled</tt><tt class="py-op">(</tt><tt class="py-name">False</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L47"></a><tt class="py-lineno"> 47</tt>  <tt class="py-line">     </tt>
+<a name="SocketNotifier.enable"></a><div id="SocketNotifier.enable-def"><a name="L48"></a><tt class="py-lineno"> 48</tt> <a class="py-toggle" href="#" id="SocketNotifier.enable-toggle" onclick="return toggle('SocketNotifier.enable');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.SocketNotifier-class.html#enable">enable</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="SocketNotifier.enable-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="SocketNotifier.enable-expanded"><a name="L49"></a><tt class="py-lineno"> 49</tt>  <tt class="py-line">        <tt class="py-docstring">""" Re-enable notification on I/O. """</tt> </tt>
+<a name="L50"></a><tt class="py-lineno"> 50</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">setEnabled</tt><tt class="py-op">(</tt><tt class="py-name">True</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L51"></a><tt class="py-lineno"> 51</tt>  <tt class="py-line">     </tt>
+<a name="SocketNotifier.shutdown"></a><div id="SocketNotifier.shutdown-def"><a name="L52"></a><tt class="py-lineno"> 52</tt> <a class="py-toggle" href="#" id="SocketNotifier.shutdown-toggle" onclick="return toggle('SocketNotifier.shutdown');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.SocketNotifier-class.html#shutdown">shutdown</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="SocketNotifier.shutdown-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="SocketNotifier.shutdown-expanded"><a name="L53"></a><tt class="py-lineno"> 53</tt>  <tt class="py-line">        <tt class="py-docstring">""" Permanentely disable notification on I/O. """</tt> </tt>
+<a name="L54"></a><tt class="py-lineno"> 54</tt>  <tt class="py-line">        <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">QObject</tt><tt class="py-op">.</tt><tt class="py-name">disconnect</tt><tt class="py-op">(</tt> </tt>
+<a name="L55"></a><tt class="py-lineno"> 55</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">,</tt> <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">SIGNAL</tt><tt class="py-op">(</tt><tt class="py-string">"activated(int)"</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fun</tt> </tt>
+<a name="L56"></a><tt class="py-lineno"> 56</tt>  <tt class="py-line">        <tt class="py-op">)</tt> </tt>
+<a name="L57"></a><tt class="py-lineno"> 57</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">setEnabled</tt><tt class="py-op">(</tt><tt class="py-name">False</tt><tt class="py-op">)</tt> </tt>
+<a name="L58"></a><tt class="py-lineno"> 58</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fun</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">watched</tt> <tt class="py-op">=</tt> <tt class="py-name">None</tt> </tt>
+<a name="L59"></a><tt class="py-lineno"> 59</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">deleteLater</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L60"></a><tt class="py-lineno"> 60</tt>  <tt class="py-line">     </tt>
+<a name="SocketNotifier.read"></a><div id="SocketNotifier.read-def"><a name="L61"></a><tt class="py-lineno"> 61</tt> <a class="py-toggle" href="#" id="SocketNotifier.read-toggle" onclick="return toggle('SocketNotifier.read');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.SocketNotifier-class.html#read">read</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">_sock</tt><tt class="py-op">=</tt><tt class="py-name">None</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="SocketNotifier.read-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="SocketNotifier.read-expanded"><a name="L62"></a><tt class="py-lineno"> 62</tt>  <tt class="py-line">        <tt class="py-docstring">""" Read I/O to do. """</tt> </tt>
+<a name="L63"></a><tt class="py-lineno"> 63</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">notifier</tt><tt class="py-op">.</tt><tt id="link-7" class="py-name" targets="Static Method asynchia.Notifier.read_obj()=asynchia.Notifier-class.html#read_obj"><a title="asynchia.Notifier.read_obj" class="py-name" href="#" onclick="return doclink('link-7', 'read_obj', 'link-7');">read_obj</a></tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">watched</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L64"></a><tt class="py-lineno"> 64</tt>  <tt class="py-line">     </tt>
+<a name="SocketNotifier.write"></a><div id="SocketNotifier.write-def"><a name="L65"></a><tt class="py-lineno"> 65</tt> <a class="py-toggle" href="#" id="SocketNotifier.write-toggle" onclick="return toggle('SocketNotifier.write');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.SocketNotifier-class.html#write">write</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">_sock</tt><tt class="py-op">=</tt><tt class="py-name">None</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="SocketNotifier.write-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="SocketNotifier.write-expanded"><a name="L66"></a><tt class="py-lineno"> 66</tt>  <tt class="py-line">        <tt class="py-docstring">""" Write I/O to do. """</tt> </tt>
+<a name="L67"></a><tt class="py-lineno"> 67</tt>  <tt class="py-line">        <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L68"></a><tt class="py-lineno"> 68</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">watched</tt><tt class="py-op">.</tt><tt class="py-name">socket</tt><tt class="py-op">.</tt><tt class="py-name">getpeername</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L69"></a><tt class="py-lineno"> 69</tt>  <tt class="py-line">        <tt class="py-keyword">except</tt> <tt class="py-name">socket</tt><tt class="py-op">.</tt><tt class="py-name">error</tt><tt class="py-op">,</tt> <tt class="py-name">err</tt><tt class="py-op">:</tt> </tt>
+<a name="L70"></a><tt class="py-lineno"> 70</tt>  <tt class="py-line">            <tt class="py-keyword">if</tt> <tt class="py-name">err</tt><tt class="py-op">.</tt><tt class="py-name">args</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt> <tt class="py-op">==</tt> <tt class="py-name">errno</tt><tt class="py-op">.</tt><tt class="py-name">ENOTCONN</tt><tt class="py-op">:</tt> </tt>
+<a name="L71"></a><tt class="py-lineno"> 71</tt>  <tt class="py-line">                <tt class="py-keyword">return</tt> </tt>
+<a name="L72"></a><tt class="py-lineno"> 72</tt>  <tt class="py-line">            <tt class="py-keyword">else</tt><tt class="py-op">:</tt> </tt>
+<a name="L73"></a><tt class="py-lineno"> 73</tt>  <tt class="py-line">                <tt class="py-keyword">raise</tt> </tt>
+<a name="L74"></a><tt class="py-lineno"> 74</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">notifier</tt><tt class="py-op">.</tt><tt id="link-8" class="py-name" targets="Static Method asynchia.Notifier.write_obj()=asynchia.Notifier-class.html#write_obj"><a title="asynchia.Notifier.write_obj" class="py-name" href="#" onclick="return doclink('link-8', 'write_obj', 'link-8');">write_obj</a></tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">watched</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L75"></a><tt class="py-lineno"> 75</tt>  <tt class="py-line">     </tt>
+<a name="SocketNotifier.except_"></a><div id="SocketNotifier.except_-def"><a name="L76"></a><tt class="py-lineno"> 76</tt> <a class="py-toggle" href="#" id="SocketNotifier.except_-toggle" onclick="return toggle('SocketNotifier.except_');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.SocketNotifier-class.html#except_">except_</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">_sock</tt><tt class="py-op">=</tt><tt class="py-name">None</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="SocketNotifier.except_-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="SocketNotifier.except_-expanded"><a name="L77"></a><tt class="py-lineno"> 77</tt>  <tt class="py-line">        <tt class="py-docstring">""" Exception I/O to do. """</tt> </tt>
+<a name="L78"></a><tt class="py-lineno"> 78</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">notifier</tt><tt class="py-op">.</tt><tt id="link-9" class="py-name" targets="Static Method asynchia.Notifier.except_obj()=asynchia.Notifier-class.html#except_obj"><a title="asynchia.Notifier.except_obj" class="py-name" href="#" onclick="return doclink('link-9', 'except_obj', 'link-9');">except_obj</a></tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">watched</tt><tt class="py-op">)</tt> </tt>
+</div></div><a name="L79"></a><tt class="py-lineno"> 79</tt>  <tt class="py-line"> </tt>
+<a name="L80"></a><tt class="py-lineno"> 80</tt>  <tt class="py-line"> </tt>
+<a name="QSocketMap"></a><div id="QSocketMap-def"><a name="L81"></a><tt class="py-lineno"> 81</tt> <a class="py-toggle" href="#" id="QSocketMap-toggle" onclick="return toggle('QSocketMap');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="asynchia.qtmap.QSocketMap-class.html">QSocketMap</a><tt class="py-op">(</tt><tt class="py-base-class">asynchia</tt><tt class="py-op">.</tt><tt class="py-base-class">SocketMap</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="QSocketMap-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="QSocketMap-expanded"><a name="L82"></a><tt class="py-lineno"> 82</tt>  <tt class="py-line">    <tt class="py-docstring">""" Decide which sockets have I/O to do using Qt facilities. """</tt> </tt>
+<a name="QSocketMap.__init__"></a><div id="QSocketMap.__init__-def"><a name="L83"></a><tt class="py-lineno"> 83</tt> <a class="py-toggle" href="#" id="QSocketMap.__init__-toggle" onclick="return toggle('QSocketMap.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.QSocketMap-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">notifier</tt><tt class="py-op">=</tt><tt class="py-name">None</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="QSocketMap.__init__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="QSocketMap.__init__-expanded"><a name="L84"></a><tt class="py-lineno"> 84</tt>  <tt class="py-line">        <tt id="link-10" class="py-name"><a title="asynchia" class="py-name" href="#" onclick="return doclink('link-10', 'asynchia', 'link-0');">asynchia</a></tt><tt class="py-op">.</tt><tt id="link-11" class="py-name" targets="Class asynchia.SocketMap=asynchia.SocketMap-class.html"><a title="asynchia.SocketMap" class="py-name" href="#" onclick="return doclink('link-11', 'SocketMap', 'link-11');">SocketMap</a></tt><tt class="py-op">.</tt><tt id="link-12" class="py-name"><a title="asynchia.AcceptHandler.__init__
+asynchia.Handler.__init__
+asynchia.SendallTrait.__init__
+asynchia.Server.__init__
+asynchia.SocketMap.__init__
+asynchia.SocketTransport.__init__
+asynchia.Transport.__init__
+asynchia.dsl.BinaryExpr.__init__
+asynchia.dsl.Expr.__init__
+asynchia.dsl.ExprAdd.__init__
+asynchia.dsl.ExprCollectorQueue.__init__
+asynchia.dsl.FileExpr.__init__
+asynchia.dsl.FixedLenExpr.__init__
+asynchia.dsl.SingleBinaryExpr.__init__
+asynchia.dsl.State.__init__
+asynchia.ee.AutoFileInput.__init__
+asynchia.ee.Collector.__init__
+asynchia.ee.CollectorQueue.__init__
+asynchia.ee.DelimitedCollector.__init__
+asynchia.ee.FactoryCollector.__init__
+asynchia.ee.FactoryInput.__init__
+asynchia.ee.FileCollector.__init__
+asynchia.ee.FileInput.__init__
+asynchia.ee.Handler.__init__
+asynchia.ee.Input.__init__
+asynchia.ee.InputQueue.__init__
+asynchia.ee.KeepingCollectorQueue.__init__
+asynchia.ee.MockHandler.__init__
+asynchia.ee.StringCollector.__init__
+asynchia.ee.StringInput.__init__
+asynchia.ee.StructCollector.__init__
+asynchia.forthcoming.Coroutine.__init__
+asynchia.forthcoming.Coroutine.return_.__init__
+asynchia.forthcoming.DataNotifier.__init__
+asynchia.forthcoming.PauseContext.__init__
+asynchia.forthcoming._ThreadedDataHandler.__init__
+asynchia.maps.ControlSocketSocketMap.__init__
+asynchia.maps.InterruptContextManager.__init__
+asynchia.maps.PollSocketMap.__init__
+asynchia.maps.RobustSocketMap.__init__
+asynchia.maps.SelectSocketMap.__init__
+asynchia.protocols.LineHandler.__init__
+asynchia.qtmap.QSocketMap.__init__
+asynchia.qtmap.SocketNotifier.__init__
+asynchia.util.GradualAverage.__init__
+asynchia.util.IDPool.__init__
+asynchia.util.LimitedAverage.__init__" class="py-name" href="#" onclick="return doclink('link-12', '__init__', 'link-1');">__init__</a></tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">,</tt> <tt class="py-name">notifier</tt><tt class="py-op">)</tt> </tt>
+<a name="L85"></a><tt class="py-lineno"> 85</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">handler_map</tt> <tt class="py-op">=</tt> <tt class="py-op">{</tt><tt class="py-op">}</tt> </tt>
+</div><a name="L86"></a><tt class="py-lineno"> 86</tt>  <tt class="py-line">     </tt>
+<a name="QSocketMap.add_transport"></a><div id="QSocketMap.add_transport-def"><a name="L87"></a><tt class="py-lineno"> 87</tt> <a class="py-toggle" href="#" id="QSocketMap.add_transport-toggle" onclick="return toggle('QSocketMap.add_transport');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.QSocketMap-class.html#add_transport">add_transport</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">handler</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="QSocketMap.add_transport-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="QSocketMap.add_transport-expanded"><a name="L88"></a><tt class="py-lineno"> 88</tt>  <tt class="py-line">        <tt class="py-docstring">""" See asynchia.SocketMap.add_transport """</tt> </tt>
+<a name="L89"></a><tt class="py-lineno"> 89</tt>  <tt class="py-line">        <tt id="link-13" class="py-name"><a title="asynchia.qtmap.SocketNotifier.read" class="py-name" href="#" onclick="return doclink('link-13', 'read', 'link-3');">read</a></tt> <tt class="py-op">=</tt> <tt id="link-14" class="py-name" targets="Class asynchia.qtmap.SocketNotifier=asynchia.qtmap.SocketNotifier-class.html"><a title="asynchia.qtmap.SocketNotifier" class="py-name" href="#" onclick="return doclink('link-14', 'SocketNotifier', 'link-14');">SocketNotifier</a></tt><tt class="py-op">(</tt> </tt>
+<a name="L90"></a><tt class="py-lineno"> 90</tt>  <tt class="py-line">            <tt class="py-name">handler</tt><tt class="py-op">,</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">notifier</tt><tt class="py-op">,</tt> <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">QSocketNotifier</tt><tt class="py-op">.</tt><tt class="py-name">Read</tt> </tt>
+<a name="L91"></a><tt class="py-lineno"> 91</tt>  <tt class="py-line">        <tt class="py-op">)</tt> </tt>
+<a name="L92"></a><tt class="py-lineno"> 92</tt>  <tt class="py-line">        <tt id="link-15" class="py-name"><a title="asynchia.qtmap.SocketNotifier.write" class="py-name" href="#" onclick="return doclink('link-15', 'write', 'link-4');">write</a></tt> <tt class="py-op">=</tt> <tt id="link-16" class="py-name"><a title="asynchia.qtmap.SocketNotifier" class="py-name" href="#" onclick="return doclink('link-16', 'SocketNotifier', 'link-14');">SocketNotifier</a></tt><tt class="py-op">(</tt> </tt>
+<a name="L93"></a><tt class="py-lineno"> 93</tt>  <tt class="py-line">            <tt class="py-name">handler</tt><tt class="py-op">,</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">notifier</tt><tt class="py-op">,</tt> <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">QSocketNotifier</tt><tt class="py-op">.</tt><tt class="py-name">Write</tt> </tt>
+<a name="L94"></a><tt class="py-lineno"> 94</tt>  <tt class="py-line">        <tt class="py-op">)</tt> </tt>
+<a name="L95"></a><tt class="py-lineno"> 95</tt>  <tt class="py-line">        <tt class="py-name">exception</tt> <tt class="py-op">=</tt> <tt id="link-17" class="py-name"><a title="asynchia.qtmap.SocketNotifier" class="py-name" href="#" onclick="return doclink('link-17', 'SocketNotifier', 'link-14');">SocketNotifier</a></tt><tt class="py-op">(</tt> </tt>
+<a name="L96"></a><tt class="py-lineno"> 96</tt>  <tt class="py-line">            <tt class="py-name">handler</tt><tt class="py-op">,</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">notifier</tt><tt class="py-op">,</tt> <tt class="py-name">QtCore</tt><tt class="py-op">.</tt><tt class="py-name">QSocketNotifier</tt><tt class="py-op">.</tt><tt class="py-name">Exception</tt> </tt>
+<a name="L97"></a><tt class="py-lineno"> 97</tt>  <tt class="py-line">        <tt class="py-op">)</tt> </tt>
+<a name="L98"></a><tt class="py-lineno"> 98</tt>  <tt class="py-line">         </tt>
+<a name="L99"></a><tt class="py-lineno"> 99</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">handler</tt><tt class="py-op">.</tt><tt id="link-18" class="py-name" targets="Variable asynchia.SocketTransport.readable=asynchia.SocketTransport-class.html#readable"><a title="asynchia.SocketTransport.readable" class="py-name" href="#" onclick="return doclink('link-18', 'readable', 'link-18');">readable</a></tt><tt class="py-op">:</tt> </tt>
+<a name="L100"></a><tt class="py-lineno">100</tt>  <tt class="py-line">            <tt id="link-19" class="py-name"><a title="asynchia.qtmap.SocketNotifier.read" class="py-name" href="#" onclick="return doclink('link-19', 'read', 'link-3');">read</a></tt><tt class="py-op">.</tt><tt id="link-20" class="py-name" targets="Method asynchia.qtmap.SocketNotifier.enable()=asynchia.qtmap.SocketNotifier-class.html#enable"><a title="asynchia.qtmap.SocketNotifier.enable" class="py-name" href="#" onclick="return doclink('link-20', 'enable', 'link-20');">enable</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L101"></a><tt class="py-lineno">101</tt>  <tt class="py-line">        <tt class="py-keyword">else</tt><tt class="py-op">:</tt> </tt>
+<a name="L102"></a><tt class="py-lineno">102</tt>  <tt class="py-line">            <tt id="link-21" class="py-name"><a title="asynchia.qtmap.SocketNotifier.read" class="py-name" href="#" onclick="return doclink('link-21', 'read', 'link-3');">read</a></tt><tt class="py-op">.</tt><tt id="link-22" class="py-name" targets="Method asynchia.qtmap.SocketNotifier.disable()=asynchia.qtmap.SocketNotifier-class.html#disable"><a title="asynchia.qtmap.SocketNotifier.disable" class="py-name" href="#" onclick="return doclink('link-22', 'disable', 'link-22');">disable</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L103"></a><tt class="py-lineno">103</tt>  <tt class="py-line">         </tt>
+<a name="L104"></a><tt class="py-lineno">104</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">handler</tt><tt class="py-op">.</tt><tt id="link-23" class="py-name" targets="Variable asynchia.SendallTrait.writeable=asynchia.SendallTrait-class.html#writeable,Variable asynchia.SocketTransport.writeable=asynchia.SocketTransport-class.html#writeable"><a title="asynchia.SendallTrait.writeable
+asynchia.SocketTransport.writeable" class="py-name" href="#" onclick="return doclink('link-23', 'writeable', 'link-23');">writeable</a></tt><tt class="py-op">:</tt> </tt>
+<a name="L105"></a><tt class="py-lineno">105</tt>  <tt class="py-line">            <tt id="link-24" class="py-name"><a title="asynchia.qtmap.SocketNotifier.write" class="py-name" href="#" onclick="return doclink('link-24', 'write', 'link-4');">write</a></tt><tt class="py-op">.</tt><tt id="link-25" class="py-name"><a title="asynchia.qtmap.SocketNotifier.enable" class="py-name" href="#" onclick="return doclink('link-25', 'enable', 'link-20');">enable</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L106"></a><tt class="py-lineno">106</tt>  <tt class="py-line">        <tt class="py-keyword">else</tt><tt class="py-op">:</tt> </tt>
+<a name="L107"></a><tt class="py-lineno">107</tt>  <tt class="py-line">            <tt id="link-26" class="py-name"><a title="asynchia.qtmap.SocketNotifier.write" class="py-name" href="#" onclick="return doclink('link-26', 'write', 'link-4');">write</a></tt><tt class="py-op">.</tt><tt id="link-27" class="py-name"><a title="asynchia.qtmap.SocketNotifier.disable" class="py-name" href="#" onclick="return doclink('link-27', 'disable', 'link-22');">disable</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L108"></a><tt class="py-lineno">108</tt>  <tt class="py-line">        <tt class="py-name">exception</tt><tt class="py-op">.</tt><tt id="link-28" class="py-name"><a title="asynchia.qtmap.SocketNotifier.enable" class="py-name" href="#" onclick="return doclink('link-28', 'enable', 'link-20');">enable</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L109"></a><tt class="py-lineno">109</tt>  <tt class="py-line">         </tt>
+<a name="L110"></a><tt class="py-lineno">110</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">handler_map</tt><tt class="py-op">[</tt><tt class="py-name">handler</tt><tt class="py-op">]</tt> <tt class="py-op">=</tt> <tt class="py-op">{</tt> </tt>
+<a name="L111"></a><tt class="py-lineno">111</tt>  <tt class="py-line">            <tt class="py-string">'read'</tt><tt class="py-op">:</tt> <tt id="link-29" class="py-name"><a title="asynchia.qtmap.SocketNotifier.read" class="py-name" href="#" onclick="return doclink('link-29', 'read', 'link-3');">read</a></tt><tt class="py-op">,</tt> </tt>
+<a name="L112"></a><tt class="py-lineno">112</tt>  <tt class="py-line">            <tt class="py-string">'write'</tt><tt class="py-op">:</tt> <tt id="link-30" class="py-name"><a title="asynchia.qtmap.SocketNotifier.write" class="py-name" href="#" onclick="return doclink('link-30', 'write', 'link-4');">write</a></tt><tt class="py-op">,</tt> </tt>
+<a name="L113"></a><tt class="py-lineno">113</tt>  <tt class="py-line">            <tt class="py-string">'exception'</tt><tt class="py-op">:</tt> <tt class="py-name">exception</tt> </tt>
+<a name="L114"></a><tt class="py-lineno">114</tt>  <tt class="py-line">        <tt class="py-op">}</tt> </tt>
+</div><a name="L115"></a><tt class="py-lineno">115</tt>  <tt class="py-line">     </tt>
+<a name="QSocketMap.del_transport"></a><div id="QSocketMap.del_transport-def"><a name="L116"></a><tt class="py-lineno">116</tt> <a class="py-toggle" href="#" id="QSocketMap.del_transport-toggle" onclick="return toggle('QSocketMap.del_transport');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.QSocketMap-class.html#del_transport">del_transport</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">handler</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="QSocketMap.del_transport-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="QSocketMap.del_transport-expanded"><a name="L117"></a><tt class="py-lineno">117</tt>  <tt class="py-line">        <tt class="py-docstring">""" See asynchia.SocketMap.del_transport """</tt> </tt>
+<a name="L118"></a><tt class="py-lineno">118</tt>  <tt class="py-line">        <tt class="py-keyword">for</tt> <tt class="py-name">notifier</tt> <tt class="py-keyword">in</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">handler_map</tt><tt class="py-op">[</tt><tt class="py-name">handler</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt class="py-name">iteritems</tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L119"></a><tt class="py-lineno">119</tt>  <tt class="py-line">            <tt class="py-name">notifier</tt><tt class="py-op">.</tt><tt id="link-31" class="py-name" targets="Method asynchia.qtmap.SocketNotifier.shutdown()=asynchia.qtmap.SocketNotifier-class.html#shutdown"><a title="asynchia.qtmap.SocketNotifier.shutdown" class="py-name" href="#" onclick="return doclink('link-31', 'shutdown', 'link-31');">shutdown</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L120"></a><tt class="py-lineno">120</tt>  <tt class="py-line">        <tt class="py-keyword">del</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">handler_map</tt><tt class="py-op">[</tt><tt class="py-name">handler</tt><tt class="py-op">]</tt> </tt>
+</div><a name="L121"></a><tt class="py-lineno">121</tt>  <tt class="py-line">     </tt>
+<a name="QSocketMap.add_reader"></a><div id="QSocketMap.add_reader-def"><a name="L122"></a><tt class="py-lineno">122</tt> <a class="py-toggle" href="#" id="QSocketMap.add_reader-toggle" onclick="return toggle('QSocketMap.add_reader');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.QSocketMap-class.html#add_reader">add_reader</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">handler</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="QSocketMap.add_reader-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="QSocketMap.add_reader-expanded"><a name="L123"></a><tt class="py-lineno">123</tt>  <tt class="py-line">        <tt class="py-docstring">""" See asynchia.SocketMap.add_reader """</tt> </tt>
+<a name="L124"></a><tt class="py-lineno">124</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">handler_map</tt><tt class="py-op">[</tt><tt class="py-name">handler</tt><tt class="py-op">]</tt><tt class="py-op">[</tt><tt class="py-string">'read'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt id="link-32" class="py-name"><a title="asynchia.qtmap.SocketNotifier.enable" class="py-name" href="#" onclick="return doclink('link-32', 'enable', 'link-20');">enable</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L125"></a><tt class="py-lineno">125</tt>  <tt class="py-line">     </tt>
+<a name="QSocketMap.del_reader"></a><div id="QSocketMap.del_reader-def"><a name="L126"></a><tt class="py-lineno">126</tt> <a class="py-toggle" href="#" id="QSocketMap.del_reader-toggle" onclick="return toggle('QSocketMap.del_reader');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.QSocketMap-class.html#del_reader">del_reader</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">handler</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="QSocketMap.del_reader-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="QSocketMap.del_reader-expanded"><a name="L127"></a><tt class="py-lineno">127</tt>  <tt class="py-line">        <tt class="py-docstring">""" See asynchia.SocketMap.del_reader """</tt> </tt>
+<a name="L128"></a><tt class="py-lineno">128</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">handler_map</tt><tt class="py-op">[</tt><tt class="py-name">handler</tt><tt class="py-op">]</tt><tt class="py-op">[</tt><tt class="py-string">'read'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt id="link-33" class="py-name"><a title="asynchia.qtmap.SocketNotifier.disable" class="py-name" href="#" onclick="return doclink('link-33', 'disable', 'link-22');">disable</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L129"></a><tt class="py-lineno">129</tt>  <tt class="py-line">     </tt>
+<a name="QSocketMap.add_writer"></a><div id="QSocketMap.add_writer-def"><a name="L130"></a><tt class="py-lineno">130</tt> <a class="py-toggle" href="#" id="QSocketMap.add_writer-toggle" onclick="return toggle('QSocketMap.add_writer');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.QSocketMap-class.html#add_writer">add_writer</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">handler</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="QSocketMap.add_writer-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="QSocketMap.add_writer-expanded"><a name="L131"></a><tt class="py-lineno">131</tt>  <tt class="py-line">        <tt class="py-docstring">""" See asynchia.SocketMap.add_writer """</tt> </tt>
+<a name="L132"></a><tt class="py-lineno">132</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">handler_map</tt><tt class="py-op">[</tt><tt class="py-name">handler</tt><tt class="py-op">]</tt><tt class="py-op">[</tt><tt class="py-string">'write'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt id="link-34" class="py-name"><a title="asynchia.qtmap.SocketNotifier.enable" class="py-name" href="#" onclick="return doclink('link-34', 'enable', 'link-20');">enable</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L133"></a><tt class="py-lineno">133</tt>  <tt class="py-line">     </tt>
+<a name="QSocketMap.del_writer"></a><div id="QSocketMap.del_writer-def"><a name="L134"></a><tt class="py-lineno">134</tt> <a class="py-toggle" href="#" id="QSocketMap.del_writer-toggle" onclick="return toggle('QSocketMap.del_writer');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.QSocketMap-class.html#del_writer">del_writer</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">handler</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="QSocketMap.del_writer-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="QSocketMap.del_writer-expanded"><a name="L135"></a><tt class="py-lineno">135</tt>  <tt class="py-line">        <tt class="py-docstring">""" See asynchia.SocketMap.del_writer """</tt> </tt>
+<a name="L136"></a><tt class="py-lineno">136</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">handler_map</tt><tt class="py-op">[</tt><tt class="py-name">handler</tt><tt class="py-op">]</tt><tt class="py-op">[</tt><tt class="py-string">'write'</tt><tt class="py-op">]</tt><tt class="py-op">.</tt><tt id="link-35" class="py-name"><a title="asynchia.qtmap.SocketNotifier.disable" class="py-name" href="#" onclick="return doclink('link-35', 'disable', 'link-22');">disable</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L137"></a><tt class="py-lineno">137</tt>  <tt class="py-line">     </tt>
+<a name="QSocketMap.close"></a><div id="QSocketMap.close-def"><a name="L138"></a><tt class="py-lineno">138</tt> <a class="py-toggle" href="#" id="QSocketMap.close-toggle" onclick="return toggle('QSocketMap.close');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="asynchia.qtmap.QSocketMap-class.html#close">close</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="QSocketMap.close-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="QSocketMap.close-expanded"><a name="L139"></a><tt class="py-lineno">139</tt>  <tt class="py-line">        <tt class="py-docstring">""" See asynchia.SocketMap.close """</tt> </tt>
+<a name="L140"></a><tt class="py-lineno">140</tt>  <tt class="py-line">        <tt class="py-keyword">for</tt> <tt class="py-name">handler</tt> <tt class="py-keyword">in</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">handler_map</tt><tt class="py-op">:</tt> </tt>
+<a name="L141"></a><tt class="py-lineno">141</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">notifier</tt><tt class="py-op">.</tt><tt id="link-36" class="py-name" targets="Static Method asynchia.Notifier.cleanup_obj()=asynchia.Notifier-class.html#cleanup_obj"><a title="asynchia.Notifier.cleanup_obj" class="py-name" href="#" onclick="return doclink('link-36', 'cleanup_obj', 'link-36');">cleanup_obj</a></tt><tt class="py-op">(</tt><tt class="py-name">handler</tt><tt class="py-op">)</tt> </tt>
+<a name="L142"></a><tt class="py-lineno">142</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">handler_map</tt><tt class="py-op">.</tt><tt class="py-name">clear</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div></div><a name="L143"></a><tt class="py-lineno">143</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+<!--
+expandto(location.href);
+// -->
+</script>
+</pre>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="asynchia-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Sat Sep 11 19:25:02 2010
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

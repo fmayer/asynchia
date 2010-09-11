@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Class Hierarchy</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="asynchia-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th bgcolor="#70b0f0" class="navbar-select"
+          >&nbsp;&nbsp;&nbsp;Trees&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">&nbsp;</td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="class-tree.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<center><b>
+ [ <a href="module-tree.html">Module Hierarchy</a>
+ | <a href="class-tree.html">Class Hierarchy</a> ]
+</b></center><br />
+<h1 class="epydoc">Class Hierarchy</h1>
+<ul class="nomargin-top">
+    <li> <strong class="uidlink">object</strong>:
+      <em class="summary">The most base type</em>
+    <ul>
+    <li> <strong class="uidlink">exceptions.BaseException</strong>:
+      <em class="summary">Common base class for all exceptions</em>
+    <ul>
+    <li> <strong class="uidlink">exceptions.Exception</strong>:
+      <em class="summary">Common base class for all non-exit exceptions.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.ee.Depleted-class.html">asynchia.ee.Depleted</a></strong>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.ee.Collector-class.html">asynchia.ee.Collector</a></strong>:
+      <em class="summary">This is the base-class for all collectors.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.ee.CollectorQueue-class.html">asynchia.ee.CollectorQueue</a></strong>:
+      <em class="summary">Write data to the first collector until CollectorFull is raised, 
+        afterwards repeat with next.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.ee.KeepingCollectorQueue-class.html">asynchia.ee.KeepingCollectorQueue</a></strong>:
+      <em class="summary">CollectorQueue that does not discard the collectors contained 
+        within after they have finished but rather appends to them to the 
+        list accessible through its member collected.</em>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.ee.DelimitedCollector-class.html">asynchia.ee.DelimitedCollector</a></strong>:
+      <em class="summary">Collect up to size bytes in collector and raise CollectorFull 
+        afterwards.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.ee.StructCollector-class.html">asynchia.ee.StructCollector</a></strong>:
+      <em class="summary">Collect and unpack stru.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.ee.SingleStructValueCollector-class.html">asynchia.ee.SingleStructValueCollector</a></strong>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.dsl.ExprCollectorQueue-class.html">asynchia.dsl.ExprCollectorQueue</a></strong>:
+      <em class="summary">Queue to collect the data specified by the list of expressions 
+        passed to it.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.ee.FactoryCollector-class.html">asynchia.ee.FactoryCollector</a></strong>:
+      <em class="summary">Call factory method to obtain the next collector until the factory 
+        raises the Depleted exception.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.ee.FileCollector-class.html">asynchia.ee.FileCollector</a></strong>:
+      <em class="summary">Write data received from the socket into a fd.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.ee.StringCollector-class.html">asynchia.ee.StringCollector</a></strong>:
+      <em class="summary">Store data received from the socket in a string.</em>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.dsl.Container-class.html">asynchia.dsl.Container</a></strong>:
+      <em class="summary">Container to hold members, which are also exposed through getitem.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.forthcoming.Coroutine-class.html">asynchia.forthcoming.Coroutine</a></strong>:
+      <em class="summary">Create coroutine from given iterator.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.forthcoming.DataNotifier-class.html">asynchia.forthcoming.DataNotifier</a></strong>:
+      <em class="summary">Call registered callbacks and send data to registered coroutines at
+        submission of data.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.dsl.Expr-class.html">asynchia.dsl.Expr</a></strong>:
+      <em class="summary">Baseclass for all expressions.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.dsl.BinaryExpr-class.html">asynchia.dsl.BinaryExpr</a></strong>:
+      <em class="summary">Represents data that can be expressed by a Struct.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.dsl.ExprAdd-class.html">asynchia.dsl.ExprAdd</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.dsl.FileExpr-class.html">asynchia.dsl.FileExpr</a></strong>:
+      <em class="summary">Data that should be collected in an fd.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.dsl.FixedLenExpr-class.html">asynchia.dsl.FixedLenExpr</a></strong>:
+      <em class="summary">Restrict the length of the expression contained to the value 
+        retuned by calling glen upon construction of the collector for said
+        expression.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.dsl.SingleBinaryExpr-class.html">asynchia.dsl.SingleBinaryExpr</a></strong>:
+      <em class="summary">Represents data that can be expressed by a Struct with a single 
+        member.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.dsl.StringExpr-class.html">asynchia.dsl.StringExpr</a></strong>:
+      <em class="summary">Data that should be collected in a string.</em>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.util.GradualAverage-class.html">asynchia.util.GradualAverage</a></strong>:
+      <em class="summary">Memory-efficient average to which values may gradually be added 
+        over time.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.Handler-class.html">asynchia.Handler</a></strong>:
+      <em class="summary">Handle a socket object.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.AcceptHandler-class.html">asynchia.AcceptHandler</a></strong>:
+      <em class="summary">Handle socket that accepts connections.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.Server-class.html">asynchia.Server</a></strong>:
+      <em class="summary">Automatically create an instance of handlercls for every 
+        connection.</em>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.ee.Handler-class.html">asynchia.ee.Handler</a></strong>:
+      <em class="summary">asynchia handler that adds all received data to a collector, and 
+        reads outgoing data from an Input.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.protocols.LineHandler-class.html">asynchia.protocols.LineHandler</a></strong>:
+      <em class="summary">Use this for line-based protocols.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.forthcoming._ThreadedDataHandler-class.html" onclick="show_private();">asynchia.forthcoming._ThreadedDataHandler</a></strong>:
+      <em class="summary">Implementation detail.</em>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.util.IDPool-class.html">asynchia.util.IDPool</a></strong>:
+      <em class="summary">Pool that returns unique identifiers.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.ee.Input-class.html">asynchia.ee.Input</a></strong>:
+      <em class="summary">Base-class for all Inputs.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.ee.FactoryInput-class.html">asynchia.ee.FactoryInput</a></strong>:
+      <em class="summary">Call factory method to obtain the next input until the factory 
+        raises the Depleted exception.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.ee.FileInput-class.html">asynchia.ee.FileInput</a></strong>:
+      <em class="summary">Input that buffers at most buffer_size bytes read from the passed 
+        fd, and sends them in a buffered way.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.ee.AutoFileInput-class.html">asynchia.ee.AutoFileInput</a></strong>:
+      <em class="summary">Same as FileInput, only that it stores samples to guess how big the
+        buffer should be.</em>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.ee.InputQueue-class.html">asynchia.ee.InputQueue</a></strong>:
+      <em class="summary">An InputQueue calls the tick method an object until it raises 
+        InputEOF, then it goes on with the next object in the queue.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.ee.StringInput-class.html">asynchia.ee.StringInput</a></strong>:
+      <em class="summary">Input that bufferedly sends a string.</em>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.maps.InterruptContextManager-class.html">asynchia.maps.InterruptContextManager</a></strong>:
+      <em class="summary">Allow with socketmap.interrupt()</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.util.LimitedAverage-class.html">asynchia.util.LimitedAverage</a></strong>:
+      <em class="summary">Average considering the last samples values added to it.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.ee.MockHandler-class.html">asynchia.ee.MockHandler</a></strong>:
+      <em class="summary">This mocks a handler by writing everything that's passed to its 
+        send method to outbuf, while reading data from inbuf upon recv 
+        calls.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.Notifier-class.html">asynchia.Notifier</a></strong>:
+      <em class="summary">Call handle functions of the object with error handling.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.forthcoming.PauseContext-class.html">asynchia.forthcoming.PauseContext</a></strong>:
+      <em class="summary">Collection of Coroutines which are currently paused but not waiting
+        for any data.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.SendallTrait-class.html">asynchia.SendallTrait</a></strong>:
+      <em class="summary">Enhance Transport with sendall that buffers data and sends it all,
+if necessary in multiple steps.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.SocketMap-class.html">asynchia.SocketMap</a></strong>:
+      <em class="summary">Decide which sockets have I/O to be done and tell the notifier to 
+        call the appropriate methods of their Handle objects.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.maps.ControlSocketSocketMap-class.html">asynchia.maps.ControlSocketSocketMap</a></strong>:
+      <em class="summary">Socket-map with an internal socket-pair that can be used to 
+        interrupt it.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.maps.FragileSocketMap-class.html">asynchia.maps.FragileSocketMap</a></strong>:
+      <em class="summary">The socket-map has to be interrupted before internals are changed.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.maps.SelectSocketMap-class.html">asynchia.maps.SelectSocketMap</a></strong>:
+      <em class="summary">Decide which sockets have I/O to do using select.select.</em>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.maps.RobustSocketMap-class.html">asynchia.maps.RobustSocketMap</a></strong>:
+      <em class="summary">The socket-map has to be stopped and resumed after internals are 
+        changed.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.maps.PollSocketMap-class.html">asynchia.maps.PollSocketMap</a></strong>:
+      <em class="summary">Decide which sockets have I/O to do using select.poll.</em>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.maps.RockSolidSocketMap-class.html">asynchia.maps.RockSolidSocketMap</a></strong>:
+      <em class="summary">The socket-map automatically refreshes its internal while it's 
+        &quot;sleeping&quot;.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.maps.EPollSocketMap-class.html">asynchia.maps.EPollSocketMap</a></strong>:
+      <em class="summary">Decide which sockets have I/O to do using select.epoll.</em>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.qtmap.QSocketMap-class.html">asynchia.qtmap.QSocketMap</a></strong>:
+      <em class="summary">Decide which sockets have I/O to do using Qt facilities.</em>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.dsl.State-class.html">asynchia.dsl.State</a></strong>:
+      <em class="summary">State of the collection done by ExprCollectorQueue.</em>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.Transport-class.html">asynchia.Transport</a></strong>:
+      <em class="summary">All I/O is done over Transports.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.SocketTransport-class.html">asynchia.SocketTransport</a></strong>:
+      <em class="summary">A transport that uses a socket to send and receive data.</em>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink">int</strong>:
+      <em class="summary">int(x[, base]) -&gt; integer</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="PyQt4.QtCore.QSocketNotifier.Type-class.html">PyQt4.QtCore.QSocketNotifier.Type</a></strong>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink">sip.simplewrapper</strong>
+    <ul>
+    <li> <strong class="uidlink">sip.wrapper</strong>
+    <ul>
+    <li> <strong class="uidlink">PyQt4.QtCore.QObject</strong>:
+      <em class="summary">QObject(QObject parent=None)</em>
+    <ul>
+    <li> <strong class="uidlink">PyQt4.QtCore.QSocketNotifier</strong>:
+      <em class="summary">QSocketNotifier(int, QSocketNotifier.Type, QObject parent=None)</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="asynchia.qtmap.SocketNotifier-class.html">asynchia.qtmap.SocketNotifier</a></strong>:
+      <em class="summary">Notificate about socket I/O using Qt facilities</em>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="asynchia.forthcoming.Coroutine.return_-class.html">asynchia.forthcoming.Coroutine.return_</a></strong>:
+      <em class="summary">Yield an instance of this to signal that the coroutine finished 
+        with the given return value (defaults to None).</em>
+    </li>
+</ul>
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="asynchia-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th bgcolor="#70b0f0" class="navbar-select"
+          >&nbsp;&nbsp;&nbsp;Trees&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Sat Sep 11 19:25:01 2010
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

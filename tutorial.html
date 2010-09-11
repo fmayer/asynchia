@@ -1,0 +1,212 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asynchia Tutorial &mdash; asynchia v0.1.0a documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.0a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="asynchia v0.1.0a documentation" href="index.html" />
+    <link rel="next" title="asynchia.ee Tutorial" href="ee_tutorial.html" />
+    <link rel="prev" title="Welcome to the asynchia 0.1a1 documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="ee_tutorial.html" title="asynchia.ee Tutorial"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to the asynchia 0.1a1 documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">asynchia v0.1.0a documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="asynchia-tutorial">
+<h1>asynchia Tutorial<a class="headerlink" href="#asynchia-tutorial" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="definitions">
+<h2>Definitions<a class="headerlink" href="#definitions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="socketmap">
+<h3>SocketMap<a class="headerlink" href="#socketmap" title="Permalink to this headline">¶</a></h3>
+<p>A SocketMap is responsible for deciding which handler has pending I/O. It also
+provides the program&#8217;s main-loop. asynchia offers SocketMaps for
+select, poll and epoll by default. It automatically exposes the best of those
+as asynchia.maps.DefaultSocketMap.</p>
+</div>
+<div class="section" id="notifier">
+<h3>Notifier<a class="headerlink" href="#notifier" title="Permalink to this headline">¶</a></h3>
+<p>A Notifier is the connection between the SocketMap and the Handlers. The
+SocketMap calls the Notifier&#8217;s methods if it finds out a Handler has pending
+I/O.</p>
+</div>
+<div class="section" id="handler">
+<h3>Handler<a class="headerlink" href="#handler" title="Permalink to this headline">¶</a></h3>
+<p>A Handler manages the I/O of a socket. Consult the API documentation for more details.</p>
+</div>
+<div class="section" id="transport">
+<h3>Transport<a class="headerlink" href="#transport" title="Permalink to this headline">¶</a></h3>
+<p>All I/O that is done is done through a transport. These allows the handlers to work with different transports without the need of changing them.</p>
+</div>
+</div>
+<div class="section" id="example-application">
+<h2>Example application<a class="headerlink" href="#example-application" title="Permalink to this headline">¶</a></h2>
+<p>This tutorial guides you through the development of a simple application. First we will write a server that prints everything it receives to stdout.</p>
+<p>To begin with, we have to import asynchia.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">asynchia</span>
+<span class="kn">import</span> <span class="nn">asynchia.maps</span>
+</pre></div>
+</div>
+<p>Afterwards we write a handler that will be used to handle I/O for every socket the server accepts. IOHandler enables us to use recv, send and connect (only the former is used in this example). We also tell the socket-map that we are interested in reading any data that is available at the underlying socket. You can also observe that a cool message is printed when a peer disconnects.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="n">BUFFERSIZE</span> <span class="o">=</span> <span class="mi">4096</span>
+<span class="k">class</span> <span class="nc">EchoHandler</span><span class="p">(</span><span class="n">asynchia</span><span class="o">.</span><span class="n">Handler</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transport</span><span class="p">):</span>
+        <span class="n">asynchia</span><span class="o">.</span><span class="n">IOHandler</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transport</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_readable</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">handle_read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">BUFFERSIZE</span><span class="p">))</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">handle_close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s">&quot;Peer said bye-bye.&quot;</span>
+</pre></div>
+</div>
+<p>So much for that; this may be nice, but we also need to code the server. To do so, we inherit from AcceptHandler and override handle_accept (be aware that handle_read of AcceptHandler may not be overriden, otherwise handle_accept will not work as expected).</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">EchoAcceptor</span><span class="p">(</span><span class="n">asynchia</span><span class="o">.</span><span class="n">AcceptHandler</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle_accept</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+        <span class="n">Echo</span><span class="p">(</span><span class="n">asynchia</span><span class="o">.</span><span class="n">SocketTransport</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">socket_map</span><span class="p">,</span> <span class="n">sock</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Now we only need to get the server up and running. We first create a socket-map, which is responsible for deciding which Handler&#8217;s handle_* methods should be called when. The port chosen (25000) is completely arbitrary.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">servermain</span><span class="p">():</span>
+    <span class="n">socketmap</span> <span class="o">=</span> <span class="n">asynchia</span><span class="o">.</span><span class="n">maps</span><span class="o">.</span><span class="n">DefaultSocketMap</span><span class="p">()</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">EchoAcceptor</span><span class="p">(</span><span class="n">asynchia</span><span class="o">.</span><span class="n">SocketTransport</span><span class="p">(</span><span class="n">socketmap</span><span class="p">))</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">reuse_addr</span><span class="p">()</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">25000</span><span class="p">))</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">listen</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">socketmap</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The server is done, now let&#8217;s get to the client. Again, import asynchia. But now we will also import asynchia.protocols.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">asynchia</span>
+<span class="kn">import</span> <span class="nn">asynchia.maps</span>
+<span class="k">class</span> <span class="nc">EchoClient</span><span class="p">(</span><span class="n">asynchia</span><span class="o">.</span><span class="n">Handler</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">handle_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="s">&quot;Hello from the echo-client</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To ease the task of sending data through the transport we enhance it by mixing in the SendallTrait. This is done to reduce redundancy because Sendall trait can be used with any transport that supplies .send and .recv.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">SendallSocketTransport</span><span class="p">(</span><span class="n">asynchia</span><span class="o">.</span><span class="n">SendallTrait</span><span class="p">,</span> <span class="n">asynchia</span><span class="o">.</span><span class="n">SocketTransport</span><span class="p">):</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<p>Now we have to connect to the server and we&#8217;re done for now.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">clientmain</span><span class="p">():</span>
+    <span class="n">socketmap</span> <span class="o">=</span> <span class="n">asynchia</span><span class="o">.</span><span class="n">DefaultSocketMap</span><span class="p">()</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">EchoClient</span><span class="p">(</span><span class="n">SendallSocketTransport</span><span class="p">(</span><span class="n">socketmap</span><span class="p">))</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">25000</span><span class="p">))</span>
+    <span class="n">socketmap</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">asynchia Tutorial</a><ul>
+<li><a class="reference internal" href="#definitions">Definitions</a><ul>
+<li><a class="reference internal" href="#socketmap">SocketMap</a></li>
+<li><a class="reference internal" href="#notifier">Notifier</a></li>
+<li><a class="reference internal" href="#handler">Handler</a></li>
+<li><a class="reference internal" href="#transport">Transport</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#example-application">Example application</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to the asynchia 0.1a1 documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="ee_tutorial.html"
+                        title="next chapter">asynchia.ee Tutorial</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/tutorial.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="ee_tutorial.html" title="asynchia.ee Tutorial"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to the asynchia 0.1a1 documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">asynchia v0.1.0a documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009, Florian Mayer.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>
