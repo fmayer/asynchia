@@ -4,12 +4,12 @@
 [x] Get rid of asyncore legacies.
 [x] Provide documentation.
 [x] Extend test suite.
+[x] Improve forthcoming to be appliable in multithreaded environment (so
+    that blocking APIs can easily converted to asynchronous APIs by
+    wrapping them in a thread).
 
 0.2.0
 =====
 [ ] SSL Transport.
-[ ] Improve forthcoming to be appliable in multithreaded environment (so
-    that blocking APIs can easily converted to asynchronous APIs by
-    wrapping them in a thread.
 [ ] Timer.
 [ ] Comprehensive IPv6 support.
