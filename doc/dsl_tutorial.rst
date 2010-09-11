@@ -1,6 +1,6 @@
-====================
-asynchia.ee Tutorial
-====================
+=====================
+asynchia.dsl Tutorial
+=====================
 
 What's asynchia.dsl
 ===================
@@ -16,11 +16,11 @@ try to write your own types of expressions).
 
 Let us henceforth consider the following simple example::
     
-    from asynchia.dsl import b, SBLFLSE
+    from asynchia.dsl import s, SBLFLSE
     e = s.L() + s.B() + LFLSE(0)
 
 This might appear utterly complicated at first glance, but it is not. The
-first statement imports b (which is a container for binary numeric types)
+first statement imports s (which is a container for binary numeric types)
 and LFLSE which expands to lookback fixed-length string-expression.
 
 The expression (which is the second statement) describes a packet which
