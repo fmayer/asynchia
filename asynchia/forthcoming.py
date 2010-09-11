@@ -158,7 +158,6 @@ class DataNotifier(object):
         else:
             callback(self, self.data)
     
-    # Good idea?
     def poll(self):
         """ Poll whether result has already been submitted. """
         return self.finished
@@ -166,7 +165,6 @@ class DataNotifier(object):
     def submit(self, data):
         """ Submit data; send it to any coroutines that may be registered and
         call any data- and callbacks that may be registered. """
-        # Good idea?
         self.data = data
         for callback in self.dcallbacks:
             callback(data)
@@ -174,7 +172,7 @@ class DataNotifier(object):
             callback(self, data)
         for coroutine in self.coroutines:
             coroutine.send(data)
-        # Good idea?
+        
         self.coroutines[:] = []
         self.rcallbacks[:] = []
         self.dcallbacks[:] = []
