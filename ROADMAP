@@ -12,3 +12,4 @@
     that blocking APIs can easily converted to asynchronous APIs by
     wrapping them in a thread.
 [ ] Timer.
+[ ] Comprehensive IPv6 support.
