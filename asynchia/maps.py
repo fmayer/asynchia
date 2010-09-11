@@ -204,7 +204,7 @@ class SelectSocketMap(FragileSocketMap):
                 raise
 
         for obj in read:
-            if obj is not self.controlreceiver:
+            if obj != self.controlreceiver:
                 # This seems to be the only way to find hangup-events with
                 # select.
                 if obj.connected and is_closed(obj.socket):
@@ -529,7 +529,7 @@ class KQueueSocketMap(RockSolidSocketMap):
                 self.notifier.read_obj(handler)
             if event.filter == select.KQ_FILTER_WRITE:
                 self.notifier.write_obj(handler)
-            if event.flags == select.KQ_EV_EOF:
+            if event.flags & select.KQ_EV_EOF:
                 self.notifier.close_obj(handler)
         
         if interrupted:
