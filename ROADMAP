@@ -13,3 +13,8 @@
 [ ] SSL Transport.
 [ ] Timer.
 [ ] Comprehensive IPv6 support.
+[ ] Use forthcoming facilities in asynchia core.
+
+0.3.0
+=====
+[ ] Multithreaded and -processed actor system.

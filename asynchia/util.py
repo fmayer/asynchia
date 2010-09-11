@@ -26,6 +26,8 @@ import collections
 import asynchia.const
 
 class GradualAverage(object):
+    """ Memory-efficient average to which values may gradually be added
+    over time. Its value can be accessed via the avg member. """
     def __init__(self, values=None):
         if values is None:
             self.avg = self.len = 0.0
@@ -34,10 +36,13 @@ class GradualAverage(object):
             self.avg = sum(values) / self.len
     
     def add_value(self, value):
+        """ Add value to the average. """
         self.avg = (self.avg * self.len + value) / (self.len + 1)
         self.len += 1
     
     def add_values(self, values):
+        """ Add values to the average. This is more effective than using
+        add_value multiple times. """
         self.avg = (
             self.avg * self.len + sum(values)
             ) / (self.len + len(values))
@@ -45,6 +50,10 @@ class GradualAverage(object):
 
 
 class LimitedAverage(object):
+    """ Average considering the last samples values added to it. Its value
+    can be accessed via the avg member. Stores up to samples objects in a
+    deque and thus has a higher memory usage than GradualAverage (and a
+    different use case). """
     def __init__(self, samples, values=None):
         self.cache = None
         
@@ -58,6 +67,7 @@ class LimitedAverage(object):
                 self.values.popleft()
     
     def add_value(self, value):
+        """ Add value to the average. """
         # Invalidate possibly existing cache.
         self.cache = None
         if len(self.values) == self.samples:
@@ -65,10 +75,12 @@ class LimitedAverage(object):
         self.values.append(value)
     
     def add_values(self, values):
+        """ Add values to the average. This is more effective than using
+        add_value multiple times. """
         # Invalidate possibly existing cache.
         self.cache = None
         self.values.extend(values)
-        for _ in xrange(len(values) - samples):
+        for _ in xrange(len(values) - self.samples):
             self.values.popleft()
     
     @property
