@@ -21,11 +21,6 @@ import os
 import asynchia
 from asynchia.util import EMPTY_BYTES
 
-# FIXME: Make up a nomenclature.
-# When a Collector raises CollectorFull, it can savely be assumed that it
-# has closed itself. The close method must only be called when explicitely
-# closing the collector. The same holds true for Inputs and InputEOF.
-
 class Depleted(Exception):
     pass
 
