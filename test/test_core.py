@@ -392,12 +392,12 @@ def dnr_connfailed2(self, map_):
             asynchia.Handler.__init__(self, transport)
             self.container = container
         
-        def handle_connect_failed(self, err):
+        def handle_connect_failed(salf, err):
             if err != errno.ECONNREFUSED:
                 self.assertEqual(True, False)
             container.done = True
         
-        def handle_connect(self):
+        def handle_connect(salf):
             self.assertEqual(True, False)
     
     mo = map_()

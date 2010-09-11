@@ -114,6 +114,8 @@ class Notifier(object):
         """ Call handle_read of the object. If any error occurs within it,
         call handle_error of the object. If it is the first read event call
         the handle_connect method. """
+        if obj.awaiting_connect:
+            _unawait_conn(obj)
         if not obj.readable:
             # This shouldn't be happening!
             return
