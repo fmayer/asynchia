@@ -116,6 +116,7 @@ class Notifier(object):
         the handle_connect method. """
         if obj.awaiting_connect:
             _unawait_conn(obj)
+        
         if not obj.readable:
             # This shouldn't be happening!
             return
@@ -144,6 +145,9 @@ class Notifier(object):
     def except_obj(obj):
         """ Call handle_except of the object. If any error occurs within it,
         call handle_error of the object.  """
+        if obj.awaiting_connect:
+            _unawait_conn(obj)
+        
         try:
             obj.handle_except(
                 obj.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
