@@ -494,9 +494,13 @@ class SocketTransport(Transport):
             self.connected = True
             self.handle_connect()
         else:
-            # FIXME: Should we call `self.handle_connect_failed(err)`
-            # instead of raising an error here?
-            raise socket.error(err, os.strerror(err))
+            # Used to be `raise socket.error(err, os.strerror(err))` but
+            # it is a better idea to have all handling of connection
+            # failed in the same place.
+            try:
+                self.handle_connect_failed(err)
+            except Exception:
+                self.handle_error()
 
 
 class SendallTrait(object):
