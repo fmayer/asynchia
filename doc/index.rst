@@ -30,6 +30,6 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
+* `API documentation <api/>`_
 * :ref:`search`
 
