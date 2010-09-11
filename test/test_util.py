@@ -84,7 +84,7 @@ class TestUtil(unittest.TestCase):
         avg = asynchia.util.GradualAverage()
         avg2 = asynchia.util.GradualAverage()
         
-        s = [random.randint(0, 2000) for _ in xrange(random.randint(0, 20))]
+        s = [random.randint(0, 2000) for _ in xrange(random.randint(1, 20))]
         
         avg.add_values(s)
         for x in s:
