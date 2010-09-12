@@ -35,7 +35,7 @@ def get_named_tempfile(delete):
             def close():
                 f.close_called = True
                 f.file.close()
-                f.close = close
+            f.close = close
         return f
 
 
