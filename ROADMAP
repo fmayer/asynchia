@@ -1,6 +1,6 @@
 0.1.0
 =====
-[ ] Sort out FIXMEs.
+[x] Sort out FIXMEs.
 [x] Get rid of asyncore legacies.
 [x] Provide documentation.
 [x] Extend test suite.
