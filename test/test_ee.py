@@ -30,13 +30,23 @@ def get_named_tempfile(delete):
     try:
         return tempfile.NamedTemporaryFile(delete=delete)
     except TypeError:
-        f = tempfile.NamedTemporaryFile()
-        if not delete and os.name != "nt":
-            def close():
-                f.close_called = True
-                f.file.close()
-            f.close = close
-        return f
+        if os.name == "nt":
+            dir_ = tempfile.gettempdir()
+            flags = tempfile._bin_openflags
+            if delete:
+                flags |= os.O_TEMPORARY
+
+            (fd, name) = tempfile._mkstemp_inner(dir_, "tmp", "", flags)
+            f = os.fdopen(fd, "w+b", -1)
+            return tempfile._TemporaryFileWrapper(f, name, delete)
+        else:
+            f = tempfile.NamedTemporaryFile()
+            if not delete:
+                def close():
+                    f.close_called = True
+                    f.file.close()
+                f.close = close
+            return f
 
 
 def del_strcoll(size):
