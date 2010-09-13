@@ -18,6 +18,7 @@
 
 import itertools
 import inspect
+import struct
 
 import unittest
 
@@ -168,6 +169,34 @@ class TestDSL(unittest.TestCase):
         self.assertEqual(d['size'], 5)
         self.assertEqual(d['blub'], 1)
         self.assertEqual(d['string'], b('ABCDE'))
+    
+    def test_mul(self):
+        x = db.B() + lookback(0) * db.B()
+        c = x()
+        
+        prod = x.produce((3, (1, 2, 5)))
+        
+        self.assertEqual(
+            prod,
+            struct.pack('!BBBB', 3, 1, 2, 5)
+        )
+        m = asynchia.ee.MockHandler(prod + 'x')
+        until_done(lambda: c.add_data(m, 10))
+        self.assertEqual(exhaust(c.value), [3, [1, 2, 5]])
+    
+    def test_mul2(self):
+        x = db.B() + db.B() * lookback(0)
+        c = x()
+        
+        prod = x.produce((3, (1, 2, 5)))
+        
+        self.assertEqual(
+            prod,
+            struct.pack('!BBBB', 3, 1, 2, 5)
+        )
+        m = asynchia.ee.MockHandler(prod + 'x')
+        until_done(lambda: c.add_data(m, 10))
+        self.assertEqual(exhaust(c.value), [3, [1, 2, 5]])
 
 if __name__ == '__main__':
     unittest.main()

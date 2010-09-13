@@ -139,6 +139,11 @@ class Expr(object):
     def __add__(self, other):
         return ExprAdd([self, other])
     
+    def __mul__(self, other):
+        return ExprMul(self, other)
+    
+    __rmul__ = __mul__
+    
     def __getitem__(self, other):
         self.name = other
         return self
@@ -190,6 +195,28 @@ class ExprCollectorQueue(asynchia.ee.Collector):
     @property
     def value(self):
         return (elem.value for elem in self.done)
+
+
+class ExprMul(Expr):
+    def __init__(self, expr, lookback):
+        Expr.__init__(self)
+        
+        self.expr = expr
+        self.lookback = lookback
+    
+    def __call__(self, state=None, onclose=None):
+        # We do not need to copy here as the expressions can no longer
+        # be changed and thus really all are the same.
+        return ExprCollectorQueue(
+            [self.expr] * self.lookback(state),
+            onclose
+        )
+    
+    def produce(self, value):
+        result = asynchia.ee.StringInput(b(""))
+        for elem in value:
+            result += self.expr.produce(elem)
+        return result
 
 
 class ExprAdd(Expr):
