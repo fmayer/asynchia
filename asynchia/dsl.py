@@ -125,10 +125,18 @@ class Container(object):
 class State(object):
     """ State of the collection done by ExprCollectorQueue. Used to enable
     lookbacks. """
-    def __init__(self):
+    def __init__(self, parentstate=None):
         self.tbl = {}
         self.ind = 0
         self.nametbl = {}
+        
+        self.parent = parentstate
+    
+    def __getitem__(self, ind):
+        if isinstance(ind, (long, int)):
+            return self.tbl[ind]
+        else:
+            return self.nametbl[ind]
 
 
 class Expr(object):
@@ -152,13 +160,13 @@ class Expr(object):
 class ExprCollectorQueue(asynchia.ee.Collector):
     """ Queue to collect the data specified by the list of expressions
     passed to it. """
-    def __init__(self, exprs, onclose=None):
+    def __init__(self, exprs, parentstate=None, onclose=None):
         asynchia.ee.Collector.__init__(self, onclose)
         
         self.exprs = exprs
         self.done = []
         
-        self.state = State()
+        self.state = State(parentstate)
         self.state.tbl = self.done
         
         self.coll = None
@@ -209,6 +217,7 @@ class ExprMul(Expr):
         # be changed and thus really all are the same.
         return ExprCollectorQueue(
             [self.expr] * self.lookback(state),
+            state,
             onclose
         )
     
@@ -228,10 +237,15 @@ class ExprAdd(Expr):
         # We need to pass a copy so ExprCollectorQueue does not pop
         # from this list. Consider creating the copy in
         # ExprCollectorQueue.__init__.
-        return ExprCollectorQueue(self.exprs[:], onclose)
+        return ExprCollectorQueue(self.exprs[:], state, onclose)
     
     def __add__(self, other):
         return ExprAdd(self.exprs + [other])
+    
+    # For the sake of completeness, not that it would matter in many cases.
+    def __iadd__(self, other):
+        self.exprs.append(other)
+        return self
     
     def produce(self, value):
         result = asynchia.ee.StringInput(b(""))
