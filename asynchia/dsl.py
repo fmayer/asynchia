@@ -137,6 +137,14 @@ class State(object):
             return self.tbl[ind]
         else:
             return self.nametbl[ind]
+    
+    def glob(self, ind):
+        if ind in self.nametbl:
+            return self.nametbl[ind]
+        elif self.parent is not None:
+            return self.parent.glob(ind)
+        else:
+            raise IndexError
 
 
 class Expr(object):

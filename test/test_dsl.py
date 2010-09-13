@@ -211,6 +211,20 @@ class TestDSL(unittest.TestCase):
         m = asynchia.ee.MockHandler(prod + 'x')
         until_done(lambda: c.add_data(m, 10))
         self.assertEqual(exhaust(c.value), [3, [[1, 2, 5], [4, 5, 6]]])
+
+    def test_nested_mul_glob(self):
+        x = db.B()['foo'] + (lambda x: 2) * ((lambda x: x.glob('foo').value) * db.B())
+        c = x()
+        
+        prod = x.produce((3, ((1, 2, 5), (4, 5, 6))))
+        
+        self.assertEqual(
+            prod,
+            struct.pack('!BBBBBBB', 3, 1, 2, 5, 4, 5, 6)
+        )
+        m = asynchia.ee.MockHandler(prod + 'x')
+        until_done(lambda: c.add_data(m, 10))
+        self.assertEqual(exhaust(c.value), [3, [[1, 2, 5], [4, 5, 6]]])
     
 
 if __name__ == '__main__':
