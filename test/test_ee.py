@@ -38,7 +38,7 @@ def get_named_tempfile(delete):
 
             (fd, name) = tempfile._mkstemp_inner(dir_, "tmp", "", flags)
             f = os.fdopen(fd, "w+b", -1)
-            return tempfile._TemporaryFileWrapper(f, name, delete)
+            return tempfile._TemporaryFileWrapper(f, name)
         else:
             f = tempfile.NamedTemporaryFile()
             if not delete:
