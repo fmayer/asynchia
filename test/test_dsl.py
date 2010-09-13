@@ -61,9 +61,15 @@ class TestDSL(unittest.TestCase):
         StringInput = asynchia.ee.StringInput 
         asynchia.ee.StringInput = lambda x: x
     
-    
     def tearDown(self):
         asynchia.ee.StringInput = StringInput
+    
+    def test_expradd(self):
+        o1, o2, o3 = db.L(), db.L(), db.L()
+        a = o1 + o2
+        b = a + o3
+        self.assertEqual(a.exprs, [o1, o2])
+        self.assertEqual(b.exprs, [o1, o2, o3])
     
     def test_LFLSE(self):
         e = db.L() + db.B() + LFLSE(-1)

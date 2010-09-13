@@ -137,7 +137,7 @@ class Expr(object):
         self.name = None
     
     def __add__(self, other):
-        return ExprAdd(self, other)
+        return ExprAdd([self, other])
     
     def __getitem__(self, other):
         self.name = other
@@ -193,9 +193,9 @@ class ExprCollectorQueue(asynchia.ee.Collector):
 
 
 class ExprAdd(Expr):
-    def __init__(self, one, other):
+    def __init__(self, exprs):
         Expr.__init__(self)
-        self.exprs = [one, other]
+        self.exprs = exprs
     
     def __call__(self, state=None, onclose=None):
         # We need to pass a copy so ExprCollectorQueue does not pop
@@ -204,8 +204,7 @@ class ExprAdd(Expr):
         return ExprCollectorQueue(self.exprs[:], onclose)
     
     def __add__(self, other):
-        self.exprs.append(other)
-        return self
+        return ExprAdd(self.exprs + [other])
     
     def produce(self, value):
         result = asynchia.ee.StringInput(b(""))
