@@ -373,6 +373,12 @@ def lookback(ind, fun=(lambda x: x.value)):
     return _fun
 
 
+def glob(ind, fun=(lambda x: x.value)):
+    def _fun(state):
+        return fun(state.glob(ind))
+    return _fun
+
+
 def binarylookback(ind, item=0):
     """ Convenience function for lookback(ind, lambda x: x.value[item]). """
     return lookback(ind, lambda x: x.value[item])
