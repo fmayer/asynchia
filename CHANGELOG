@@ -1,3 +1,9 @@
 0.1.1
 =====
 * Fixed critical bug in DSL.
+* Fixed bug in PollSocketMap that caused the timeout to be interpreted as
+  milliseconds rather than seconds.
+
+0.2.0
+=====
+* Improve support for nested expressions in the DSL.
