@@ -265,6 +265,10 @@ class PollSocketMap(RobustSocketMap):
         """ Poll for I/O. """
         interrupted = False
         
+        # Stupidest API ever. epoll accepts a float in seconds whereas
+        # poll accepts an int in millseconds.
+        timeout = int(timeout * 1000)
+        
         try:
             active = self.poller.poll(timeout)
         except IOError, err:
