@@ -80,7 +80,6 @@ class SSLSocketTransport(asynchia.SocketTransport):
         except ssl.SSLError, err:
             if err.args[0] == ssl.SSL_ERROR_WANT_READ:
                 self.set_readable(True)
-                select.select([s], [], [])
             elif err.args[0] == ssl.SSL_ERROR_WANT_WRITE:
                 self.set_writeable(True)
             else:
