@@ -105,6 +105,9 @@ class SocketMap(object):
         """ Call the handle_cleanup methods of all handlers contained
         in the socket-map, indicating that they are void. """
         raise NotImplementedError
+    
+    def isempty(self):
+        raise NotImplementedError
 
 
 class Notifier(object):
