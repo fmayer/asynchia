@@ -51,4 +51,13 @@ do
 	esac
 done
 
-"$PYTHON" "$TESTMAIN" 2>&1 | tee "$LOGFILE"
+rm -rf "$SCRIPTDIR"/tmpenv;
+mkdir "$SCRIPTDIR"/tmpenv;
+$PYTHON "$SCRIPTDIR"/ext/virtualenv.py\
+   --no-site-packages -p "$PYTHON" "$SCRIPTDIR"/tmpenv;
+
+INTR="$SCRIPTDIR"/tmpenv/bin/python
+
+"$INTR" "$TESTMAIN" 2>&1 | tee "$LOGFILE"
+
+rm -rf "$SCRIPTDIR"/tmpenv;
