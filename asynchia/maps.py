@@ -231,7 +231,7 @@ class SelectSocketMap(FragileSocketMap):
         for handler in self.socket_list[1:]:
             self.notifier.cleanup_obj(handler)
     
-    def isempty(self):
+    def is_empty(self):
         return bool(self.socket_list)
 
 
@@ -333,7 +333,7 @@ class PollSocketMap(RobustSocketMap):
         for handler in self.socket_list.itervalues():
             self.notifier.cleanup_obj(handler)
     
-    def isempty(self):
+    def is_empty(self):
         return bool(self.socket_list)
 
 
@@ -434,7 +434,7 @@ class EPollSocketMap(RockSolidSocketMap):
         for handler in self.socket_list.itervalues():
             self.notifier.cleanup_obj(handler)
     
-    def isempty(self):
+    def is_empty(self):
         return bool(self.socket_list)
 
 
@@ -553,7 +553,7 @@ class KQueueSocketMap(RockSolidSocketMap):
         for handler in self.socket_list.itervalues():
             self.notifier.cleanup_obj(handler)
     
-    def isempty(self):
+    def is_empty(self):
         return bool(self.socket_list)
 
 

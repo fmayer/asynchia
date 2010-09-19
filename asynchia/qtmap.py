@@ -141,5 +141,5 @@ class QSocketMap(asynchia.SocketMap):
             self.notifier.cleanup_obj(handler)
         self.handler_map.clear()
     
-    def isempty(self):
+    def is_empty(self):
         return bool(self.handler_map)

@@ -106,7 +106,7 @@ class SocketMap(object):
         in the socket-map, indicating that they are void. """
         raise NotImplementedError
     
-    def isempty(self):
+    def is_empty(self):
         raise NotImplementedError
 
 
