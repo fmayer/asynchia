@@ -107,6 +107,8 @@ class _MPServerHandler(asynchia.Handler):
             notifier.submit(
                 pickle.loads(self.data[len(notifier.pwd):])
             )
+            self.serv.release_notifier(int(id_))
+        
         if notifier.pool is not None:
             notifier.pool.free()
 
@@ -128,7 +130,11 @@ class MPServer(asynchia.Server):
     
     def get_notifier(self, id_):
         self.idpool.release(id_)
-        return self.notimap.pop(id_)
+        return self.notimap[id_]
+    
+    def release_notifier(self, id_):
+        self.idpool.release(id_)
+        self.notimap.pop(id_)
 
 
 def _mp_client(fun, args, kwargs, addr, pwd, id_):
@@ -175,13 +181,15 @@ class MPNotifier(DataNotifier):
         self.kwargs = kwargs
         self.addr = serv.transport.socket.getsockname()
         self.pwd = pwd
+        
+        self.proc = None
     
     def start_standalone_proc(self):
-        proc = multiprocessing.Process(
+        self.proc = multiprocessing.Process(
             target=_mp_client,
             args=(self.fun, self.args, self.kwargs,
                   self.addr, self.pwd, self.id_
             )
         )
         
-        proc.start()
+        self.proc.start()
