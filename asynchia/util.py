@@ -19,6 +19,7 @@
 """ Auxiliary functions. """
 
 import sys
+import errno
 import math
 import socket
 import collections
@@ -226,6 +227,8 @@ def is_closed(sock):
         rcv = sock.recv(1, socket.MSG_PEEK)
     except socket.error, err:
         if err.args[0] in asynchia.const.trylater:
+            return False
+        if err.args[0] == errno.ENOTCONN:
             return False
         else:
             raise

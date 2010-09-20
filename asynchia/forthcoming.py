@@ -56,6 +56,7 @@ else:
 
 import asynchia
 from asynchia.util import b
+from asynchia.util import IDPool
 
 class PauseContext(object):
     """ Collection of Coroutines which are currently paused but not waiting
@@ -252,13 +253,12 @@ if multiprocessing is not None:
             while True:
                 try:
                     id_ = self.statusq.get_nowait()
-                    print id_
                     self.imap[id_] = self.wmap.pop(id_)
                 except queue.Empty:
                     break
         
         def register(self, notifier):
-            notifier.serv.set_pool(self)
+            notifier.pool = self
             if not self.run(notifier):
                 self.notifiers.append(notifier)
         
@@ -283,7 +283,7 @@ if multiprocessing is not None:
             q.put(
                 (
                     notifier.fun, notifier.args, notifier.kwargs, notifier.addr,
-                    notifier.pwd
+                    notifier.pwd, notifier.id_
                 )
             )
             self.wmap[id_] = (q, proc)
@@ -291,63 +291,67 @@ if multiprocessing is not None:
             
         
         @staticmethod
-        def worker(queue, statusq, id_):
+        def worker(queue, statusq, wid_):
             while True:
-                fun, args, kwargs, addr, pwd = queue.get()
+                fun, args, kwargs, addr, pwd, id_ = queue.get()
                 if fun is None:
                     break
-                _mp_client(fun, args, kwargs, addr, pwd)
-                statusq.put(id_)
+                _mp_client(fun, args, kwargs, addr, pwd, id_)
+                statusq.put(wid_)
         
         
     class _MPServerHandler(asynchia.Handler):
         BUFFER = 2048
-        def __init__(self, tr, notifier, pwd, pool):
+        def __init__(self, tr, serv):
             asynchia.Handler.__init__(self, tr)
-            self.notifier = notifier
             self.data = ''
-            self.pwd = pwd
-            self.pool = pool
+            self.serv = serv
             
             self.transport.set_readable(True)
         
         def handle_read(self):
             self.data += self.transport.recv(self.BUFFER)
+            try:
+                id_, self.data = self.data.split('|', 1)
+            except ValueError:
+                pass
+            else:
+                self.notifier = self.serv.get_notifier(int(id_))
         
         def handle_close(self):
-            if self.data[:len(self.pwd)] == self.pwd:
-                self.notifier.submit(pickle.loads(self.data[len(self.pwd):]))
-            if self.pool is not None:
-                self.pool.free()
+            if self.data[:len(self.notifier.pwd)] == self.notifier.pwd:
+                self.notifier.submit(
+                    pickle.loads(self.data[len(self.notifier.pwd):])
+                )
+            if self.notifier.pool is not None:
+                self.notifier.pool.free()
     
     
     class _MPServer(asynchia.Server):
-        def __init__(self, transport, notifier, pwd, pool=None):
+        def __init__(self, transport):
             asynchia.Server.__init__(
                 self, transport,
-                lambda tr: _MPServerHandler(tr, notifier, pwd, pool)
+                lambda tr: _MPServerHandler(tr, self)
             )
             self.handler = None
-            self.pool = pool
+            self.idpool = IDPool()
+            self.notimap = {}
         
-        def new_connection(self, handler, addr):
-            self.handler = handler
-            if self.pool is not None:
-                handler.pool = self.pool
-            self.transport.close()
+        def add_notifier(self, noti):
+            id_ = self.idpool.get()
+            self.notimap[id_] = noti
+            return id_
         
-        def set_pool(self, pool):
-            if self.handler is None:
-                self.pool = pool
-            else:
-                self.handler.pool = pool
+        def get_notifier(self, id_):
+            self.idpool.release(id_)
+            return self.notimap.pop(id_)
     
     
-    def _mp_client(fun, args, kwargs, addr, pwd):
+    def _mp_client(fun, args, kwargs, addr, pwd, id_):
         sock = socket.socket()
         sock.connect(addr)
         
-        data = pwd + pickle.dumps(fun(*args, **kwargs))
+        data = str(id_) + '|' + pwd + pickle.dumps(fun(*args, **kwargs))
         while data:
             sent = sock.send(data)
             data = data[sent:]
@@ -356,7 +360,8 @@ if multiprocessing is not None:
         
     
     class MPNotifier(DataNotifier):
-        def __init__(self, socket_map, fun, args=None, kwargs=None, pwdstr=10):
+        def __init__(self, socket_map, fun, args=None, kwargs=None, serv=None,
+                     pwdstr=10):
             DataNotifier.__init__(self, socket_map)
             
             if args is None:
@@ -365,11 +370,13 @@ if multiprocessing is not None:
                 kwargs = {}
             pwd = os.urandom(pwdstr)
             
-            serv = _MPServer(
-                asynchia.SocketTransport(socket_map), self, pwd
-            )
-            serv.transport.bind(('127.0.0.1', 0))
-            serv.transport.listen(1)
+            if serv is None:
+                serv = _MPServer(
+                    asynchia.SocketTransport(socket_map)
+                )
+                serv.transport.bind(('127.0.0.1', 0))
+                serv.transport.listen(1)
+            self.id_ = serv.add_notifier(self)
             
             self.serv = serv
             
@@ -383,7 +390,7 @@ if multiprocessing is not None:
             proc = multiprocessing.Process(
                 target=_mp_client,
                 args=(self.fun, self.args, self.kwargs,
-                      self.addr, self.pwd
+                      self.addr, self.pwd, self.id_
                 )
             )
             
