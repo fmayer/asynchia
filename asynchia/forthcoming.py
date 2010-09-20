@@ -271,13 +271,13 @@ if multiprocessing is not None:
                 if not self.run(self.notifiers.popleft()):
                     break
         
-        def run(self, notifier):
-            self.running += 1
-            
+        def run(self, notifier):            
             try:
                 id_ = self.imap.iterkeys().next()
             except StopIteration:
                 return False
+            
+            self.running += 1
             
             q, proc = self.imap.pop(id_)
             q.put(
