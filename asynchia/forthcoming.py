@@ -311,14 +311,10 @@ if multiprocessing is not None:
         
         def handle_read(self):
             self.data += self.transport.recv(self.BUFFER)
-            try:
-                id_, self.data = self.data.split('|', 1)
-            except ValueError:
-                pass
-            else:
-                self.notifier = self.serv.get_notifier(int(id_))
         
         def handle_close(self):
+            print self.data
+            
             if self.data[:len(self.notifier.pwd)] == self.notifier.pwd:
                 self.notifier.submit(
                     pickle.loads(self.data[len(self.notifier.pwd):])
