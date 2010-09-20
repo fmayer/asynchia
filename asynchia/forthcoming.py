@@ -39,7 +39,15 @@ Example:
     a.submit('blub')
 """
 
+import os
 import threading
+try:
+    import multiprocessing
+except ImportError:
+    multiprocessing = None
+else:
+    import socket
+    import pickle
 
 import asynchia
 from asynchia.util import b
@@ -208,6 +216,69 @@ class DataNotifier(object):
             target=cls._coroutine, args=(datanot, fun, args, kwargs)
         )
         return datanot
+
+
+
+if multiprocessing is not None:
+    class _MPServerHandler(asynchia.Handler):
+        BUFFER = 2048
+        def __init__(self, tr, notifier, pwd):
+            asynchia.Handler.__init__(self, tr)
+            self.notifier = notifier
+            self.data = ''
+            self.pwd = pwd
+            
+            self.transport.set_readable(True)
+        
+        def handle_read(self):
+            self.data += self.transport.recv(self.BUFFER)
+        
+        def handle_close(self):
+            if self.data[:len(self.pwd)] == self.pwd:
+                self.notifier.submit(pickle.loads(self.data[len(self.pwd):]))
+    
+    
+    class _MPServer(asynchia.Server):
+        def __init__(self, transport, notifier, pwd):
+            asynchia.Server.__init__(
+                self, transport, lambda tr: _MPServerHandler(tr, notifier, pwd)
+            )
+        
+        def new_connection(self, handler, addr):
+            self.transport.close()
+    
+    
+    def _mp_client(fun, args, kwargs, addr, pwd):
+        sock = socket.socket()
+        sock.connect(addr)
+        
+        data = pwd + pickle.dumps(fun(*args, **kwargs))
+        while data:
+            sent = sock.send(data)
+            data = data[sent:]
+        
+        sock.close()
+        
+        
+    def mp_notifier(socket_map, fun, args, kwargs, pwdstr=10):
+        pwd = os.urandom(pwdstr)
+        
+        notifier = DataNotifier(socket_map)
+        
+        serv = _MPServer(asynchia.SocketTransport(socket_map), notifier, pwd)
+        serv.transport.bind(('127.0.0.1', 0))
+        serv.transport.listen(1)
+    
+        # MPDataNotifier?
+        notifier.proc = multiprocessing.Process(
+            target=_mp_client,
+            args=(fun, args, kwargs,
+                  serv.transport.socket.getsockname(), pwd
+            )
+        )
+        
+        notifier.proc.start()
+        return notifier
 
 
 class _ThreadedDataHandler(asynchia.Handler):
