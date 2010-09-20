@@ -89,6 +89,8 @@ class MPPool(object):
         except KeyError:
             return False
         
+        del self.wmap[id_]
+        
         self.running -= 1
         proc.terminate()
         
