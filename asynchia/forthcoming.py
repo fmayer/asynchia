@@ -313,14 +313,14 @@ if multiprocessing is not None:
             self.data += self.transport.recv(self.BUFFER)
         
         def handle_close(self):
-            print self.data
-            
-            if self.data[:len(self.notifier.pwd)] == self.notifier.pwd:
-                self.notifier.submit(
-                    pickle.loads(self.data[len(self.notifier.pwd):])
+            id_, self.data = self.data.split('|', 1)
+            notifier = self.serv.get_notifier(int(id_))
+            if self.data[:len(notifier.pwd)] == notifier.pwd:
+                notifier.submit(
+                    pickle.loads(self.data[len(notifier.pwd):])
                 )
-            if self.notifier.pool is not None:
-                self.notifier.pool.free()
+            if notifier.pool is not None:
+                notifier.pool.free()
     
     
     class _MPServer(asynchia.Server):
