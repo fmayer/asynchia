@@ -22,6 +22,7 @@ class MPPool(object):
         
         self.wmap = {}
         self.imap = {}
+        self.nmap = {}
         
         self.statusq = multiprocessing.Queue()
         
@@ -47,14 +48,21 @@ class MPPool(object):
         if not self.run(notifier):
             self.notifiers.append(notifier)
     
-    def free(self):
+    def unregister(self, notifier):
+        self.notifiers.remove(notifier)
+    
+    def free(self, notifier):
         self.running -= 1
-        
         self.handle_squeue()
         
+        del self.nmap[notifier]
+        self._fill_slots()
+    
+    def _fill_slots(self):
         while self.notifiers and self.running < self.procs:
-            if not self.run(self.notifiers.popleft()):
-                break
+            noti = self.notifiers.popleft()
+            if not self.run(noti):
+                self.notifiers.appendleft(noti)
     
     def run(self, notifier):            
         try:
@@ -72,8 +80,27 @@ class MPPool(object):
             )
         )
         self.wmap[id_] = (queue, proc)
+        self.nmap[notifier] = (queue, proc, id_)
         return True
+    
+    def terminate(self, notifier):
+        try:
+            queue, proc, id_ = self.nmap[notifier]
+        except KeyError:
+            return False
         
+        self.running -= 1
+        proc.terminate()
+        
+        queue = multiprocessing.Queue()
+        proc = multiprocessing.Process(
+            target=self.worker, args=(queue, self.statusq, id_)
+        )
+            
+        proc.start()
+        self.imap[id_] = (queue, proc)
+        
+        self._fill_slots()
     
     @staticmethod
     def worker(queue, statusq, wid_):
@@ -110,7 +137,7 @@ class _MPServerHandler(asynchia.Handler):
             self.serv.release_notifier(int(id_))
         
         if notifier.pool is not None:
-            notifier.pool.free()
+            notifier.pool.free(notifier)
 
 
 class MPServer(asynchia.Server):
@@ -182,6 +209,7 @@ class MPNotifier(DataNotifier):
         self.addr = serv.transport.socket.getsockname()
         self.pwd = pwd
         
+        self.pool = None
         self.proc = None
     
     def start_standalone_proc(self):
@@ -193,3 +221,11 @@ class MPNotifier(DataNotifier):
         )
         
         self.proc.start()
+    
+    def terminate_proc(self):
+        if self.proc is not None:
+            self.proc.terminate()
+            return True
+        elif self.pool is not None:
+            return self.pool.terminate(self)
+        return False
