@@ -40,6 +40,10 @@ Example:
 """
 
 import os
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 import threading
 import collections
 try:
@@ -226,25 +230,74 @@ if multiprocessing is not None:
             if notifiers is None:
                 notifiers = []
             self.notifiers = collections.deque(notifiers)
+            
             self.procs = procs
             self.running = 0
+            
+            self.wmap = {}
+            self.imap = {}
+            
+            self.statusq = multiprocessing.Queue()
+            
+            for id_ in xrange(procs):
+                queue = multiprocessing.Queue()
+                proc = multiprocessing.Process(
+                    target=self.worker, args=(queue, self.statusq, id_)
+                )
+                
+                proc.start()
+                self.imap[id_] = (queue, proc)
+        
+        def handle_squeue(self):
+            while True:
+                try:
+                    id_ = self.statusq.get_nowait()
+                    print id_
+                    self.imap[id_] = self.wmap.pop(id_)
+                except queue.Empty:
+                    break
         
         def register(self, notifier):
-            if not self._run_if_slot(notifier):
+            notifier.serv.set_pool(self)
+            if not self.run(notifier):
                 self.notifiers.append(notifier)
         
         def free(self):
             self.running -= 1
+            
+            self.handle_squeue()
+            
             while self.notifiers and self.running < self.procs:
-                self.notifiers.popleft().start_standalone_proc()
-                self.running += 1
+                if not self.run(self.notifiers.popleft()):
+                    break
         
-        def _run_if_slot(self, notifier):
-            if self.running < self.procs:
-                notifier.start_standalone_proc()
-                self.running += 1
-                return True
-            return False
+        def run(self, notifier):
+            self.running += 1
+            
+            try:
+                id_ = self.imap.iterkeys().next()
+            except StopIteration:
+                return False
+            
+            q, proc = self.imap.pop(id_)
+            q.put(
+                (
+                    notifier.fun, notifier.args, notifier.kwargs, notifier.addr,
+                    notifier.pwd
+                )
+            )
+            self.wmap[id_] = (q, proc)
+            return True
+            
+        
+        @staticmethod
+        def worker(queue, statusq, id_):
+            while True:
+                fun, args, kwargs, addr, pwd = queue.get()
+                if fun is None:
+                    break
+                _mp_client(fun, args, kwargs, addr, pwd)
+                statusq.put(id_)
         
         
     class _MPServerHandler(asynchia.Handler):
@@ -274,9 +327,20 @@ if multiprocessing is not None:
                 self, transport,
                 lambda tr: _MPServerHandler(tr, notifier, pwd, pool)
             )
+            self.handler = None
+            self.pool = pool
         
         def new_connection(self, handler, addr):
+            self.handler = handler
+            if self.pool is not None:
+                handler.pool = self.pool
             self.transport.close()
+        
+        def set_pool(self, pool):
+            if self.handler is None:
+                self.pool = pool
+            else:
+                self.handler.pool = pool
     
     
     def _mp_client(fun, args, kwargs, addr, pwd):
@@ -306,6 +370,8 @@ if multiprocessing is not None:
             )
             serv.transport.bind(('127.0.0.1', 0))
             serv.transport.listen(1)
+            
+            self.serv = serv
             
             self.fun = fun
             self.args = args
