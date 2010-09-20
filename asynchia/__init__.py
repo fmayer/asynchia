@@ -237,9 +237,12 @@ class Transport(object):
         # Ensure the handler is only called once, even if multiple connection
         # closed events should be fired (which could happen due to the code
         # in SocketTransport.send).
-        if self.handler is not None and not self.closed:
-            self.handler.handle_close()
-        self.closed = True
+        try:
+            if self.handler is not None and not self.closed:
+                self.handler.handle_close()
+                self.closed = True
+        finally:
+            self.closed = True
     
     def handle_cleanup(self):
         """ Called whenever the Handler is voided, for whatever reason.
