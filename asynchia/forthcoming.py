@@ -259,26 +259,32 @@ if multiprocessing is not None:
         
         sock.close()
         
-        
-    def mp_notifier(socket_map, fun, args, kwargs, pwdstr=10):
-        pwd = os.urandom(pwdstr)
-        
-        notifier = DataNotifier(socket_map)
-        
-        serv = _MPServer(asynchia.SocketTransport(socket_map), notifier, pwd)
-        serv.transport.bind(('127.0.0.1', 0))
-        serv.transport.listen(1)
     
-        # MPDataNotifier?
-        notifier.proc = multiprocessing.Process(
-            target=_mp_client,
-            args=(fun, args, kwargs,
-                  serv.transport.socket.getsockname(), pwd
+    class MPNotifier(DataNotifier):
+        def __init__(self, socket_map, fun, args=None, kwargs=None, pwdstr=10):
+            DataNotifier.__init__(self, socket_map)
+            
+            if args is None:
+                args = tuple()
+            if kwargs is None:
+                kwargs = {}
+            pwd = os.urandom(pwdstr)
+            
+            serv = _MPServer(
+                asynchia.SocketTransport(socket_map), self, pwd
             )
-        )
+            serv.transport.bind(('127.0.0.1', 0))
+            serv.transport.listen(1)
         
-        notifier.proc.start()
-        return notifier
+            # MPDataNotifier?
+            self.proc = multiprocessing.Process(
+                target=_mp_client,
+                args=(fun, args, kwargs,
+                      serv.transport.socket.getsockname(), pwd
+                )
+            )
+            
+            self.proc.start()
 
 
 class _ThreadedDataHandler(asynchia.Handler):
