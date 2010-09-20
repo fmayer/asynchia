@@ -133,7 +133,13 @@ class _MPServer(asynchia.Server):
 
 def _mp_client(fun, args, kwargs, addr, pwd, id_):
     sock = socket.socket()
-    sock.connect(addr)
+    while True:
+        try:
+            sock.connect(addr)
+        except socket.error:
+            pass
+        else:
+            break
     
     data = b(id_) + b('|') + pwd + pickle.dumps(fun(*args, **kwargs))
     while data:
@@ -159,7 +165,7 @@ class MPNotifier(DataNotifier):
                 asynchia.SocketTransport(socket_map)
             )
             serv.transport.bind(('127.0.0.1', 0))
-            serv.transport.listen(1)
+            serv.transport.listen(0)
         self.id_ = serv.add_notifier(self)
         
         self.serv = serv
