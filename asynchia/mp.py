@@ -111,7 +111,7 @@ class _MPServerHandler(asynchia.Handler):
             notifier.pool.free()
 
 
-class _MPServer(asynchia.Server):
+class MPServer(asynchia.Server):
     def __init__(self, transport):
         asynchia.Server.__init__(
             self, transport,
@@ -161,7 +161,7 @@ class MPNotifier(DataNotifier):
         pwd = os.urandom(pwdstr)
         
         if serv is None:
-            serv = _MPServer(
+            serv = MPServer(
                 asynchia.SocketTransport(socket_map)
             )
             serv.transport.bind(('127.0.0.1', 0))
