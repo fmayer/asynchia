@@ -222,3 +222,5 @@ class _ThreadedDataHandler(asynchia.Handler):
         """ Implementation detail. """
         self.transport.recv(1)
         self.datanotifier.submit(self.datanotifier.injected)
+        # Not needed anymore.
+        self.transport.close()
