@@ -4,10 +4,7 @@ import pickle
 import collections
 import multiprocessing
 
-try:
-    import queue
-except ImportError:
-    import Queue as queue
+from Queue import Empty
 
 import asynchia
 from asynchia.forthcoming import DataNotifier
@@ -42,7 +39,7 @@ class MPPool(object):
             try:
                 id_ = self.statusq.get_nowait()
                 self.imap[id_] = self.wmap.pop(id_)
-            except queue.Empty:
+            except Empty:
                 break
     
     def register(self, notifier):
@@ -67,14 +64,14 @@ class MPPool(object):
         
         self.running += 1
         
-        q, proc = self.imap.pop(id_)
-        q.put(
+        queue, proc = self.imap.pop(id_)
+        queue.put(
             (
                 notifier.fun, notifier.args, notifier.kwargs, notifier.addr,
                 notifier.pwd, notifier.id_
             )
         )
-        self.wmap[id_] = (q, proc)
+        self.wmap[id_] = (queue, proc)
         return True
         
     
@@ -90,8 +87,8 @@ class MPPool(object):
     
 class _MPServerHandler(asynchia.Handler):
     BUFFER = 2048
-    def __init__(self, tr, serv):
-        asynchia.Handler.__init__(self, tr)
+    def __init__(self, transport, serv):
+        asynchia.Handler.__init__(self, transport)
         self.data = ''
         self.serv = serv
         
