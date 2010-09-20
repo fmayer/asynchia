@@ -101,6 +101,9 @@ class _MPServerHandler(asynchia.Handler):
         self.data += self.transport.recv(self.BUFFER)
     
     def handle_close(self):
+        # The password is not contained in a pickle tuple (which would be
+        # far easier and straightforward) to avoid unpickling untrusted
+        # data.
         id_, self.data = self.data.split(b('|'), 1)
         notifier = self.serv.get_notifier(int(id_))
         if self.data[:len(notifier.pwd)] == notifier.pwd:
