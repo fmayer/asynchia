@@ -41,6 +41,7 @@ Example:
 
 import os
 import threading
+import collections
 try:
     import multiprocessing
 except ImportError:
@@ -220,13 +221,40 @@ class DataNotifier(object):
 
 
 if multiprocessing is not None:
+    class MPPool(object):
+        def __init__(self, procs, notifiers=None):
+            if notifiers is None:
+                notifiers = []
+            self.notifiers = collections.deque(notifiers)
+            self.procs = procs
+            self.running = 0
+        
+        def register(self, notifier):
+            if not self._run_if_slot(notifier):
+                self.notifiers.append(notifier)
+        
+        def free(self):
+            self.running -= 1
+            while self.notifiers and self.running < self.procs:
+                self.notifiers.popleft().start_standalone_proc()
+                self.running += 1
+        
+        def _run_if_slot(self, notifier):
+            if self.running < self.procs:
+                notifier.start_standalone_proc()
+                self.running += 1
+                return True
+            return False
+        
+        
     class _MPServerHandler(asynchia.Handler):
         BUFFER = 2048
-        def __init__(self, tr, notifier, pwd):
+        def __init__(self, tr, notifier, pwd, pool):
             asynchia.Handler.__init__(self, tr)
             self.notifier = notifier
             self.data = ''
             self.pwd = pwd
+            self.pool = pool
             
             self.transport.set_readable(True)
         
@@ -236,12 +264,15 @@ if multiprocessing is not None:
         def handle_close(self):
             if self.data[:len(self.pwd)] == self.pwd:
                 self.notifier.submit(pickle.loads(self.data[len(self.pwd):]))
+            if self.pool is not None:
+                self.pool.free()
     
     
     class _MPServer(asynchia.Server):
-        def __init__(self, transport, notifier, pwd):
+        def __init__(self, transport, notifier, pwd, pool=None):
             asynchia.Server.__init__(
-                self, transport, lambda tr: _MPServerHandler(tr, notifier, pwd)
+                self, transport,
+                lambda tr: _MPServerHandler(tr, notifier, pwd, pool)
             )
         
         def new_connection(self, handler, addr):
@@ -275,16 +306,22 @@ if multiprocessing is not None:
             )
             serv.transport.bind(('127.0.0.1', 0))
             serv.transport.listen(1)
+            
+            self.fun = fun
+            self.args = args
+            self.kwargs = kwargs
+            self.addr = serv.transport.socket.getsockname()
+            self.pwd = pwd
         
-            # MPDataNotifier?
-            self.proc = multiprocessing.Process(
+        def start_standalone_proc(self):
+            proc = multiprocessing.Process(
                 target=_mp_client,
-                args=(fun, args, kwargs,
-                      serv.transport.socket.getsockname(), pwd
+                args=(self.fun, self.args, self.kwargs,
+                      self.addr, self.pwd
                 )
             )
             
-            self.proc.start()
+            proc.start()
 
 
 class _ThreadedDataHandler(asynchia.Handler):
