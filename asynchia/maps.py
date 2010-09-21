@@ -123,6 +123,7 @@ class RobustSocketMap(ControlSocketSocketMap):
         if self.needresp:
             self.controlreceiver.send(b('i'))
             self.needresp = False
+        super(RobustSocketMap, self).close()
         
 
 
@@ -191,6 +192,9 @@ class SelectSocketMap(FragileSocketMap):
     
     def poll(self, timeout):
         """ Poll for I/O. """
+        if self.closed:
+            raise asynchia.SocketMapClosedError
+        
         interrupted = False
         
         try:
@@ -221,15 +225,15 @@ class SelectSocketMap(FragileSocketMap):
         if interrupted:
             self.do_interrupt()
     
-    def run(self):
-        """ Periodically poll for I/O. """
-        while True:
-            self.poll(None)
-    
     def close(self):
         """ See SocketMap.close """
         for handler in self.socket_list[1:]:
             self.notifier.cleanup_obj(handler)
+        
+        self.writers = []
+        self.socket_list = []
+        
+        super(SelectSocketMap, self).close()
     
     def is_empty(self):
         return bool(self.socket_list)
@@ -266,11 +270,15 @@ class PollSocketMap(RobustSocketMap):
     
     def poll(self, timeout):
         """ Poll for I/O. """
+        if self.closed:
+            raise asynchia.SocketMapClosedError
+        
         interrupted = False
         
         # Stupidest API ever. epoll accepts a float in seconds whereas
         # poll accepts an int in millseconds.
-        timeout = int(timeout * 1000)
+        if timeout is not None:
+            timeout = int(timeout * 1000)
         
         try:
             active = self.poller.poll(timeout)
@@ -298,11 +306,6 @@ class PollSocketMap(RobustSocketMap):
                 self.notifier.close_obj(obj)
         if interrupted:
             self.do_interrupt()
-    
-    def run(self):
-        """ Periodically poll for I/O. """
-        while True:
-            self.poll(None)
     
     def handler_changed(self, handler):
         """ Update flags for handler. """
@@ -332,6 +335,9 @@ class PollSocketMap(RobustSocketMap):
         RobustSocketMap.close(self)
         for handler in self.socket_list.itervalues():
             self.notifier.cleanup_obj(handler)
+        self.socket_list = {}
+        
+        super(PollSocketMap, self).close()
     
     def is_empty(self):
         return bool(self.socket_list)
@@ -369,6 +375,9 @@ class EPollSocketMap(RockSolidSocketMap):
     
     def poll(self, timeout):
         """ Poll for I/O. """
+        if self.closed:
+            raise asynchia.SocketMapClosedError
+        
         # While select.poll is alright with None, select.epoll expects
         # -1 for no timeout,
         if timeout is None:
@@ -403,11 +412,6 @@ class EPollSocketMap(RockSolidSocketMap):
         if interrupted:
             self.do_interrupt()
     
-    def run(self):
-        """ Periodically poll for I/O. """
-        while True:
-            self.poll(None)
-    
     def handler_changed(self, handler):
         """ Update flags for handler. """
         self.poller.modify(handler.fileno(), self.create_flags(handler))
@@ -433,6 +437,8 @@ class EPollSocketMap(RockSolidSocketMap):
         """ See SocketMap.close """
         for handler in self.socket_list.itervalues():
             self.notifier.cleanup_obj(handler)
+        self.poller.close()
+        super(EPollSocketMap, self).close()
     
     def is_empty(self):
         return bool(self.socket_list)
@@ -523,6 +529,9 @@ class KQueueSocketMap(RockSolidSocketMap):
         )
     
     def poll(self, timeout=None):
+        if self.closed:
+            raise asynchia.SocketMapClosedError
+        
         interrupted = False
         
         try:
@@ -552,6 +561,7 @@ class KQueueSocketMap(RockSolidSocketMap):
         self.queue.close()
         for handler in self.socket_list.itervalues():
             self.notifier.cleanup_obj(handler)
+        super(KQueueSocketMap, self).close()
     
     def is_empty(self):
         return bool(self.socket_list)

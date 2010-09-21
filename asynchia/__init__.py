@@ -29,6 +29,9 @@ from asynchia.const import trylater, connection_lost
 
 __version__ = '0.1.0a'
 
+class SocketMapClosedError(Exception):
+    pass
+
 def _unawait_conn(obj):
     """ Helper function for Notifier. """
     obj.stop_awaiting_connect()
@@ -55,6 +58,18 @@ class SocketMap(object):
         if notifier is None:
             notifier = Notifier()
         self.notifier = notifier
+        self.closed = False
+    
+    def poll(self, timeout=None):
+        raise NotImplementedError
+    
+    def run(self):
+        """ Periodically poll for I/O. """
+        while True:
+            try:
+                self.poll(None)
+            except asynchia.SocketMapClosedError:
+                return
     
     def add_transport(self, obj):
         """ Add handler to the socket-map. This gives the SocketMap
@@ -104,7 +119,7 @@ class SocketMap(object):
     def close(self):
         """ Call the handle_cleanup methods of all handlers contained
         in the socket-map, indicating that they are void. """
-        raise NotImplementedError
+        self.closed = True
     
     def is_empty(self):
         raise NotImplementedError
@@ -237,9 +252,12 @@ class Transport(object):
         # Ensure the handler is only called once, even if multiple connection
         # closed events should be fired (which could happen due to the code
         # in SocketTransport.send).
-        if self.handler is not None and not self.closed:
-            self.handler.handle_close()
-        self.closed = True
+        try:
+            if self.handler is not None and not self.closed:
+                self.handler.handle_close()
+                self.closed = True
+        finally:
+            self.closed = True
     
     def handle_cleanup(self):
         """ Called whenever the Handler is voided, for whatever reason.
