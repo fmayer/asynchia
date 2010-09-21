@@ -484,7 +484,7 @@ class TestCore(unittest.TestCase):
         test_pingpong2 = _override_socketpair(test_pingpong)
     
     def test_closed(self):
-        mo =asynchia.maps.DefaultSocketMap()
+        mo = asynchia.maps.DefaultSocketMap()
         mo.close()
         self.assertRaises(asynchia.SocketMapClosedError, mo.poll, None)
 
