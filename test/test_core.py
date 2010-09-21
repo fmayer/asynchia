@@ -482,6 +482,11 @@ class TestCore(unittest.TestCase):
     
     if hasattr(socket, 'socketpair'):
         test_pingpong2 = _override_socketpair(test_pingpong)
+    
+    def test_closed(self):
+        mo =asynchia.maps.DefaultSocketMap()
+        mo.close()
+        self.assertRaises(asynchia.SocketMapClosedError, mo.poll, None)
 
 def _genfun(map_, test):
     def _fun(self):
