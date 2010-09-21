@@ -433,6 +433,7 @@ class EPollSocketMap(RockSolidSocketMap):
         """ See SocketMap.close """
         for handler in self.socket_list.itervalues():
             self.notifier.cleanup_obj(handler)
+        self.poll.close()
     
     def is_empty(self):
         return bool(self.socket_list)
