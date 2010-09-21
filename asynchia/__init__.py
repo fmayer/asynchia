@@ -68,7 +68,7 @@ class SocketMap(object):
         while True:
             try:
                 self.poll(None)
-            except asynchia.SocketMapClosedError:
+            except SocketMapClosedError:
                 return
     
     def add_transport(self, obj):
