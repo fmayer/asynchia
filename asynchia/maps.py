@@ -123,6 +123,7 @@ class RobustSocketMap(ControlSocketSocketMap):
         if self.needresp:
             self.controlreceiver.send(b('i'))
             self.needresp = False
+        super(RobustSocketMap, self).close()
         
 
 
@@ -276,7 +277,8 @@ class PollSocketMap(RobustSocketMap):
         
         # Stupidest API ever. epoll accepts a float in seconds whereas
         # poll accepts an int in millseconds.
-        timeout = int(timeout * 1000)
+        if timeout is not None:
+            timeout = int(timeout * 1000)
         
         try:
             active = self.poller.poll(timeout)
@@ -333,7 +335,6 @@ class PollSocketMap(RobustSocketMap):
         RobustSocketMap.close(self)
         for handler in self.socket_list.itervalues():
             self.notifier.cleanup_obj(handler)
-        
         self.socket_list = {}
         
         super(PollSocketMap, self).close()

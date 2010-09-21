@@ -423,6 +423,13 @@ def dnr_connfailed2(self, map_):
         mo.poll(abs(10 - (time.time() - s)))
     self.assertEqual(container.done, True)
 
+    
+def dnr_closed(self, map_):
+    mo = map_()
+    mo.close()
+    self.assertRaises(asynchia.SocketMapClosedError, mo.poll, 10)
+
+
 class TestCore(unittest.TestCase):    
     def test_error(self):
         container = Container()
@@ -482,11 +489,6 @@ class TestCore(unittest.TestCase):
     
     if hasattr(socket, 'socketpair'):
         test_pingpong2 = _override_socketpair(test_pingpong)
-    
-    def test_closed(self):
-        mo = asynchia.maps.DefaultSocketMap()
-        mo.close()
-        self.assertRaises(asynchia.SocketMapClosedError, mo.poll, None)
 
 def _genfun(map_, test):
     def _fun(self):
@@ -511,7 +513,7 @@ wsocketpair = [
 
 tests = [
     dnr_interrupt, t_changeflag(ctx), t_changeflag(std),
-    dnr_remove, dnr_remove2
+    dnr_remove, dnr_remove2, dnr_closed
 ] + wsocketpair
 
 if hasattr(socket, 'socketpair'):
