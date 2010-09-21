@@ -206,7 +206,7 @@ class DataNotifier(object):
         datanot = cls(socket_map)
         threading.Thread(
             target=cls._coroutine, args=(datanot, fun, args, kwargs)
-        )
+        ).start()
         return datanot
 
 
