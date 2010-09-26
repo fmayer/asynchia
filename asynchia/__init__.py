@@ -208,6 +208,13 @@ class Transport(object):
         self.closed = False
         self.cleanedup = False
     
+    def recv_into(self, buf, nbytes, *args):
+        if nbytes is None:
+            nbytes = len(buf)
+        rcv = self.recv(nbytes, *args)
+        buf[:len(rcv)] = rev
+        return len(rcv)
+    
     def recv(self, nbytes, *args):
         """ Override. """
         raise NotImplementedError
@@ -498,6 +505,19 @@ class SocketTransport(Transport):
             or if an error is pending for the socket. """
         try:
             data = self.socket.recv(buffer_size, flags)
+            if not data:
+                self.socket_map.notifier.close_obj(self)
+            return data
+        except socket.error, err:
+            if err.args[0] in connection_lost:
+                self.socket_map.notifier.close_obj(self)
+                return EMPTY_BYTES
+            else:
+                raise
+    
+    def recv_into(self, buf, nbytes, flags=0):
+        try:
+            data = self.socket.recv_into(buf, nbytes, flags)
             if not data:
                 self.socket_map.notifier.close_obj(self)
             return data
