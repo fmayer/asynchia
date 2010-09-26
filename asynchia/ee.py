@@ -384,10 +384,11 @@ class DelimitedCollector(Collector):
         return self.collector.value
 
 
-class DelimitedStringCollector(DelimitedCollector):
+class NaiveDelimitedStringCollector(DelimitedCollector):
     def __init__(self, size, onclose=None):
         DelimitedCollector.__init__(self, StringCollector(), size, onclose)
 
+DelimitedStringCollector = NaiveDelimitedStringCollector
 if hasattr(__builtin__, 'memoryview'):
     class MemoryViewCollector(Collector):
         def __init__(self, size, onclose=None):
