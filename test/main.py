@@ -25,7 +25,9 @@ import os
 from itertools import chain
 
 PATH = os.path.abspath(os.path.dirname(__file__))
-MODULES = ['test_core', 'test_dsl', 'test_ee', 'test_util']
+MODULES = [
+    'test_core', 'test_dsl', 'test_ee', 'test_util', 'test_forthcoming'
+]
 
 
 class DummyTestRunner:
