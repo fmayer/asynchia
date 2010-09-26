@@ -397,6 +397,9 @@ class CollectorQueue(Collector):
         self.collectors.append(collector)
         return self
     
+    def __add__(self, collector):
+        return CollectorQueue(self.collectors + [collector])
+    
     def add_collector(self, coll):
         """ Add coll to queue. """
         self.collectors.append(coll)
