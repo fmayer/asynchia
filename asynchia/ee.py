@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import __builtin__
 
 import asynchia
-from asynchia.util import EMPTY_BYTES
+from asynchia.util import EMPTY_BYTES, b
 
 class Depleted(Exception):
     pass
@@ -381,6 +382,36 @@ class DelimitedCollector(Collector):
     @property
     def value(self):
         return self.collector.value
+
+
+class DelimitedStringCollector(DelimitedCollector):
+    def __init__(self, size, onclose=None):
+        DelimitedCollector.__init__(self, StringCollector(), size, onclose)
+
+if hasattr(__builtin__, 'memoryview'):
+    class MemoryViewCollector(Collector):
+        def __init__(self, size, onclose=None):
+            Collector.__init__(self, onclose)
+            self.size = self.vsize = size
+            self.view = self.intvalue = memoryview(bytearray(size))
+        
+        def add_data(self, prot, nbytes):
+            """ Write at most nbytes bytes from prot to string. """
+            Collector.add_data(self, prot, nbytes)
+            if not self.vsize:
+                return True, 0
+            
+            nrecv = prot.recv_into(self.view, min(nbytes, self.vsize))
+            self.view = self.view[nrecv:]
+            self.vsize -= nrecv
+            
+            return not bool(self.vsize), nrecv
+        
+        @property
+        def value(self):
+            return self.intvalue.tobytes()
+    
+    DelimitedStringCollector = MemoryViewCollector
 
 
 class CollectorQueue(Collector):
