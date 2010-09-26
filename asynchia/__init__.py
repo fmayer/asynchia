@@ -206,6 +206,7 @@ class Transport(object):
         self.handler = None
         
         self.closed = False
+        self.cleanedup = False
     
     def recv(self, nbytes, *args):
         """ Override. """
@@ -263,8 +264,12 @@ class Transport(object):
         """ Called whenever the Handler is voided, for whatever reason.
         This may be the shutdown of the program, the closing of the
         connection by the local end or the like. """
-        if self.handler is not None:
-            self.handler.handle_cleanup()
+        try:
+            if self.handler is not None and not self.cleanedup:
+                self.handler.handle_cleanup()
+                self.cleanedup = True
+        finally:
+            self.cleanedup = True
 
 
 class SocketTransport(Transport):
