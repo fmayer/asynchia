@@ -393,6 +393,10 @@ class CollectorQueue(Collector):
             collectors = []
         self.collectors = collectors
     
+    def __iadd__(self, collector):
+        self.collectors.append(collector)
+        return self
+    
     def add_collector(self, coll):
         """ Add coll to queue. """
         self.collectors.append(coll)
