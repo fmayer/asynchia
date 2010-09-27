@@ -212,7 +212,7 @@ class Transport(object):
         if nbytes is None:
             nbytes = len(buf)
         rcv = self.recv(nbytes, *args)
-        buf[:len(rcv)] = rev
+        buf[:len(rcv)] = rcv
         return len(rcv)
     
     def recv(self, nbytes, *args):
