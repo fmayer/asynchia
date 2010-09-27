@@ -164,7 +164,7 @@ class BufferQ(object):
                     old = bytearray()
                     for i in xrange(lastread, n):
                         old += self.rbuffers[i].read()[1]
-                split = old + split
+                    split = old + split
                 return split
             else:
                 if n == len(self.rbuffers) - 1:
