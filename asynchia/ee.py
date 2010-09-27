@@ -20,7 +20,7 @@ import os
 import __builtin__
 
 import asynchia
-from asynchia.util import EMPTY_BYTES, b
+from asynchia.util import EMPTY_BYTES
 
 class Depleted(Exception):
     pass
