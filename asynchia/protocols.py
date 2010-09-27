@@ -20,6 +20,7 @@
 
 import asynchia
 from asynchia.util import EMPTY_BYTES
+from asynchia.buffer import BufferQ
 
 class LineHandler(asynchia.Handler):
     """ Use this for line-based protocols. """
@@ -27,26 +28,20 @@ class LineHandler(asynchia.Handler):
     buffer_size = 4096
     def __init__(self, transport):
         asynchia.Handler.__init__(self, transport)
-        self.read_buffer = EMPTY_BYTES
+        self.read_buffer = BufferQ(self.buffer_size)
         if not self.transport.readable:
             self.transport.set_readable(True)
-    
-    def split_buffer(self):
-        """ Split buffer into the different lines. """
-        split = self.read_buffer.split(self.delimiter)
-        self.read_buffer = split.pop()
-        return split
     
     def parse_buffer(self):
         """ Call the line_received method for any lines delimited by
         self.delimited that are in the buffer. """
-        for line in self.split_buffer():
+        for line in self.read_buffer.splitall(self.delimiter):
             self.line_received(line)
     
     def handle_read(self):
         """ We got inbound data. Extend our buffer and see if we have
         got lines in it. """
-        self.read_buffer += self.transport.recv(self.buffer_size)
+        self.read_buffer.add_data(self.transport, self.buffer_size)
         self.parse_buffer()
     
     def send_line(self, line):
