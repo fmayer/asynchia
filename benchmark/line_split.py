@@ -19,38 +19,39 @@
 import time
 import itertools
 
-import asynchia.ee
+import asynchia.protocols
 
 from benchutil import *
 
 
-def _mk_parser(col, mp, size):
-    trnsp = mock_handler(mp, os.urandom(size))
-    sub = itertools.repeat(range(20))
-    chunks = []
-    x = size
-    while x > 0:
-        chunks.append(min(x, sub.next()))
-        x -= chunks[-1]
-
-    ptcl = reduce(
-        operator.add,
-        map(asynchia.ee.DelimitedStringCollector, chunks)
+def _mk_parser(col, mp, size, lines):
+    class Handler(asynchia.protocols.LineHandler):
+        delimiter = '\n'
+        def __init__(self, transport):
+            asynchia.protocols.LineHandler.__init__(self, transport)
+            self.n = 0
+        
+        def line_received(self, line):
+            self.n += 1
+            if self.n == lines:
+                col.submit(time.time())
+    data = ''.join(
+        os.urandom(size).replace('\n', '\0') + '\n'
+        for _ in xrange(lines)
     )
     
-    def _cls(x):
-        col.submit(time.time())
+    trnsp = mock_handler(mp, data)
     
-    ptcl.onclose = _cls
-    
-    hndl = asynchia.ee.Handler(trnsp, ptcl)
+    Handler(trnsp)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) >= 3:
+    if len(sys.argv) >= 4:
         sample = int(sys.argv[1])
         len_ = int(sys.argv[2])
+        lines = int(sys.argv[3])
     else:
         sample = 50
-        len_ = 5000000
-    run(_mk_parser, sample, len_)
+        len_ = 50000
+        lines = 10
+    run(_mk_parser, sample, len_, lines)
