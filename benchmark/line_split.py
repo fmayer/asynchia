@@ -35,11 +35,10 @@ def _mk_parser(col, mp, size, lines):
             self.n += 1
             if self.n == lines:
                 col.submit(time.time())
-    data = ''.join(
-        os.urandom(size).replace('\n', '\0') + '\n'
+    data = '\n'.join(
+        os.urandom(size).replace('\n', '\0')
         for _ in xrange(lines)
-    )
-    
+    ) + '\n'
     trnsp = mock_handler(mp, data)
     
     Handler(trnsp)
@@ -54,4 +53,5 @@ if __name__ == '__main__':
         sample = 50
         len_ = 50000
         lines = 10
+    print sample, len_, lines
     run(_mk_parser, sample, len_, lines)
