@@ -88,4 +88,5 @@ def run(fun, n, *args):
     mp = asynchia.maps.DefaultSocketMap()
     for _ in xrange(n):
         fun(col, mp, *args)
+    col.start = time.time()
     mp.run()
