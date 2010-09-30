@@ -4,14 +4,14 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-static size_t minsize(size_t a, size_t b) {
+static size_t asynchia_minsize(size_t a, size_t b) {
 	if (a < b) {
 		return a;
 	}
 	return b;
 }
 
-struct mysend_ret {
+struct asynchia_send_ret {
 	size_t ret;
 	int errsv;
 };
@@ -23,7 +23,7 @@ struct asynchia_buffer {
 	char* buf;
 };
 
-int expand(struct asynchia_buffer* buf, size_t n) {
+int asynchia_buffer_expand(struct asynchia_buffer* buf, size_t n) {
 	char* nbuf = realloc(buf->buf, buf->length + n);
 	if (nbuf != NULL) {
 		buf->buf = nbuf;
@@ -34,7 +34,7 @@ int expand(struct asynchia_buffer* buf, size_t n) {
 	}
 }
 
-struct asynchia_buffer* new_buffer(size_t length) {
+struct asynchia_buffer* asynchia_buffer_new(size_t length) {
 	struct asynchia_buffer* nbuf = malloc(sizeof(struct asynchia_buffer));
 	if (nbuf != NULL) {
 		nbuf->size = 0;
@@ -45,19 +45,23 @@ struct asynchia_buffer* new_buffer(size_t length) {
 	return nbuf;
 }
 
-size_t add(struct asynchia_buffer* buf, char* abuf, size_t length) {
+size_t asynchia_buffer_add(
+	struct asynchia_buffer* buf, char* abuf, size_t length
+) {
 	size_t i;
-	for (i = 0; i < minsize(length, buf->length - buf->size); ++i) {
+	for (i = 0; i < asynchia_minsize(length, buf->length - buf->size); ++i) {
 		buf->buf[buf->size + i] = abuf[i];
 	}
 	buf->size += i;
 	return i;
 }
 
-size_t mysend(struct asynchia_buffer* buf, int sockfd, int flags) {
+size_t asynchia_buffer_send(
+	struct asynchia_buffer* buf, int sockfd, int flags
+) {
 	size_t ret;
 	int errsv;
-	struct mysend_ret mret;
+	struct asynchia_send_ret mret;
 
 	if (
 	(ret = send(sockfd,
@@ -74,11 +78,11 @@ size_t mysend(struct asynchia_buffer* buf, int sockfd, int flags) {
 }
 
 int main() {
-	struct asynchia_buffer* buf = new_buffer(20);
-	printf("%d\n", add(buf, "abcde", 5));
-	add(buf, "fghij", 5);
-	add(buf, "klmno", 5);
-	add(buf, "pqrst", 5);
-	printf("%d\n", add(buf, "foo", 3));
+	struct asynchia_buffer* buf = asynchia_buffer_new(20);
+	printf("%d\n", asynchia_buffer_add(buf, "abcde", 5));
+	asynchia_buffer_add(buf, "fghij", 5);
+	asynchia_buffer_add(buf, "klmno", 5);
+	asynchia_buffer_add(buf, "pqrst", 5);
+	printf("%d\n", asynchia_buffer_add(buf, "foo", 3));
 	return 0;
 }
