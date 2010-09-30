@@ -11,6 +11,16 @@ static size_t asynchia_minsize(size_t a, size_t b) {
 	return b;
 }
 
+struct asynchia_lilst {
+	struct asynchia_lilstitem* tip;
+	struct asynchia_lilstitem* shaft;
+};
+
+struct asynchia_lilstitem {
+	void* item;
+	void* next;
+};
+
 struct asynchia_send_ret {
 	size_t ret;
 	int errsv;
@@ -22,6 +32,49 @@ struct asynchia_buffer {
 	size_t position;
 	char* buf;
 };
+
+struct asynchia_lilst* asynchia_lilst_new() {
+	struct asynchia_lilst* lilst = malloc(sizeof(struct asynchia_lilst));
+	lilst->tip = NULL;
+	lilst->shaft = NULL;
+	return lilst;
+}
+
+void asynchia_lilst_add(
+	struct asynchia_lilst* lilst, struct asynchia_lilstitem* lilstitem
+)
+{
+	if (lilst->shaft == NULL) {
+		lilst->shaft = lilstitem;
+	}
+	if (lilst->tip != NULL) {
+		lilst->tip->next = lilstitem;
+	}
+	lilstitem->next = NULL;
+	lilst->tip = lilstitem;
+}
+
+void asynchia_lilst_addleft(
+	struct asynchia_lilst* lilst, struct asynchia_lilstitem* lilstitem
+)
+{
+	if (lilst->tip == NULL) {
+		lilst->tip = lilstitem;
+	}
+	lilstitem->next = lilst->shaft;
+	lilst->shaft = lilstitem;
+}
+
+struct asynchia_lilstitem* asynchia_lilst_popleft(
+	struct asynchia_lilst* lilst
+)
+{
+	struct asynchia_lilstitem* popped = lilst->shaft;
+	lilst->shaft = popped->next;
+	popped->next = NULL;
+	return popped;
+}
+
 
 int asynchia_buffer_expand(struct asynchia_buffer* buf, size_t n) {
 	char* nbuf = realloc(buf->buf, buf->length + n);
