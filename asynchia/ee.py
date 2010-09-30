@@ -406,7 +406,10 @@ if hasattr(__builtin__, 'memoryview'):
             self.view = self.view[nrecv:]
             self.vsize -= nrecv
             
-            return not bool(self.vsize), nrecv
+            if self.vsize == 0:
+                self.close()
+            
+            return (self.vsize == 0), nrecv
         
         @property
         def value(self):
