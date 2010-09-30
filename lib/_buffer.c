@@ -4,6 +4,13 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+static ssize_t minsize(ssize_t a, ssize_t b) {
+	if (a < b) {
+		return a;
+	}
+	return b;
+}
+
 struct mysend_ret {
 	ssize_t ret;
 	int errsv;
@@ -40,7 +47,7 @@ struct asynchia_buffer* new_buffer(ssize_t length) {
 
 ssize_t add(struct asynchia_buffer* buf, char* abuf, ssize_t length) {
 	ssize_t i;
-	for (i = 0; i < min(length, buf->length - buf->size); ++i) {
+	for (i = 0; i < minsize(length, buf->length - buf->size); ++i) {
 		buf->buf[buf->size + i] = abuf[i];
 	}
 	buf->size += i;
