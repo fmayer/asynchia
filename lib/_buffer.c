@@ -4,7 +4,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-
 struct mysend_ret {
 	ssize_t ret;
 	int errsv;
@@ -40,16 +39,11 @@ struct asynchia_buffer* new_buffer(ssize_t length) {
 }
 
 ssize_t add(struct asynchia_buffer* buf, char* abuf, ssize_t length) {
-	if (buf->size + length > buf->length) {
-		if (expand(buf, buf->size + length) == -1) {
-			return -1;
-		}
-	}
 	ssize_t i;
-	for (i = 0; i < length; ++i) {
+	for (i = 0; i < min(length, buf->length - buf->size); ++i) {
 		buf->buf[buf->size + i] = abuf[i];
 	}
-	buf->size += length;
+	buf->size += i;
 	return 0;
 }
 
@@ -58,7 +52,11 @@ ssize_t mysend(struct asynchia_buffer* buf, int sockfd, int flags) {
 	int errsv;
 	struct mysend_ret mret;
 
-	if ((ret = send(sockfd, buf->buf + buf->position, buf->size - buf->position, flags)) == -1) {
+	if (
+	(ret = send(sockfd,
+		buf->buf + buf->position,
+		buf->size - buf->position,
+		flags)) == -1) {
 		errsv = errno;
 	}
 	buf->position += ret;
@@ -66,8 +64,8 @@ ssize_t mysend(struct asynchia_buffer* buf, int sockfd, int flags) {
 	mret.ret = ret;
 	mret.errsv = errsv;
 	return ret;
-} 
-		
+}
+
 int main() {
 	struct asynchia_buffer* buf = new_buffer(20);
 	printf("%d\n", add(buf, "abcde", 5));
