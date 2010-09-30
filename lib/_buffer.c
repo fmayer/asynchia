@@ -36,7 +36,7 @@ struct asynchia_lilst {
 
 struct asynchia_lilstitem {
 	void* item;
-	void* next;
+	asynchia_lilstitem* next;
 };
 
 struct asynchia_send_ret {
