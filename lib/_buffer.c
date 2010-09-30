@@ -44,7 +44,7 @@ ssize_t add(struct asynchia_buffer* buf, char* abuf, ssize_t length) {
 		buf->buf[buf->size + i] = abuf[i];
 	}
 	buf->size += i;
-	return 0;
+	return i;
 }
 
 ssize_t mysend(struct asynchia_buffer* buf, int sockfd, int flags) {
