@@ -26,7 +26,7 @@ from benchutil import *
 
 def _mk_parser(col, mp, size):
     trnsp = mock_handler(mp, os.urandom(size))
-    sub = itertools.repeat(range(20))
+    sub = itertools.repeat(range(250, 20000))
     chunks = []
     x = size
     while x > 0:
