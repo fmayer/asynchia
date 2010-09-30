@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-static ssize_t minsize(ssize_t a, ssize_t b) {
+static size_t minsize(size_t a, size_t b) {
 	if (a < b) {
 		return a;
 	}
@@ -12,18 +12,18 @@ static ssize_t minsize(ssize_t a, ssize_t b) {
 }
 
 struct mysend_ret {
-	ssize_t ret;
+	size_t ret;
 	int errsv;
 };
 
 struct asynchia_buffer {
-	ssize_t size;
-	ssize_t length;
-	ssize_t position;
+	size_t size;
+	size_t length;
+	size_t position;
 	char* buf;
 };
 
-int expand(struct asynchia_buffer* buf, ssize_t n) {
+int expand(struct asynchia_buffer* buf, size_t n) {
 	char* nbuf = realloc(buf->buf, buf->length + n);
 	if (nbuf != NULL) {
 		buf->buf = nbuf;
@@ -34,7 +34,7 @@ int expand(struct asynchia_buffer* buf, ssize_t n) {
 	}
 }
 
-struct asynchia_buffer* new_buffer(ssize_t length) {
+struct asynchia_buffer* new_buffer(size_t length) {
 	struct asynchia_buffer* nbuf = malloc(sizeof(struct asynchia_buffer));
 	if (nbuf != NULL) {
 		nbuf->size = 0;
@@ -45,8 +45,8 @@ struct asynchia_buffer* new_buffer(ssize_t length) {
 	return nbuf;
 }
 
-ssize_t add(struct asynchia_buffer* buf, char* abuf, ssize_t length) {
-	ssize_t i;
+size_t add(struct asynchia_buffer* buf, char* abuf, size_t length) {
+	size_t i;
 	for (i = 0; i < minsize(length, buf->length - buf->size); ++i) {
 		buf->buf[buf->size + i] = abuf[i];
 	}
@@ -54,8 +54,8 @@ ssize_t add(struct asynchia_buffer* buf, char* abuf, ssize_t length) {
 	return i;
 }
 
-ssize_t mysend(struct asynchia_buffer* buf, int sockfd, int flags) {
-	ssize_t ret;
+size_t mysend(struct asynchia_buffer* buf, int sockfd, int flags) {
+	size_t ret;
 	int errsv;
 	struct mysend_ret mret;
 
