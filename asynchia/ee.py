@@ -388,7 +388,36 @@ class NaiveDelimitedStringCollector(DelimitedCollector):
     def __init__(self, size, onclose=None):
         DelimitedCollector.__init__(self, StringCollector(), size, onclose)
 
-DelimitedStringCollector = NaiveDelimitedStringCollector
+
+class ByteArrayCollector(Collector):
+    def __init__(self, size, onclose=None):
+        Collector.__init__(self, onclose)
+        
+        self.pos = self.len_ = self.extended = 0
+        self.size = size
+        
+        self.array = bytearray(size)
+    
+    def add_data(self, tnsp, nbytes):
+        Collector.add_data(self, tnsp, nbytes)
+        
+        data = tnsp.recv(min(nbytes, self.size - self.len_))
+        data = data[: self.size - self.len_]
+        
+        self.array[self.len_: self.len_ + len(data)] = data
+        self.len_ += len(data)
+        
+        if self.len_ == self.size:
+            self.close()
+        
+        return self.len_ == self.size, len(data)
+    
+    @property
+    def value(self):
+        return str(self.array)
+
+
+DelimitedStringCollector = ByteArrayCollector
 if hasattr(__builtin__, 'memoryview'):
     class MemoryViewCollector(Collector):
         def __init__(self, size, onclose=None):
@@ -399,8 +428,6 @@ if hasattr(__builtin__, 'memoryview'):
         def add_data(self, prot, nbytes):
             """ Write at most nbytes bytes from prot to string. """
             Collector.add_data(self, prot, nbytes)
-            if not self.vsize:
-                return True, 0
             
             nrecv = prot.recv_into(self.view, min(nbytes, self.vsize))
             self.view = self.view[nrecv:]
