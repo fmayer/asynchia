@@ -17,7 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import __builtin__
+# For Python 3.x
+import __builtin__ as __builtin__
 
 import asynchia
 from asynchia.util import EMPTY_BYTES
