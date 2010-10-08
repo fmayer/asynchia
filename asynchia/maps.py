@@ -292,7 +292,12 @@ class PollSocketMap(RobustSocketMap):
             if fileno == self.controlfd:
                 interrupted = True
                 continue
-            obj = self.socket_list[fileno]
+            try:
+                obj = self.socket_list[fileno]
+            # MacOS seems to give us invalid fds and thus we need to do
+            # this sanity check.
+            except KeyError:
+                continue
             if flags & (select.POLLIN | select.POLLPRI):
                 if obj.connected and is_closed(obj.socket):
                     self.notifier.close_obj(obj)
