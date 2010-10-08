@@ -206,7 +206,7 @@ class DataNotifier(object):
         datanot = cls(socket_map)
         threading.Thread(
             target=cls._coroutine, args=(datanot, fun, args, kwargs)
-        )
+        ).start()
         return datanot
 
 
@@ -222,3 +222,5 @@ class _ThreadedDataHandler(asynchia.Handler):
         """ Implementation detail. """
         self.transport.recv(1)
         self.datanotifier.submit(self.datanotifier.injected)
+        # Not needed anymore.
+        self.transport.close()

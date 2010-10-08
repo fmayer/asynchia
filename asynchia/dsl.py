@@ -125,10 +125,26 @@ class Container(object):
 class State(object):
     """ State of the collection done by ExprCollectorQueue. Used to enable
     lookbacks. """
-    def __init__(self):
+    def __init__(self, parentstate=None):
         self.tbl = {}
         self.ind = 0
         self.nametbl = {}
+        
+        self.parent = parentstate
+    
+    def __getitem__(self, ind):
+        if isinstance(ind, (long, int)):
+            return self.tbl[ind]
+        else:
+            return self.nametbl[ind]
+    
+    def glob(self, ind):
+        if ind in self.nametbl:
+            return self.nametbl[ind]
+        elif self.parent is not None:
+            return self.parent.glob(ind)
+        else:
+            raise IndexError
 
 
 class Expr(object):
@@ -137,7 +153,12 @@ class Expr(object):
         self.name = None
     
     def __add__(self, other):
-        return ExprAdd(self, other)
+        return ExprAdd([self, other])
+    
+    def __mul__(self, other):
+        return ExprMul(self, other)
+    
+    __rmul__ = __mul__
     
     def __getitem__(self, other):
         self.name = other
@@ -147,13 +168,13 @@ class Expr(object):
 class ExprCollectorQueue(asynchia.ee.Collector):
     """ Queue to collect the data specified by the list of expressions
     passed to it. """
-    def __init__(self, exprs, onclose=None):
+    def __init__(self, exprs, parentstate=None, onclose=None):
         asynchia.ee.Collector.__init__(self, onclose)
         
         self.exprs = exprs
         self.done = []
         
-        self.state = State()
+        self.state = State(parentstate)
         self.state.tbl = self.done
         
         self.coll = None
@@ -192,18 +213,45 @@ class ExprCollectorQueue(asynchia.ee.Collector):
         return (elem.value for elem in self.done)
 
 
-class ExprAdd(Expr):
-    def __init__(self, one, other):
+class ExprMul(Expr):
+    def __init__(self, expr, lookback):
         Expr.__init__(self)
-        self.exprs = [one, other]
+        
+        self.expr = expr
+        self.lookback = lookback
+    
+    def __call__(self, state=None, onclose=None):
+        # We do not need to copy here as the expressions can no longer
+        # be changed and thus really all are the same.
+        return ExprCollectorQueue(
+            [self.expr] * self.lookback(state),
+            state,
+            onclose
+        )
+    
+    def produce(self, value):
+        result = asynchia.ee.StringInput(b(""))
+        for elem in value:
+            result += self.expr.produce(elem)
+        return result
+
+
+class ExprAdd(Expr):
+    def __init__(self, exprs):
+        Expr.__init__(self)
+        self.exprs = exprs
     
     def __call__(self, state=None, onclose=None):
         # We need to pass a copy so ExprCollectorQueue does not pop
         # from this list. Consider creating the copy in
         # ExprCollectorQueue.__init__.
-        return ExprCollectorQueue(self.exprs[:], onclose)
+        return ExprCollectorQueue(self.exprs[:], state, onclose)
     
     def __add__(self, other):
+        return ExprAdd(self.exprs + [other])
+    
+    # For the sake of completeness, not that it would matter in many cases.
+    def __iadd__(self, other):
         self.exprs.append(other)
         return self
     
@@ -322,6 +370,12 @@ def lookback(ind, fun=(lambda x: x.value)):
     else:
         def _fun(state):
             return fun(state.nametbl[ind])
+    return _fun
+
+
+def glob(ind, fun=(lambda x: x.value)):
+    def _fun(state):
+        return fun(state.glob(ind))
     return _fun
 
 

@@ -140,3 +140,6 @@ class QSocketMap(asynchia.SocketMap):
         for handler in self.handler_map:
             self.notifier.cleanup_obj(handler)
         self.handler_map.clear()
+    
+    def is_empty(self):
+        return bool(self.handler_map)

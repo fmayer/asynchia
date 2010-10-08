@@ -1,0 +1,13 @@
+0.1.1
+=====
+* Fixed critical bug in DSL.
+* Fixed bug in PollSocketMap that caused the timeout to be interpreted as
+  milliseconds rather than seconds.
+* Improve support for nested expressions in the DSL.
+* Add asynchia.ee.DelimitedStringCollector with an efficient implementation
+  on Python 2.7.
+* Revamp close logic so that handle_close and handle_cleanup are never
+  called multiple times and so that the socket map leaves the
+  main loop once its close method is called.
+* Misc. bugfixes.
+* Add SocketMap.is_empty.

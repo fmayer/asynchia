@@ -18,6 +18,7 @@
 
 import itertools
 import inspect
+import struct
 
 import unittest
 
@@ -61,9 +62,15 @@ class TestDSL(unittest.TestCase):
         StringInput = asynchia.ee.StringInput 
         asynchia.ee.StringInput = lambda x: x
     
-    
     def tearDown(self):
         asynchia.ee.StringInput = StringInput
+    
+    def test_expradd(self):
+        o1, o2, o3 = db.L(), db.L(), db.L()
+        a = o1 + o2
+        b = a + o3
+        self.assertEqual(a.exprs, [o1, o2])
+        self.assertEqual(b.exprs, [o1, o2, o3])
     
     def test_LFLSE(self):
         e = db.L() + db.B() + LFLSE(-1)
@@ -162,6 +169,63 @@ class TestDSL(unittest.TestCase):
         self.assertEqual(d['size'], 5)
         self.assertEqual(d['blub'], 1)
         self.assertEqual(d['string'], b('ABCDE'))
+    
+    def test_mul(self):
+        x = db.B() + lookback(0) * db.B()
+        c = x()
+        
+        prod = x.produce((3, (1, 2, 5)))
+        
+        self.assertEqual(
+            prod,
+            struct.pack('!BBBB', 3, 1, 2, 5)
+        )
+        m = asynchia.ee.MockHandler(prod + b('x'))
+        until_done(lambda: c.add_data(m, 10))
+        self.assertEqual(exhaust(c.value), [3, [1, 2, 5]])
+    
+    def test_mul2(self):
+        x = db.B() + db.B() * lookback(0)
+        c = x()
+        
+        prod = x.produce((3, (1, 2, 5)))
+        
+        self.assertEqual(
+            prod,
+            struct.pack('!BBBB', 3, 1, 2, 5)
+        )
+        m = asynchia.ee.MockHandler(prod + b('x'))
+        until_done(lambda: c.add_data(m, 10))
+        self.assertEqual(exhaust(c.value), [3, [1, 2, 5]])
+    
+    def test_nested_mul(self):
+        x = db.B() + (lambda x: 2) * ((lambda x: x.parent[0].value) * db.B())
+        c = x()
+        
+        prod = x.produce((3, ((1, 2, 5), (4, 5, 6))))
+        
+        self.assertEqual(
+            prod,
+            struct.pack('!BBBBBBB', 3, 1, 2, 5, 4, 5, 6)
+        )
+        m = asynchia.ee.MockHandler(prod + b('x'))
+        until_done(lambda: c.add_data(m, 10))
+        self.assertEqual(exhaust(c.value), [3, [[1, 2, 5], [4, 5, 6]]])
+
+    def test_nested_mul_glob(self):
+        x = db.B()['foo'] + (lambda x: 2) * ((lambda x: x.glob('foo').value) * db.B())
+        c = x()
+        
+        prod = x.produce((3, ((1, 2, 5), (4, 5, 6))))
+        
+        self.assertEqual(
+            prod,
+            struct.pack('!BBBBBBB', 3, 1, 2, 5, 4, 5, 6)
+        )
+        m = asynchia.ee.MockHandler(prod + b('x'))
+        until_done(lambda: c.add_data(m, 10))
+        self.assertEqual(exhaust(c.value), [3, [[1, 2, 5], [4, 5, 6]]])
+    
 
 if __name__ == '__main__':
     unittest.main()

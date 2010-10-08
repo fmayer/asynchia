@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+# For Python 3.x
+import __builtin__ as __builtin__
 
 import asynchia
 from asynchia.util import EMPTY_BYTES
@@ -383,6 +385,67 @@ class DelimitedCollector(Collector):
         return self.collector.value
 
 
+class NaiveDelimitedStringCollector(DelimitedCollector):
+    def __init__(self, size, onclose=None):
+        DelimitedCollector.__init__(self, StringCollector(), size, onclose)
+
+
+class ByteArrayCollector(Collector):
+    def __init__(self, size, onclose=None):
+        Collector.__init__(self, onclose)
+        
+        self.pos = self.len_ = self.extended = 0
+        self.size = size
+        
+        self.array = bytearray(size)
+    
+    def add_data(self, tnsp, nbytes):
+        Collector.add_data(self, tnsp, nbytes)
+        
+        data = tnsp.recv(min(nbytes, self.size - self.len_))
+        data = data[: self.size - self.len_]
+        
+        self.array[self.len_: self.len_ + len(data)] = data
+        self.len_ += len(data)
+        
+        if self.len_ == self.size:
+            self.close()
+        
+        return self.len_ == self.size, len(data)
+    
+    @property
+    def value(self):
+        return str(self.array)
+
+
+DelimitedStringCollector = ByteArrayCollector
+if hasattr(__builtin__, 'memoryview'):
+    class MemoryViewCollector(Collector):
+        def __init__(self, size, onclose=None):
+            Collector.__init__(self, onclose)
+            self.size = self.vsize = size
+            self.view = self.intvalue = memoryview(bytearray(size))
+        
+        def add_data(self, prot, nbytes):
+            """ Write at most nbytes bytes from prot to string. """
+            Collector.add_data(self, prot, nbytes)
+            
+            nrecv = prot.recv_into(self.view, min(nbytes, self.vsize))
+            self.view = self.view[nrecv:]
+            self.vsize -= nrecv
+            
+            if self.vsize == 0:
+                self.close()
+            
+            return (self.vsize == 0), nrecv
+        
+        @property
+        def value(self):
+            return self.intvalue.tobytes()
+    
+    DelimitedStringCollector = MemoryViewCollector
+
+
 class CollectorQueue(Collector):
     """ Write data to the first collector until CollectorFull is raised,
     afterwards repeat with next. When the CollectorQueue gets empty it
@@ -392,6 +455,13 @@ class CollectorQueue(Collector):
         if collectors is None:
             collectors = []
         self.collectors = collectors
+    
+    def __iadd__(self, collector):
+        self.collectors.append(collector)
+        return self
+    
+    def __add__(self, collector):
+        return CollectorQueue(self.collectors + [collector])
     
     def add_collector(self, coll):
         """ Add coll to queue. """

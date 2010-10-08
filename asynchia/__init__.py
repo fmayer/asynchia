@@ -29,6 +29,9 @@ from asynchia.const import trylater, connection_lost
 
 __version__ = '0.1.0a'
 
+class SocketMapClosedError(Exception):
+    pass
+
 def _unawait_conn(obj):
     """ Helper function for Notifier. """
     obj.stop_awaiting_connect()
@@ -55,6 +58,18 @@ class SocketMap(object):
         if notifier is None:
             notifier = Notifier()
         self.notifier = notifier
+        self.closed = False
+    
+    def poll(self, timeout=None):
+        raise NotImplementedError
+    
+    def run(self):
+        """ Periodically poll for I/O. """
+        while True:
+            try:
+                self.poll(None)
+            except SocketMapClosedError:
+                return
     
     def add_transport(self, obj):
         """ Add handler to the socket-map. This gives the SocketMap
@@ -104,6 +119,9 @@ class SocketMap(object):
     def close(self):
         """ Call the handle_cleanup methods of all handlers contained
         in the socket-map, indicating that they are void. """
+        self.closed = True
+    
+    def is_empty(self):
         raise NotImplementedError
 
 
@@ -188,6 +206,14 @@ class Transport(object):
         self.handler = None
         
         self.closed = False
+        self.cleanedup = False
+    
+    def recv_into(self, buf, nbytes, *args):
+        if nbytes is None:
+            nbytes = len(buf)
+        rcv = self.recv(nbytes, *args)
+        buf[:len(rcv)] = rcv
+        return len(rcv)
     
     def recv(self, nbytes, *args):
         """ Override. """
@@ -234,16 +260,23 @@ class Transport(object):
         # Ensure the handler is only called once, even if multiple connection
         # closed events should be fired (which could happen due to the code
         # in SocketTransport.send).
-        if self.handler is not None and not self.closed:
-            self.handler.handle_close()
-        self.closed = True
+        try:
+            if self.handler is not None and not self.closed:
+                self.handler.handle_close()
+                self.closed = True
+        finally:
+            self.closed = True
     
     def handle_cleanup(self):
         """ Called whenever the Handler is voided, for whatever reason.
         This may be the shutdown of the program, the closing of the
         connection by the local end or the like. """
-        if self.handler is not None:
-            self.handler.handle_cleanup()
+        try:
+            if self.handler is not None and not self.cleanedup:
+                self.handler.handle_cleanup()
+                self.cleanedup = True
+        finally:
+            self.cleanedup = True
 
 
 class SocketTransport(Transport):
@@ -472,6 +505,19 @@ class SocketTransport(Transport):
             or if an error is pending for the socket. """
         try:
             data = self.socket.recv(buffer_size, flags)
+            if not data:
+                self.socket_map.notifier.close_obj(self)
+            return data
+        except socket.error, err:
+            if err.args[0] in connection_lost:
+                self.socket_map.notifier.close_obj(self)
+                return EMPTY_BYTES
+            else:
+                raise
+    
+    def recv_into(self, buf, nbytes, flags=0):
+        try:
+            data = self.socket.recv_into(buf, nbytes, flags)
             if not data:
                 self.socket_map.notifier.close_obj(self)
             return data
