@@ -180,7 +180,7 @@ class TestDSL(unittest.TestCase):
             prod,
             struct.pack('!BBBB', 3, 1, 2, 5)
         )
-        m = asynchia.ee.MockHandler(prod + 'x')
+        m = asynchia.ee.MockHandler(prod + b('x'))
         until_done(lambda: c.add_data(m, 10))
         self.assertEqual(exhaust(c.value), [3, [1, 2, 5]])
     
@@ -194,7 +194,7 @@ class TestDSL(unittest.TestCase):
             prod,
             struct.pack('!BBBB', 3, 1, 2, 5)
         )
-        m = asynchia.ee.MockHandler(prod + 'x')
+        m = asynchia.ee.MockHandler(prod + b('x'))
         until_done(lambda: c.add_data(m, 10))
         self.assertEqual(exhaust(c.value), [3, [1, 2, 5]])
     
@@ -208,7 +208,7 @@ class TestDSL(unittest.TestCase):
             prod,
             struct.pack('!BBBBBBB', 3, 1, 2, 5, 4, 5, 6)
         )
-        m = asynchia.ee.MockHandler(prod + 'x')
+        m = asynchia.ee.MockHandler(prod + b('x'))
         until_done(lambda: c.add_data(m, 10))
         self.assertEqual(exhaust(c.value), [3, [[1, 2, 5], [4, 5, 6]]])
 
@@ -222,7 +222,7 @@ class TestDSL(unittest.TestCase):
             prod,
             struct.pack('!BBBBBBB', 3, 1, 2, 5, 4, 5, 6)
         )
-        m = asynchia.ee.MockHandler(prod + 'x')
+        m = asynchia.ee.MockHandler(prod + b('x'))
         until_done(lambda: c.add_data(m, 10))
         self.assertEqual(exhaust(c.value), [3, [[1, 2, 5], [4, 5, 6]]])
     
