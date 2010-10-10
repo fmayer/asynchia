@@ -206,6 +206,14 @@ class Transport(object):
         self.handler = None
         
         self.closed = False
+        self.cleanedup = False
+    
+    def recv_into(self, buf, nbytes, *args):
+        if nbytes is None:
+            nbytes = len(buf)
+        rcv = self.recv(nbytes, *args)
+        buf[:len(rcv)] = rcv
+        return len(rcv)
     
     def recv(self, nbytes, *args):
         """ Override. """
@@ -263,8 +271,12 @@ class Transport(object):
         """ Called whenever the Handler is voided, for whatever reason.
         This may be the shutdown of the program, the closing of the
         connection by the local end or the like. """
-        if self.handler is not None:
-            self.handler.handle_cleanup()
+        try:
+            if self.handler is not None and not self.cleanedup:
+                self.handler.handle_cleanup()
+                self.cleanedup = True
+        finally:
+            self.cleanedup = True
 
 
 class SocketTransport(Transport):
@@ -493,6 +505,19 @@ class SocketTransport(Transport):
             or if an error is pending for the socket. """
         try:
             data = self.socket.recv(buffer_size, flags)
+            if not data:
+                self.socket_map.notifier.close_obj(self)
+            return data
+        except socket.error, err:
+            if err.args[0] in connection_lost:
+                self.socket_map.notifier.close_obj(self)
+                return EMPTY_BYTES
+            else:
+                raise
+    
+    def recv_into(self, buf, nbytes, flags=0):
+        try:
+            data = self.socket.recv_into(buf, nbytes, flags)
             if not data:
                 self.socket_map.notifier.close_obj(self)
             return data
