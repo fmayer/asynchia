@@ -90,8 +90,8 @@ class TestUtil(unittest.TestCase):
         for x in s:
             avg2.add_value(x)
         
-        self.assertEqual(avg.avg, avg2.avg)
-        self.assertEqual(avg.avg, sum(s) / float(len(s)))
+        self.assertAlmostEqual(avg.avg, avg2.avg)
+        self.assertAlmostEqual(avg.avg, sum(s) / float(len(s)))
 
     def test_limitedaverage(self):
         avg = asynchia.util.LimitedAverage(10)
@@ -103,8 +103,8 @@ class TestUtil(unittest.TestCase):
         for x in s:
             avg2.add_value(x)
         
-        self.assertEqual(avg.avg, avg2.avg)
-        self.assertEqual(avg.avg, sum(s[-10:]) / float(len(s[-10:])))
+        self.assertAlmostEqual(avg.avg, avg2.avg)
+        self.assertAlmostEqual(avg.avg, sum(s[-10:]) / float(len(s[-10:])))
 
 
 if __name__ == '__main__':
