@@ -190,6 +190,8 @@ def _mp_client(fun, args, kwargs, addr, pwd, id_):
         try:
             sock.connect(addr)
         except socket.error:
+            # FIXME: Only retry in certain cases, lest we enter
+            # an infinite loop.
             pass
         else:
             break
