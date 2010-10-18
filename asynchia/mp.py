@@ -136,7 +136,7 @@ class _MPServerHandler(asynchia.Handler):
     BUFFER = 2048
     def __init__(self, transport, serv):
         asynchia.Handler.__init__(self, transport)
-        self.data = ''
+        self.data = b('')
         self.serv = serv
         
         self.transport.set_readable(True)
