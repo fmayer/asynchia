@@ -193,10 +193,7 @@ class MPServer(asynchia.Server):
         return id_
     
     def get_notifier(self, id_):
-        """ Get the notifier corresponding to the id and free the id.
-        Subsequent calls with the same id will either fail or return
-        a different notifier (in case a new one has acquired the id).
-        """
+        """ Get the notifier corresponding to the id. """
         return self.notimap[id_]
     
     def release_notifier(self, id_):
