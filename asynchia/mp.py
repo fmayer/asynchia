@@ -192,7 +192,6 @@ class MPServer(asynchia.Server):
         self.notimap[id_] = noti
         return id_
     
-    # FIXME: Rename to pop_notifier.
     def pop_notifier(self, id_):
         """ Get the notifier corresponding to the id and free the id.
         Subsequent calls with the same id will either fail or return
