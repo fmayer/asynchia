@@ -22,8 +22,6 @@ import pickle
 import collections
 import multiprocessing
 
-from Queue import Empty
-
 import asynchia
 from asynchia.forthcoming import DataNotifier
 from asynchia.util import IDPool, b
@@ -49,7 +47,7 @@ class MPPool(object):
         for id_ in xrange(procs):
             queue = multiprocessing.Queue()
             proc = multiprocessing.Process(
-                target=self.worker, args=(queue, id_)
+                target=self.worker, args=(queue, )
             )
             
             proc.start()
@@ -121,7 +119,7 @@ class MPPool(object):
         
         queue = multiprocessing.Queue()
         proc = multiprocessing.Process(
-            target=self.worker, args=(queue, id_)
+            target=self.worker, args=(queue, )
         )
             
         proc.start()
@@ -130,7 +128,7 @@ class MPPool(object):
         self._fill_slots()
     
     @staticmethod
-    def worker(queue, wid_):
+    def worker(queue):
         """ The function run in the client that loops and reads the jobs from 
         queue (as a tuple containing the function, the positional arguments to
         be passed to it, the keyword arguments to be passed to it, the address
