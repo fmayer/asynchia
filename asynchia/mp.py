@@ -162,7 +162,7 @@ class _MPServerHandler(asynchia.Handler):
         # far easier and straightforward) to avoid unpickling untrusted
         # data.
         id_, self.data = self.data.split(b('|'), 1)
-        notifier = self.serv.get_notifier(int(id_))
+        notifier = self.serv.pop_notifier(int(id_))
         if self.data[:len(notifier.pwd)] == notifier.pwd:
             notifier.submit(
                 pickle.loads(self.data[len(notifier.pwd):])
@@ -174,6 +174,8 @@ class _MPServerHandler(asynchia.Handler):
 
 
 class MPServer(asynchia.Server):
+    """ Server managing the mapping of job-ids to notifiers and accepting
+    connections of worker clients. """
     def __init__(self, transport):
         asynchia.Server.__init__(
             self, transport,
@@ -190,7 +192,12 @@ class MPServer(asynchia.Server):
         self.notimap[id_] = noti
         return id_
     
-    def get_notifier(self, id_):
+    # FIXME: Rename to pop_notifier.
+    def pop_notifier(self, id_):
+        """ Get the notifier corresponding to the id and free the id.
+        Subsequent calls with the same id will either fail or return
+        a different notifier (in case a new one has acquired the id).
+        """
         self.idpool.release(id_)
         return self.notimap[id_]
     
