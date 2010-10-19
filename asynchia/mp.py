@@ -29,7 +29,10 @@ from asynchia.forthcoming import DataNotifier
 from asynchia.util import IDPool, b
 
 
+# FIXME: Consider adding a priority queue.
 class MPPool(object):
+    """ Concurrently execute jobs on a fixed amount of workers. If all workers
+    are busy, the job is sheduled for execution. """
     def __init__(self, procs, notifiers=None):
         if notifiers is None:
             notifiers = []
@@ -40,26 +43,17 @@ class MPPool(object):
         
         self.wmap = {}
         self.imap = {}
-        self.nmap = {}
         
-        self.statusq = multiprocessing.Queue()
+        self.nmap = {}
         
         for id_ in xrange(procs):
             queue = multiprocessing.Queue()
             proc = multiprocessing.Process(
-                target=self.worker, args=(queue, self.statusq, id_)
+                target=self.worker, args=(queue, id_)
             )
             
             proc.start()
             self.imap[id_] = (queue, proc)
-    
-    def handle_squeue(self):
-        while True:
-            try:
-                id_ = self.statusq.get_nowait()
-                self.imap[id_] = self.wmap.pop(id_)
-            except Empty:
-                break
     
     def register(self, notifier):
         notifier.pool = self
@@ -71,9 +65,8 @@ class MPPool(object):
     
     def free(self, notifier):
         self.running -= 1
-        self.handle_squeue()
-        
-        del self.nmap[notifier]
+        _, _, id_ = nmap.pop(notifier)
+        self.imap[id_] = self.wmap.pop(id_)
         self._fill_slots()
     
     def _fill_slots(self):
@@ -116,7 +109,7 @@ class MPPool(object):
         
         queue = multiprocessing.Queue()
         proc = multiprocessing.Process(
-            target=self.worker, args=(queue, self.statusq, id_)
+            target=self.worker, args=(queue, id_)
         )
             
         proc.start()
@@ -125,7 +118,7 @@ class MPPool(object):
         self._fill_slots()
     
     @staticmethod
-    def worker(queue, statusq, wid_):
+    def worker(queue, wid_):
         """ The function run in the client that loops and reads the jobs from 
         queue (as a tuple containing the function, the positional arguments to
         be passed to it, the keyword arguments to be passed to it, the address
@@ -139,7 +132,6 @@ class MPPool(object):
             if fun is None:
                 break
             _mp_client(fun, args, kwargs, addr, pwd, id_)
-            statusq.put(wid_)
     
     
 class _MPServerHandler(asynchia.Handler):
