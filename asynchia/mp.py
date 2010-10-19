@@ -102,6 +102,8 @@ class MPPool(object):
         return True
     
     def terminate(self, notifier):
+        """ Kill the process for whose data the specified notifer is currently
+        waiting. """
         try:
             queue, proc, id_ = self.nmap[notifier]
         except KeyError:
@@ -124,6 +126,14 @@ class MPPool(object):
     
     @staticmethod
     def worker(queue, statusq, wid_):
+        """ The function run in the client that loops and reads the jobs from 
+        queue (as a tuple containing the function, the positional arguments to
+        be passed to it, the keyword arguments to be passed to it, the address
+        of the server waiting for the reply, its password and the job-id that
+        enables the server to associate the result with the corresponding
+        notifier) until it is supplied None as the function. Also puts the 
+        worker-id into the status-queue to tell the pool that the worker is
+        ready to execute a new job. """
         while True:
             fun, args, kwargs, addr, pwd, id_ = queue.get()
             if fun is None:
@@ -133,6 +143,7 @@ class MPPool(object):
     
     
 class _MPServerHandler(asynchia.Handler):
+    """ Implementation detail. """
     BUFFER = 2048
     def __init__(self, transport, serv):
         asynchia.Handler.__init__(self, transport)
@@ -142,9 +153,11 @@ class _MPServerHandler(asynchia.Handler):
         self.transport.set_readable(True)
     
     def handle_read(self):
+    """ Implementation detail. """
         self.data += self.transport.recv(self.BUFFER)
     
     def handle_close(self):
+    """ Implementation detail. """
         # The password is not contained in a pickle tuple (which would be
         # far easier and straightforward) to avoid unpickling untrusted
         # data.
@@ -171,6 +184,8 @@ class MPServer(asynchia.Server):
         self.notimap = {}
     
     def add_notifier(self, noti):
+        """ Add a notifier and get the id that is to be passed to the
+        corresponding worker process. """
         id_ = self.idpool.get()
         self.notimap[id_] = noti
         return id_
