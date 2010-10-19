@@ -190,8 +190,8 @@ class MPServer(asynchia.Server):
     def add_notifier(self, noti):
         """ Add a notifier and get the id that is to be passed to the
         corresponding worker process. Subsequent calls to get_notifier
-        with the id returned will return the notifier passed as an
-        argument. """
+        with the id returned will return the notifier passed to this
+        method. """
         id_ = self.idpool.get()
         self.notimap[id_] = noti
         return id_
@@ -202,8 +202,7 @@ class MPServer(asynchia.Server):
     
     def release_notifier(self, id_):
         """ Release the id from the notifier. Thereafter calls to get_notifier
-        will no longer return the current notifier when given the id as a
-        argument. """
+        will no longer return the current notifier when given the id. """
         self.idpool.release(id_)
         self.notimap.pop(id_)
 
