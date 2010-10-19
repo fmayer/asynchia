@@ -124,9 +124,7 @@ class MPPool(object):
         be passed to it, the keyword arguments to be passed to it, the address
         of the server waiting for the reply, its password and the job-id that
         enables the server to associate the result with the corresponding
-        notifier) until it is supplied None as the function. Also puts the 
-        worker-id into the status-queue to tell the pool that the worker is
-        ready to execute a new job. """
+        notifier) until it is supplied None as the function. """
         while True:
             fun, args, kwargs, addr, pwd, id_ = queue.get()
             if fun is None:
