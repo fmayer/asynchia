@@ -73,7 +73,7 @@ class MPPool(object):
         """ Tell the pool the job associate with the notifier has finished and
         the worker is thus ready for new jobs. """
         self.running -= 1
-        _, _, id_ = nmap.pop(notifier)
+        _, _, id_ = self.nmap.pop(notifier)
         self.imap[id_] = self.wmap.pop(id_)
         self._fill_slots()
     
@@ -155,11 +155,11 @@ class _MPServerHandler(asynchia.Handler):
         self.transport.set_readable(True)
     
     def handle_read(self):
-    """ Implementation detail. """
+        """ Implementation detail. """
         self.data += self.transport.recv(self.BUFFER)
     
     def handle_close(self):
-    """ Implementation detail. """
+        """ Implementation detail. """
         # The password is not contained in a pickle tuple (which would be
         # far easier and straightforward) to avoid unpickling untrusted
         # data.
