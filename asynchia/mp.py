@@ -56,26 +56,38 @@ class MPPool(object):
             self.imap[id_] = (queue, proc)
     
     def register(self, notifier):
+        """ Register the job described by the notifier for execution. It may
+        not be executed instantly if all workers are busy with other tasks,
+        in this case it is sheduled for execution. """
         notifier.pool = self
         if not self.run(notifier):
             self.notifiers.append(notifier)
     
     def unregister(self, notifier):
+        """ Remove job previously sheduled for execution. This may not be
+        possible if the job was already delegated to a worker process,
+        in this case the terminate method of MPPool should be used. """
         self.notifiers.remove(notifier)
     
     def free(self, notifier):
+        """ Tell the pool the job associate with the notifier has finished and
+        the worker is thus ready for new jobs. """
         self.running -= 1
         _, _, id_ = nmap.pop(notifier)
         self.imap[id_] = self.wmap.pop(id_)
         self._fill_slots()
     
     def _fill_slots(self):
+        """ Implementation detail. """
         while self.notifiers and self.running < self.procs:
             noti = self.notifiers.popleft()
             if not self.run(noti):
                 self.notifiers.appendleft(noti)
     
-    def run(self, notifier):            
+    def run(self, notifier):
+        """ Try and run the job associated with the MPNotifier supplied as an
+        argument. Upon success, return True. Upon failure (because all workers
+        are occupied with other jobs), return False. """
         try:
             id_ = self.imap.iterkeys().next()
         except StopIteration:
@@ -177,7 +189,9 @@ class MPServer(asynchia.Server):
     
     def add_notifier(self, noti):
         """ Add a notifier and get the id that is to be passed to the
-        corresponding worker process. """
+        corresponding worker process. Subsequent calls to get_notifier
+        with the id returned will return the notifier passed as an
+        argument. """
         id_ = self.idpool.get()
         self.notimap[id_] = noti
         return id_
@@ -187,11 +201,15 @@ class MPServer(asynchia.Server):
         return self.notimap[id_]
     
     def release_notifier(self, id_):
+        """ Release the id from the notifier. Thereafter calls to get_notifier
+        will no longer return the current notifier when given the id as a
+        argument. """
         self.idpool.release(id_)
         self.notimap.pop(id_)
 
 
 def _mp_client(fun, args, kwargs, addr, pwd, id_):
+    """ Implementation detail. """
     sock = socket.socket()
     while True:
         try:
@@ -242,6 +260,8 @@ class MPNotifier(DataNotifier):
         self.proc = None
     
     def start_standalone_proc(self):
+        """ Start a standalone process (as opposed to a worker in a pool)
+        that executes the job described by this notifier. """
         self.proc = multiprocessing.Process(
             target=_mp_client,
             args=(self.fun, self.args, self.kwargs,
@@ -252,7 +272,13 @@ class MPNotifier(DataNotifier):
         self.proc.start()
     
     def terminate_proc(self):
+        """ Terminate the process that runs the job associated with this
+        notifier, regardless of whether it was started in a pool or
+        as a standalone process. Return True upon success and False upon
+        failure. This may fail if the process was not yet started or
+        has already finished. """
         if self.proc is not None:
+        
             self.proc.terminate()
             return True
         elif self.pool is not None:
