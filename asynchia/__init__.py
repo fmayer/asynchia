@@ -27,7 +27,7 @@ import traceback
 from asynchia.util import EMPTY_BYTES
 from asynchia.const import trylater, connection_lost
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 class SocketMapClosedError(Exception):
     pass
