@@ -236,7 +236,7 @@ class SelectSocketMap(FragileSocketMap):
         super(SelectSocketMap, self).close()
     
     def is_empty(self):
-        return bool(self.socket_list)
+        return not bool(self.socket_list)
 
 
 class PollSocketMap(RobustSocketMap):
@@ -345,7 +345,7 @@ class PollSocketMap(RobustSocketMap):
         super(PollSocketMap, self).close()
     
     def is_empty(self):
-        return bool(self.socket_list)
+        return not bool(self.socket_list)
 
 
 class EPollSocketMap(RockSolidSocketMap):
@@ -446,7 +446,7 @@ class EPollSocketMap(RockSolidSocketMap):
         super(EPollSocketMap, self).close()
     
     def is_empty(self):
-        return bool(self.socket_list)
+        return not bool(self.socket_list)
 
 
 # It is possible to only get hangup events by applying the hack presented
@@ -569,7 +569,7 @@ class KQueueSocketMap(RockSolidSocketMap):
         super(KQueueSocketMap, self).close()
     
     def is_empty(self):
-        return bool(self.socket_list)
+        return not bool(self.socket_list)
 
 
 DefaultSocketMap = SelectSocketMap
