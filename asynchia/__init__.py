@@ -474,7 +474,7 @@ class SocketTransport(Transport):
             sockets and currently only implemented for IPv4 and IPv6.
             See arp(7) for details. """
         try:
-            return self.socket.send(data)
+            return self.socket.send(data, flags)
         except socket.error, err:
             if err.args[0] in trylater:
                 return 0
