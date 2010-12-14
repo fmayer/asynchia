@@ -146,6 +146,8 @@ class RockSolidSocketMap(ControlSocketSocketMap):
 
 class SelectSocketMap(FragileSocketMap):
     """ Decide which sockets have I/O to do using select.select. """
+    available = True
+    
     def __init__(self, notifier=None):
         FragileSocketMap.__init__(self, notifier)
         self.writers = []
@@ -242,9 +244,13 @@ class SelectSocketMap(FragileSocketMap):
 class PollSocketMap(RobustSocketMap):
     """ Decide which sockets have I/O to do using select.poll. 
     
-    Do not refer to this class without explicitely checking for its existance
-    first, it may not exist on some platforms (it is known not to on Windows).
+    Do not refer to this class without explicitely checking whether its
+    functionality is available on your operation system by checking
+    the `available` class-member, it may not exist on some platforms
+    (it is known not to on Windows).
     """
+    available = hasattr(select, 'poll')
+    
     def __init__(self, notifier=None):
         RobustSocketMap.__init__(self, notifier)
         self.socket_list = {}
@@ -351,10 +357,13 @@ class PollSocketMap(RobustSocketMap):
 class EPollSocketMap(RockSolidSocketMap):
     """ Decide which sockets have I/O to do using select.epoll. 
     
-    Do not refer to this class without explicitely checking for its existance
-    first, it may not exist on some platforms (it is known not to on Windows
-    and BSD).
+    Do not refer to this class without explicitely checking whether its
+    functionality is available on your operation system by checking
+    the `available` class-member, it may not exist on some platforms
+    (it is known not to on Windows and BSD).
     """
+    available = hasattr(select, 'epoll')
+    
     def __init__(self, notifier=None):
         RockSolidSocketMap.__init__(self, notifier)
         self.socket_list = {}
@@ -460,9 +469,13 @@ class EPollSocketMap(RockSolidSocketMap):
 class KQueueSocketMap(RockSolidSocketMap):
     """ Decide which sockets have I/O to do using select.kqueue. 
     
-    Do not refer to this class without explicitely checking for its existance
-    first, it may not exist on some platforms (it only exists on BSD).
+    Do not refer to this class without explicitely checking whether its
+    functionality is available on your operation system by checking
+    the `available` class-member, it may not exist on some platforms
+    (it only exists on BSD).
     """
+    available = hasattr(select, 'kqueue')
+    
     def __init__(self, nevents=100, notifier=None):
         RockSolidSocketMap.__init__(self, notifier)
         self.socket_list = {}
@@ -571,20 +584,7 @@ class KQueueSocketMap(RockSolidSocketMap):
     def is_empty(self):
         return not bool(self.socket_list)
 
-
-DefaultSocketMap = SelectSocketMap
-
-if hasattr(select, 'poll'):
-    DefaultSocketMap = PollSocketMap
-else:
-    del PollSocketMap
-
-if hasattr(select, 'epoll'):
-    DefaultSocketMap = EPollSocketMap
-else:
-    del EPollSocketMap
-
-if hasattr(select, 'kqueue'):
-    DefaultSocketMap = KQueueSocketMap
-else:
-    del KQueueSocketMap
+order = [SelectSocketMap, PollSocketMap, EPollSocketMap, KQueueSocketMap]
+for mp in order:
+    if mp.available:
+        DefaultSocketMap = mp
