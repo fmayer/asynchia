@@ -584,6 +584,7 @@ class KQueueSocketMap(RockSolidSocketMap):
     def is_empty(self):
         return not bool(self.socket_list)
 
+
 order = [SelectSocketMap, PollSocketMap, EPollSocketMap, KQueueSocketMap]
 for mp in order:
     if mp.available:
