@@ -24,7 +24,7 @@ import socket
 
 import traceback
 
-from asynchia.util import EMPTY_BYTES
+from asynchia.util import EMPTY_BYTES, is_unconnected
 from asynchia.const import trylater, connection_lost
 
 __version__ = '0.1.2'
@@ -326,14 +326,9 @@ class SocketTransport(Transport):
             self.socket_map.del_transport(self)
         
         sock.setblocking(0)
-        try:
-            sock.getpeername()
-        except socket.error, err:
-            if err.args[0] == errno.ENOTCONN:
-                await = True
-                self.connected = False
-            else:
-                raise
+        if is_unconnected(sock):
+            await = True
+            self.connected = False
         else:
             self.connected = True
             # To provide consistency. If an async socket that already had
