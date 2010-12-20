@@ -25,7 +25,7 @@ import socket
 import traceback
 
 from asynchia.util import EMPTY_BYTES, is_unconnected
-from asynchia.const import trylater, connection_lost
+from asynchia.const import trylater, connection_lost, inprogress
 
 __version__ = '0.1.2'
 
@@ -530,7 +530,7 @@ class SocketTransport(Transport):
         """ Connect to (host, port). """
         err = self.socket.connect_ex(address)
         # EWOULDBLOCK is only expected with WinSock.
-        if err in (errno.EINPROGRESS, errno.EWOULDBLOCK):
+        if err in inprogress:
             if not self.awaiting_connect:
                 self.connected = False
                 self.await_connect()
