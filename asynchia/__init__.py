@@ -281,12 +281,14 @@ class Transport(object):
 
 class SocketTransport(Transport):
     """ A transport that uses a socket to send and receive data. """
-    def __init__(self, socket_map, sock=None, handler=None):
+    def __init__(self, socket_map=None, sock=None, handler=None):
         super(SocketTransport, self).__init__(handler)
         # Make no assumptions on what we want to do with the handler.
         # The user will need to explicitely make it read- or writeable.
         if sock is None:
             sock = defaultsocket_factory()
+        if socket_map is None:
+            socket_map = global_socketmap
         self._readable = False
         self._writeable = False
         
@@ -605,7 +607,10 @@ class SendallTrait(object):
 class Handler(object):
     """ Handle a socket object. Call this objects handle_* methods upon I/O """
     # Dummy handlers.
-    def __init__(self, transport):
+    def __init__(self, transport=None):
+        if transport is None:
+            transport = defaulttransport(global_socketmap)
+        
         self.transport = transport
         
         self.transport.handler = self
@@ -689,4 +694,7 @@ class Server(AcceptHandler):
         finally:
             self.transport.close()
 
+
 defaultsocket_factory = socket.socket
+global_socketmap = None
+defaulttransport = SocketTransport
