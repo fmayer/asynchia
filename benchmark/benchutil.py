@@ -78,9 +78,9 @@ class TimeResult(object):
             len(self.data) - int(sample)
         )
     
-    def mean_stdev(self):
+    def mean_stdev(self, sample=True):
         mean = self.mean()
-        stdev = self.stdev(mean_=mean)
+        stdev = self.stdev(sample, mean)
         return mean, stdev
     
     def add_data(self, time_elapsed):
