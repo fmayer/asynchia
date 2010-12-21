@@ -223,6 +223,9 @@ def goodsize(maxsize):
 def is_closed(sock):
     """ Find out whether a socked is closed or not.
     Does only work on non-blocking sockets! """
+    if sock.type != socket.SOCK_STREAM:
+        raise ValueError("Socket is not stream socket.")
+    
     try:
         rcv = sock.recv(1, socket.MSG_PEEK)
     except socket.error, err:
@@ -234,6 +237,24 @@ def is_closed(sock):
             raise
     else:
         return not rcv
+
+
+def is_unconnected(sock):
+    """ Find out whether a socket has not yet been connected.
+    Does only work on non-blocking sockets! """
+    if sock.type != socket.SOCK_STREAM:
+        raise ValueError("Socket is not stream socket.")
+    
+    try:
+        sock.recv(0)
+    except socket.error, err:
+        if err.args[0] == errno.ENOTCONN:
+            return True
+        elif err.args[0] in asynchia.const.trylater:
+            return False
+        else:
+            raise
+    return False
 
 
 if sys.version_info >= (3, 0):
