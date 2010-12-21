@@ -45,6 +45,8 @@ import threading
 import asynchia
 from asynchia.util import b
 
+_NULL = object()
+
 class PauseContext(object):
     """ Collection of Coroutines which are currently paused but not waiting
     for any data. They are paused to prevent too much time to be spent in
@@ -126,7 +128,7 @@ class DataNotifier(object):
         self.rcallbacks = []
         self.coroutines = []
         self.finished = False
-        self.data = None
+        self.data = _NULL
         
         self.event = threading.Event()
         
@@ -138,7 +140,7 @@ class DataNotifier(object):
     
     def add_coroutine(self, coroutine):
         """ Add coroutine that waits for the submission of this data. """
-        if self.data is None:
+        if self.data is _NULL:
             self.coroutines.append(coroutine)
         else:
             coroutine.send(self.data)
@@ -146,7 +148,7 @@ class DataNotifier(object):
     def add_databack(self, callback):
         """ Add databack (function that receives the the data-notifier data
         upon submission as arguments). """
-        if self.data is None:
+        if self.data is _NULL:
             self.dcallbacks.append(callback)
         else:
             callback(self.data)
@@ -154,7 +156,7 @@ class DataNotifier(object):
     def add_callback(self, callback):
         """ Add callback (function that only receives the data upon
         submission as an argument). """
-        if self.data is None:
+        if self.data is _NULL:
             self.rcallbacks.append(callback)
         else:
             callback(self, self.data)

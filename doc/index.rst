@@ -3,9 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-============================================
+=============================================
 Welcome to the asynchia 0.1.0a documentation!
-============================================
+=============================================
 First of all, you are reminded that both asynchia and this documentation are
 in an alpha phase. This is the first asynchia release so bugs are to be
 expected.
@@ -26,11 +26,11 @@ Contents:
    tutorial
    ee_tutorial
    dsl_tutorial
+   modules/index
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* `API documentation <api/>`_
 * :ref:`search`
 
