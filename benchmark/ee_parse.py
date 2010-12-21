@@ -16,34 +16,54 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import sys
 import time
+import operator
 import itertools
 
 import asynchia.ee
+import asynchia.maps
+import asynchia.util
 
-from benchutil import *
+import benchutil
+
+class SendAllTransport(asynchia.SendallTrait, asynchia.SocketTransport):
+    pass
 
 
-def _mk_parser(col, mp, size):
-    trnsp = mock_handler(mp, os.urandom(size))
-    sub = itertools.repeat(range(250, 20000))
-    chunks = []
-    x = size
-    while x > 0:
-        chunks.append(min(x, sub.next()))
-        x -= chunks[-1]
-
-    ptcl = reduce(
-        operator.add,
-        map(asynchia.ee.DelimitedStringCollector, chunks)
-    )
+def mock_handler(mp, inbuf):
+    a, b = asynchia.util.socketpair()
+    sender = SendAllTransport(mp, a)
+    sender.sendall(inbuf)
     
-    def _cls(x):
-        col.submit(time.time())
+    recvr = asynchia.SocketTransport(mp, b)
+    return recvr
+
+
+class ParseEE(benchutil.AsyncBenchmark):
+    def __init__(self, mp, size):
+        self.trnsp = mock_handler(mp, os.urandom(size))
+        sub = itertools.repeat(range(250, 20000))
+        chunks = []
+        x = size
+        while x > 0:
+            chunks.append(min(x, sub.next()))
+            x -= chunks[-1]
     
-    ptcl.onclose = _cls
+        self.ptcl = reduce(
+            operator.add,
+            map(asynchia.ee.DelimitedStringCollector, chunks)
+        )
+        
+        self.ptcl.onclose = lambda _: self.submit_async(time.time())
     
-    hndl = asynchia.ee.Handler(trnsp, ptcl)
+    def run(self):
+        hndl = asynchia.ee.Handler(self.trnsp, self.ptcl)
+
+
+def done(_):
+    raise asynchia.SocketMapClosedError
 
 
 if __name__ == '__main__':
@@ -53,4 +73,8 @@ if __name__ == '__main__':
     else:
         sample = 50
         len_ = 5000000
-    run(_mk_parser, sample, len_)
+    mp = asynchia.maps.DefaultSocketMap()
+    run = benchutil.Runner([ParseEE(mp, len_) for _ in xrange(sample)], done)
+    run.start()
+    mp.run()
+    print run.result
