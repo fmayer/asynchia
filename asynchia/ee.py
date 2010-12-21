@@ -597,6 +597,8 @@ class StructCollector(DelimitedCollector):
 
 
 class SingleStructValueCollector(StructCollector):
+    """ Struct collector that makes the first item returned by unpack its
+    value member. """
     @property
     def value(self):
         return self.intvalue[0]

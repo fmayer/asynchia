@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: us-ascii -*-
 
 # asynchia - asynchronous networking library
@@ -17,32 +16,41 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import time
+import itertools
 
-try:
-    # If we got setuptools, use it so we get the nice develop cmd.
-    from setuptools import setup
-except:
-    # Doesn't matter if we don't have it though.
-    from distutils.core import setup
+import asynchia.ee
+
+from benchutil import *
 
 
-VERSION = '0.1.2'
+def _mk_parser(col, mp, size):
+    trnsp = mock_handler(mp, os.urandom(size))
+    sub = itertools.repeat(range(250, 20000))
+    chunks = []
+    x = size
+    while x > 0:
+        chunks.append(min(x, sub.next()))
+        x -= chunks[-1]
 
-extra = {}
-if sys.version_info >= (3, 0):
-    extra['use_2to3'] = True
+    ptcl = reduce(
+        operator.add,
+        map(asynchia.ee.DelimitedStringCollector, chunks)
+    )
+    
+    def _cls(x):
+        col.submit(time.time())
+    
+    ptcl.onclose = _cls
+    
+    hndl = asynchia.ee.Handler(trnsp, ptcl)
 
-setup(
-    name='asynchia',
-    version=VERSION,
-    description='asynchia is a minimalistic asynchronous networking library.',
-    author='Florian Mayer',
-    author_email='flormayer@aim.com',
-    url='http://bitbucket.org/segfaulthunter/asynchia-mainline',
-    keywords='async asynchronous network',
-    license='LGPL',
-    zip_safe=True,
-    packages=['asynchia'],
-    **extra
-)
+
+if __name__ == '__main__':
+    if len(sys.argv) >= 3:
+        sample = int(sys.argv[1])
+        len_ = int(sys.argv[2])
+    else:
+        sample = 50
+        len_ = 5000000
+    run(_mk_parser, sample, len_)
