@@ -44,7 +44,9 @@ class AsyncBenchmark(Benchmark):
         self.stop = None
         self.callback = None
     
-    def set_start(self, start):
+    def set_start(self, start=None):
+        if start is None:
+            start = time.time()
         self.start = start
     
     def submit_async(self, stop=None):
