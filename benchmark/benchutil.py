@@ -36,9 +36,6 @@ class SequentialBenchmark(Benchmark):
         self.run()
         stop = time.time()
         callback(stop - start)
-    
-    def get_time(self):
-        return self.stop - self.start
 
 
 class AsyncBenchmark(Benchmark):
