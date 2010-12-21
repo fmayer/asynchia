@@ -129,14 +129,14 @@ def _genfun(map_, test):
     return _fun
 
 maps = \
-     (getattr(asynchia.maps, name) for name in
+     (map_ for map_ in
       [
-          'SelectSocketMap',
-          'PollSocketMap',
-          'EPollSocketMap',
-          'KQueueSocketMap',
+          asynchia.maps.SelectSocketMap,
+          asynchia.maps.PollSocketMap,
+          asynchia.maps.EPollSocketMap,
+          asynchia.maps.KQueueSocketMap,
       ]
-      if hasattr(asynchia.maps, name)
+      if map_.available
       )
 
 tests = [
