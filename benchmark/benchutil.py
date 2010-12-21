@@ -16,77 +16,126 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
 import time
-import operator
-import itertools
 import threading
 
-import asynchia
-import asynchia.ee
-import asynchia.maps
-import asynchia.util
-
-
-def mean(lst):
-    return sum(lst) / float(len(lst))
-
-
-def stdev(lst, sample=True, mean_=None):
-    if mean_ is None:
-        mean_ = mean(lst)
-    return sum((x - mean_) ** 2 for x in lst) / float(len(lst) - int(sample))
-
-
-class SendAllTransport(asynchia.SendallTrait, asynchia.SocketTransport):
-    pass
-
-
-def mock_handler(mp, inbuf):
-    a, b = asynchia.util.socketpair()
-    sender = SendAllTransport(mp, a)
-    sender.sendall(inbuf)
+class Benchmark(object):
+    def set_up(self):
+        pass
     
-    recvr = asynchia.SocketTransport(mp, b)
-    return recvr
+    def run(self):
+        pass
+    
+    def tear_down(self):
+        pass
 
 
-def until_done(fun):
-    while True:
-        d, s = fun()
-        if d:
-            break
+class SequentialBenchmark(Benchmark):
+    def execute(self, callback):
+        start = time.time()
+        self.run()
+        stop = time.time()
+        callback(stop - start)
+    
+    def get_time(self):
+        return self.stop - self.start
 
 
-class Col(object):
-    def __init__(self, n):
-        self.n = n
-        self.times = []
+class AsyncBenchmark(Benchmark):
+    def __init__(self):
+        self.start = None
+        self.stop = None
+        self.callback = None
+    
+    def set_start(self, start):
+        self.start = start
+    
+    def submit_async(self, stop=None):
+        if stop is None:
+            stop = time.time()
+        self.callback(self.start - stop)
+    
+    def execute(self, callback):
         self.start = time.time()
+        self.callback = callback
+        self.run()
+
+
+class TimeResult(object):
+    def __init__(self, data=None):
+        if data is None:
+            data = []
+        
+        self.data = data
+        self.total = None
     
-    def submit(self, tme):
-        self.times.append(tme)
-        self.n -= 1
-        if not self.n:
-            data = [tme - self.start for tme in self.times]
-            print mean(data)
-            print stdev(data)
-            print data
-            sys.exit(0)
+    def mean(self):
+        return sum(self.data) / float(len(self.data))
+    
+    def stdev(self, sample=True, mean_=None):
+        if mean_ is None:
+            mean_ = self.mean()
+        return sum((x - mean_) ** 2 for x in self.data) / float(
+            len(self.data) - int(sample)
+        )
+    
+    def mean_stdev(self):
+        mean = self.mean()
+        stdev = self.stdev(mean_=mean)
+        return mean, stdev
+    
+    def add_data(self, time_elapsed):
+        self.data.append(time_elapsed)
+    
+    def __repr__(self):
+        return "<TimeResult(%r)>" % self.data
 
 
-def timed(fun, *args, **kwargs):
-    start = time.time()
-    ret = fun(*args, **kwargs)
-    stop = time.time()
-    return ret, stop - start
+class Benchmarks(object):
+    def __init__(self, benchmarks=None, done_callback=None):
+        if benchmarks is None:
+            benchmarks = []
+        self.benchmarks = benchmarks
+        self.waiting = self.result = None
+        self.done = threading.Event()
+        self.done_callback = done_callback
+    
+    def callback(self, data):
+        self.waiting -= 1
+        self.result.add_data(data)
+        
+        if self.waiting == 0:
+            self.done.set()
+            if self.done_callback is not None:
+                self.done_callback()
+    
+    def start(self, result=None):
+        self.waiting = len(self.benchmarks)
+        
+        if result is None:
+            result = TimeResult()
+        self.result = result
+        
+        for benchmark in self.benchmarks:
+            benchmark.set_up()
+        
+        for benchmark in self.benchmarks:
+            benchmark.execute(self.callback)
+    
+    def wait(self):
+        self.done.wait()
+        self.done.clear()
+        return self.result
+    
+    def add_benchmark(self, benchmark):
+        self.benchmarks.append(benchmark)
 
 
-def run(fun, n, *args):
-    col = Col(n)
-    mp = asynchia.maps.DefaultSocketMap()
-    for _ in xrange(n):
-        fun(col, mp, *args)
-    col.start = time.time()
-    mp.run()
+if __name__ == '__main__':
+    class MyBench(SequentialBenchmark):
+        def run(self):
+            time.sleep(1)
+    
+    runner = Benchmarks([MyBench() for _ in xrange(5)])
+    runner.start()
+    print runner.wait()
