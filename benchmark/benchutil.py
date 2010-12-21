@@ -50,7 +50,7 @@ class AsyncBenchmark(Benchmark):
     def submit_async(self, stop=None):
         if stop is None:
             stop = time.time()
-        self.callback(self.start - stop)
+        self.callback(stop - self.start)
     
     def execute(self, callback):
         self.start = time.time()
@@ -88,7 +88,7 @@ class TimeResult(object):
         return "<TimeResult(%r)>" % self.data
 
 
-class Benchmarks(object):
+class Runner(object):
     def __init__(self, benchmarks=None, done_callback=None):
         if benchmarks is None:
             benchmarks = []
@@ -129,10 +129,10 @@ class Benchmarks(object):
 
 
 if __name__ == '__main__':
-    class MyBench(SequentialBenchmark):
+    class MyBench(AsyncBenchmark):
         def run(self):
-            time.sleep(1)
+            self.submit_async(time.sleep(1))
     
-    runner = Benchmarks([MyBench() for _ in xrange(5)])
+    runner = Runner([MyBench() for _ in xrange(5)])
     runner.start()
     print runner.wait()
