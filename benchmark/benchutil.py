@@ -111,7 +111,7 @@ class Runner(object):
         if self.waiting == 0:
             self.done.set()
             if self.done_callback is not None:
-                self.done_callback()
+                self.done_callback(self)
     
     def start(self, result=None):
         self.waiting = len(self.benchmarks)
