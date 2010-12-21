@@ -33,7 +33,10 @@ class Benchmark(object):
 class SequentialBenchmark(Benchmark):
     def execute(self, callback):
         start = time.time()
-        self.run()
+        try:
+            self.run()
+        finally:
+            self.tear_down()
         stop = time.time()
         callback(stop - start)
 
@@ -52,6 +55,8 @@ class AsyncBenchmark(Benchmark):
     def submit_async(self, stop=None):
         if stop is None:
             stop = time.time()
+        
+        self.tear_down()
         self.callback(stop - self.start)
     
     def execute(self, callback):
