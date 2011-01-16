@@ -82,8 +82,15 @@ class Coroutine(object):
     
     def send(self, data=None):
         """ Start (or resume) execution of the coroutine. """
+        if data is None:
+            status, data = SUCCESS, None
+        else:
+            status, data = data
         try:
-            result = self.itr.send(data)
+            if status is SUCCESS:
+                result = self.itr.send(data)
+            else:
+                result = self.itr.throw(data)
         except StopIteration, e:
             ret = None
             if len(e.args) == 1:
@@ -118,16 +125,6 @@ class Coroutine(object):
     @staticmethod
     def return_(obj):
         raise StopIteration(obj)
-    
-    @staticmethod
-    def defer(obj):
-        status, data = obj
-        if status is SUCCESS:
-            return data
-        elif status is ERROR:
-            raise data
-        else:
-            raise ValueError
 
 
 class DataNotifier(object):
@@ -273,14 +270,14 @@ if __name__ == '__main__':
     a = Deferred(None)
     def bar():
         # Request result of network I/O.
-        blub = Coroutine.defer((yield a))
+        blub = (yield a)
         raise HTTP404
         Coroutine.return_(blub)
     def foo():
         # Wait for completion of new coroutine which - in turn - waits
         # for I/O.
         try:
-            blub = Coroutine.defer((yield Coroutine.call_itr(bar(), None)))
+            blub = yield Coroutine.call_itr(bar(), None)
         except HTTP404:
             blub = 404
         print "yay %s" % blub
