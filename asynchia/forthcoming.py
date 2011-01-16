@@ -34,7 +34,7 @@ Example:
         print "yay %s" % blub
     
     c = Coroutine(foo())
-    c.call()
+    c.send()
     # Network I/O complete.
     a.submit('blub')
 """
@@ -45,6 +45,8 @@ import asynchia
 from asynchia.util import b
 
 _NULL = object()
+SUCCESS = object()
+ERROR = object()
 
 class PauseContext(object):
     """ Collection of Coroutines which are currently paused but not waiting
@@ -70,53 +72,62 @@ class Coroutine(object):
     DataNotifier will send the requested value to the coroutine once
     available. Yielding an instance of Coroutine.return_ will end execution
     of the coroutine and send the return value to any coroutines that may be
-    waiting for it or calls any callbacks associated with it. """
-    class return_:
-        """ Yield an instance of this to signal that the coroutine finished
-        with the given return value (defaults to None). """
-        def __init__(self, obj=None):
-            self.obj = obj
-    
-    def __init__(self, itr, pcontext=None, datanotifier=None):
+    waiting for it or calls any callbacks associated with it. """    
+    def __init__(self, itr, socket_map, pcontext=None, deferred=None):
         self.itr = itr
-        if datanotifier is None:
-            datanotifier = DataNotifier()
-        self.datanotifier = datanotifier
+        if deferred is None:
+            deferred = Deferred(socket_map)
+        self.deferred = deferred
         self.pcontext = pcontext
     
-    def send(self, data):
-        """ Send requested data to coroutine. """
-        try:
-            self.handle_result(self.itr.send(data))
-        except StopIteration:
-            self.datanotifier.submit(None)
-    
-    def call(self):
+    def send(self, data=None):
         """ Start (or resume) execution of the coroutine. """
         try:
-            self.handle_result(self.itr.next())
-        except StopIteration:
-            self.datanotifier.submit(None)
-    
-    def handle_result(self, result):
-        """ Internal. """
-        if result is None:
-            if self.pcontext is not None:
-                self.pcontext.pause(self)
-            else:
-                raise ValueError("No PauseContext.")
-        elif isinstance(result, Coroutine.return_):
-            self.datanotifier.submit(result.obj)
+            result = self.itr.send(data)
+        except StopIteration, e:
+            ret = None
+            if len(e.args) == 1:
+                ret = e.args[0]
+            self.deferred.success_notifier.submit(ret)
+        except Exception, e:
+            self.deferred.error_notifier.submit(e)
         else:
-            result.add_coroutine(self)
+            if result is None:
+                if self.pcontext is not None:
+                    self.pcontext.pause(self)
+                else:
+                    raise ValueError("No PauseContext.")
+            else:
+                result.success_notifier.add_databack(self.success_databack)
+                result.error_notifier.add_databack(self.error_databack)
+    
+    def success_databack(self, data):
+        self.send((SUCCESS, data))
+    
+    def error_databack(self, data):
+        self.send((ERROR, data))
     
     @classmethod
-    def call_itr(cls, itr):
+    def call_itr(cls, itr, socket_map):
         """ Create a coroutine from the given iterator, start it
         and return the DataNotifier. """
-        coroutine = cls(itr)
-        coroutine.call()
-        return coroutine.datanotifier
+        coroutine = cls(itr, socket_map)
+        coroutine.send()
+        return coroutine.deferred
+    
+    @staticmethod
+    def return_(obj):
+        raise StopIteration(obj)
+    
+    @staticmethod
+    def defer(obj):
+        status, data = obj
+        if status is SUCCESS:
+            return data
+        elif status is ERROR:
+            raise data
+        else:
+            raise ValueError
 
 
 class DataNotifier(object):
@@ -131,11 +142,12 @@ class DataNotifier(object):
         
         self.event = threading.Event()
         
-        self.wakeup, other = asynchia.util.socketpair()
-        self.handler = _ThreadedDataHandler(
-            asynchia.SocketTransport(socket_map, other),
-            self
-        )
+        if socket_map is not None:
+            self.wakeup, other = asynchia.util.socketpair()
+            self.handler = _ThreadedDataHandler(
+                asynchia.SocketTransport(socket_map, other),
+                self
+            )
     
     def add_coroutine(self, coroutine):
         """ Add coroutine that waits for the submission of this data. """
@@ -151,6 +163,7 @@ class DataNotifier(object):
             self.dcallbacks.append(callback)
         else:
             callback(self.data)
+        return self
     
     def add_callback(self, callback):
         """ Add callback (function that only receives the data upon
@@ -159,6 +172,7 @@ class DataNotifier(object):
             self.rcallbacks.append(callback)
         else:
             callback(self, self.data)
+        return self
     
     def poll(self):
         """ Poll whether result has already been submitted. """
@@ -210,6 +224,30 @@ class DataNotifier(object):
             target=cls._coroutine, args=(datanot, fun, args, kwargs)
         ).start()
         return datanot
+    
+    __call__ = add_callback
+
+
+
+class Deferred(object):
+    def __init__(self, socket_map, success=None, error=None):
+        if success is None:
+            success = DataNotifier(socket_map)
+        if error is None:
+            error = DataNotifier(socket_map)
+        self.success_notifier = success
+        self.error_notifier = error
+    
+    def success(self, callback):
+        self.success_notifier.add_callback(callback)
+        return self
+    
+    def error(self, callback):
+        self.error_notifier.add_callback(callback)
+        return self
+    
+    def __call__(self, *args, **kwargs):
+        self.success(*args, **kwargs)
 
 
 class _ThreadedDataHandler(asynchia.Handler):
@@ -226,3 +264,28 @@ class _ThreadedDataHandler(asynchia.Handler):
         self.datanotifier.submit(self.datanotifier.injected)
         # Not needed anymore.
         self.transport.close()
+
+
+if __name__ == '__main__':
+    class HTTP404(Exception):
+        pass
+    
+    a = Deferred(None)
+    def bar():
+        # Request result of network I/O.
+        blub = Coroutine.defer((yield a))
+        raise HTTP404
+        Coroutine.return_(blub)
+    def foo():
+        # Wait for completion of new coroutine which - in turn - waits
+        # for I/O.
+        try:
+            blub = Coroutine.defer((yield Coroutine.call_itr(bar(), None)))
+        except HTTP404:
+            blub = 404
+        print "yay %s" % blub
+    
+    c = Coroutine(foo(), None)
+    c.send()
+    # Network I/O complete.
+    a.success_notifier.submit('blub')
