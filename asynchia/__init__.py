@@ -21,13 +21,24 @@
 import os
 import errno
 import socket
+import Queue as queue
 
 import traceback
 
-from asynchia.util import EMPTY_BYTES, is_unconnected
+from asynchia.util import EMPTY_BYTES, is_unconnected, socketpair, b
 from asynchia.const import trylater, connection_lost, inprogress
 
 __version__ = '0.1.2'
+
+class CallSynchronized(object):
+    def __init__(self, handler, sock):
+        self.sock = sock
+        self.handler = handler
+    
+    def call(self, fun):
+        self.handler.funs.put(fun)
+        self.sock.send(b('a'))
+
 
 class SocketMapClosedError(Exception):
     pass
@@ -59,6 +70,18 @@ class SocketMap(object):
             notifier = Notifier()
         self.notifier = notifier
         self.closed = False
+    
+    def constructed(self):
+        wakeup, other = socketpair()
+        self.callsync = CallSynchronized(
+            _CallSynchronizedHandler(
+                SocketTransport(self, other)
+                ),
+            wakeup
+        )
+    
+    def call_synchronized(self, fun):
+        self.callsync.call(fun)
     
     def poll(self, timeout=None):
         raise NotImplementedError
@@ -683,5 +706,23 @@ class Server(AcceptHandler):
             self.transport.socket_map.run()
         finally:
             self.transport.close()
+
+
+class _CallSynchronizedHandler(Handler):
+    """ Implementation detail. """
+    def __init__(self, transport, per_run=1):
+        Handler.__init__(self, transport)
+        self.transport.set_readable(True)
+        
+        self.funs = queue.Queue()
+        self.per_run = per_run
+    
+    def handle_read(self):
+        """ Implementation detail. """
+        for _ in self.transport.recv(self.per_run):
+            try:
+                self.funs.get_nowait()()
+            except queue.Empty:
+                break
 
 defaultsocket_factory = socket.socket
