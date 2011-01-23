@@ -132,9 +132,9 @@ class DataNotifier(object):
         self.event = threading.Event()
         
         self.wakeup, other = asynchia.util.socketpair()
-        self.handler = _ThreadedDataHandler(
+        self.handler = _CallLater(
             asynchia.SocketTransport(socket_map, other),
-            self
+            lambda: self.submit(self.injected)
         )
     
     def add_coroutine(self, coroutine):
@@ -212,17 +212,17 @@ class DataNotifier(object):
         return datanot
 
 
-class _ThreadedDataHandler(asynchia.Handler):
+class _CallLater(asynchia.Handler):
     """ Implementation detail. """
-    def __init__(self, transport, datanotifier):
+    def __init__(self, transport, fun):
         asynchia.Handler.__init__(self, transport)
         self.transport.set_readable(True)
         
-        self.datanotifier = datanotifier
+        self.fun = fun
     
     def handle_read(self):
         """ Implementation detail. """
         self.transport.recv(1)
-        self.datanotifier.submit(self.datanotifier.injected)
+        self.fun()
         # Not needed anymore.
         self.transport.close()
