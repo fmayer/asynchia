@@ -48,6 +48,10 @@ _NULL = object()
 SUCCESS = object()
 ERROR = object()
 
+class CoroutineReturn(BaseException):
+    pass
+
+
 class PauseContext(object):
     """ Collection of Coroutines which are currently paused but not waiting
     for any data. They are paused to prevent too much time to be spent in
@@ -92,10 +96,9 @@ class Coroutine(object):
             else:
                 result = self.itr.throw(data)
         except StopIteration, e:
-            ret = None
-            if len(e.args) == 1:
-                ret = e.args[0]
-            self.deferred.success_notifier.submit(ret)
+            self.deferred.success_notifier.submit(None)
+        except CoroutineReturn, e:
+            self.deferred.success_notifier.submit(e.args[0])
         except Exception, e:
             self.deferred.error_notifier.submit(e)
         else:
@@ -124,7 +127,7 @@ class Coroutine(object):
     
     @staticmethod
     def return_(obj):
-        raise StopIteration(obj)
+        raise CoroutineReturn(obj)
 
 
 class DataNotifier(object):
