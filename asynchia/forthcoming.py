@@ -197,6 +197,24 @@ class Deferred(object):
     
     def __call__(self, *args, **kwargs):
         self.success(*args, **kwargs)
+    
+    @staticmethod
+    def _coroutine(obj, fun, args, kwargs):
+        """ Implementation detail. """
+        try:
+            obj.submit_success(fun(*args, **kwargs))
+        except Exception, e:
+            obj.submit_error(e)
+    
+    @classmethod
+    def threaded_coroutine(cls, socket_map, fun, *args, **kwargs):
+        """ Run fun(*args, **kwargs) in a thread and return a DataNotifier
+        notifying upon availability of the return value of the function. """
+        obj = cls(socket_map)
+        threading.Thread(
+            target=cls._coroutine, args=(obj, fun, args, kwargs)
+        ).start()
+        return obj
 
 
 if __name__ == '__main__':
