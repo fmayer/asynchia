@@ -96,11 +96,11 @@ class Coroutine(object):
             else:
                 result = self.itr.throw(data)
         except StopIteration, e:
-            self.deferred.success_notifier.submit(None)
+            self.deferred.submit_success(None)
         except CoroutineReturn, e:
-            self.deferred.success_notifier.submit(e.args[0])
+            self.deferred.submit_success(e.args[0])
         except Exception, e:
-            self.deferred.error_notifier.submit(e)
+            self.deferred.submit_error(e)
         else:
             if result is None:
                 if self.pcontext is not None:
@@ -108,8 +108,8 @@ class Coroutine(object):
                 else:
                     raise ValueError("No PauseContext.")
             else:
-                result.success_notifier.add_databack(self.success_databack)
-                result.error_notifier.add_databack(self.error_databack)
+                result.success_signal.listen(self.success_databack)
+                result.error_signal.listen(self.error_databack)
     
     __call__ = send
     
@@ -132,107 +132,67 @@ class Coroutine(object):
         raise CoroutineReturn(obj)
 
 
-class DataNotifier(object):
-    """ Call registered callbacks and send data to registered coroutines
-    at submission of data. """
+class Signal(object):
     def __init__(self, socket_map):
-        self.dcallbacks = []
-        self.rcallbacks = []
-        self.finished = False
-        self.data = _NULL
-        
-        self.event = threading.Event()
-        
+        self.listeners = []
         self.socket_map = socket_map
     
-    def add_databack(self, callback):
-        """ Add databack (function that receives the the data-notifier data
-        upon submission as arguments). """
-        if self.data is _NULL:
-            self.dcallbacks.append(callback)
-        else:
-            callback(self.data)
-        return self
+    def fire(self, *args, **kwargs):
+        for listener in self.listeners:
+            listener(*args, **kwargs)
     
-    add_coroutine = add_databack
-    add_coroutine.__doc__ = ("Add coroutine that waits for the submission"
-                             " of this data. ")
+    def fire_synchronized(self, *args, **kwargs):
+        self.socket_map.call_synchronized(
+            lambda: self.fire(*args, **kwargs)
+        )
     
-    def add_callback(self, callback):
-        """ Add callback (function that only receives the data upon
-        submission as an argument). """
-        if self.data is _NULL:
-            self.rcallbacks.append(callback)
-        else:
-            callback(self, self.data)
-        return self
-    
-    def poll(self):
-        """ Poll whether result has already been submitted. """
-        return self.finished
-    
-    def submit(self, data):
-        """ Submit data; send it to any coroutines that may be registered and
-        call any data- and callbacks that may be registered. """
-        self.data = data
-        for callback in self.dcallbacks:
-            callback(data)
-        for callback in self.rcallbacks:
-            callback(self, data)
-        
-        self.rcallbacks[:] = []
-        self.dcallbacks[:] = []
-        
-        # Wake up threads waiting for the data.
-        self.event.set()
-        
-        self.finished = True
-    
-    def inject(self, data):
-        """ Submit data and ensure their callbacks are called in the main
-        thread. """
-        self.socket_map.call_synchronized(lambda: self.submit(data))
-    
-    def wait(self, timeout=None):
-        """ Block execution of current thread until the data is available.
-        Return requested data. """
-        self.event.wait(timeout)
-        return self.data
-    
-    @staticmethod
-    def _coroutine(datanotifier, fun, args, kwargs):
-        """ Implementation detail. """
-        datanotifier.inject(fun(*args, **kwargs))
-    
-    @classmethod
-    def threaded_coroutine(cls, socket_map, fun, *args, **kwargs):
-        """ Run fun(*args, **kwargs) in a thread and return a DataNotifier
-        notifying upon availability of the return value of the function. """
-        datanot = cls(socket_map)
-        threading.Thread(
-            target=cls._coroutine, args=(datanot, fun, args, kwargs)
-        ).start()
-        return datanot
-    
-    __call__ = add_callback
+    def listen(self, listener):
+        self.listeners.append(listener)
 
+
+class FireOnceSignal(Signal):
+    def __init__(self, socket_map):
+        super(FireOnceSignal, self).__init__(socket_map)
+        self.data = _NULL
+        self.event = threading.Event()
+        self.finished = False
+    
+    def fire(self, *args, **kwargs):
+        super(FireOnceSignal, self).fire(*args, **kwargs)
+        
+        self.data = (args, kwargs)
+        self.finished = True
+        self.event.set()
+    
+    def listen(self, listener):
+        if self.data is _NULL:
+            super(FireOnceSignal, self).listen(listener)
+        else:
+            args, kwargs = self.data
+            listener(*args, **kwargs)
 
 
 class Deferred(object):
     def __init__(self, socket_map, success=None, error=None):
         if success is None:
-            success = DataNotifier(socket_map)
+            success = FireOnceSignal(socket_map)
         if error is None:
-            error = DataNotifier(socket_map)
-        self.success_notifier = success
-        self.error_notifier = error
+            error = FireOnceSignal(socket_map)
+        self.success_signal = success
+        self.error_signal = error
+    
+    def submit_error(self, err):
+        self.error_signal.fire(err)
+    
+    def submit_success(self, ret):
+        self.success_signal.fire(ret)
     
     def success(self, callback):
-        self.success_notifier.add_callback(callback)
+        self.success_signal.listen(callback)
         return self
     
     def error(self, callback):
-        self.error_notifier.add_callback(callback)
+        self.error_signal.listen(callback)
         return self
     
     def __call__(self, *args, **kwargs):

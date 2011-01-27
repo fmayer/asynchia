@@ -33,7 +33,7 @@ def dnr_inject(self, map_):
     main_thread = threading.currentThread()
     
     def in_thread(noti, container):
-        noti.inject("foobar")
+        noti.success_signal.fire_synchronized("foobar")
         container.main_thread = threading.currentThread() == main_thread
     
     def mkfun(container):
@@ -44,8 +44,8 @@ def dnr_inject(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.DataNotifier(mo)
-    noti.add_databack(mkfun(container))
+    noti = fc.Deferred(mo)
+    noti.success_signal.listen(mkfun(container))
     self.assertEquals(container.run, False)
     
     threading.Thread(target=in_thread, args=(noti, container)).start()
@@ -67,10 +67,10 @@ def dnr_databack_beforedata(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.DataNotifier(mo)
-    noti.add_databack(mkfun(container))
+    noti = fc.FireOnceSignal(mo)
+    noti.listen(mkfun(container))
     self.assertEquals(container.run, False)
-    noti.submit("foobar")
+    noti.fire("foobar")
     self.assertEquals(container.run, True)
 
 
@@ -84,9 +84,9 @@ def dnr_databack_afterdata(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.DataNotifier(mo)
-    noti.submit("foobar")
-    noti.add_databack(mkfun(container))
+    noti = fc.FireOnceSignal(mo)
+    noti.fire("foobar")
+    noti.listen(mkfun(container))
     self.assertEquals(container.run, True)
 
 
@@ -113,9 +113,9 @@ def dnr_coroutines(self, map_):
     conoti = coroutine.deferred
     coroutine.send()
     
-    conoti.success_notifier.add_databack(mkfun(container))
+    conoti.success_signal.listen(mkfun(container))
     self.assertEquals(container.run, False)
-    noti.success_notifier.submit("foobar")
+    noti.submit_success("foobar")
     self.assertEquals(container.run, True)
 
 
