@@ -80,7 +80,7 @@ class Coroutine(object):
     def __init__(self, itr, socket_map, pcontext=None, deferred=None):
         self.itr = itr
         if deferred is None:
-            deferred = Deferred(socket_map)
+            deferred = FireOnceDeferred(socket_map)
         self.deferred = deferred
         self.pcontext = pcontext
     
@@ -130,6 +130,14 @@ class Coroutine(object):
     @staticmethod
     def return_(obj):
         raise CoroutineReturn(obj)
+    
+    def wait(self):
+        self.deferred.wait()
+        if self.deferred.error_signal.data is not _NULL:
+            # first element of args
+            raise self.deferred.error_signal.data[0][0]
+        if self.deferred.success_signal.data is not _NULL:
+            return self.deferred.success_signal.data[0][0]
 
 
 class Signal(object):
@@ -180,18 +188,12 @@ class Deferred(object):
             error = FireOnceSignal(socket_map)
         self.success_signal = success
         self.error_signal = error
-        
-        self.event = threading.Event()
     
     def submit_error(self, *args, **kwargs):
         self.error_signal.fire(*args, **kwargs)
-        
-        self.event.set()
     
     def submit_success(self, *args, **kwargs):
         self.success_signal.fire(*args, **kwargs)
-        
-        self.event.set()
     
     def success(self, callback):
         self.success_signal.listen(callback)
@@ -223,6 +225,23 @@ class Deferred(object):
         return obj
 
 
+class FireOnceDeferred(Deferred):
+    def __init__(self, *args, **kwargs):
+        super(FireOnceDeferred, self).__init__(*args, **kwargs)
+        self.event = threading.Event()
+    
+    def submit_error(self, *args, **kwargs):
+        super(FireOnceDeferred, self).submit_error(*args, **kwargs)
+        self.event.set()
+    
+    def submit_success(self, *args, **kwargs):
+        super(FireOnceDeferred, self).submit_success(*args, **kwargs)
+        self.event.set()
+    
+    def wait(self, timeout=None):
+        self.event.wait(timeout)
+
+
 if __name__ == '__main__':
     class HTTP404(Exception):
         pass
@@ -239,9 +258,10 @@ if __name__ == '__main__':
             blub = yield Coroutine.call_itr(bar(), None)
         except HTTP404:
             blub = 404
-        print "yay %s" % blub
+        Coroutine.return_("yay %s" % blub)
     
     c = Coroutine(foo(), None)
     c.send()
     # Network I/O complete.
     a.submit_success('yay')
+    print c.wait()
