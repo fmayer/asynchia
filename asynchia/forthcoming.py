@@ -111,6 +111,8 @@ class Coroutine(object):
                 result.success_notifier.add_databack(self.success_databack)
                 result.error_notifier.add_databack(self.error_databack)
     
+    __call__ = send
+    
     def success_databack(self, data):
         self.send((SUCCESS, data))
     
@@ -136,20 +138,12 @@ class DataNotifier(object):
     def __init__(self, socket_map):
         self.dcallbacks = []
         self.rcallbacks = []
-        self.coroutines = []
         self.finished = False
         self.data = _NULL
         
         self.event = threading.Event()
         
         self.socket_map = socket_map
-    
-    def add_coroutine(self, coroutine):
-        """ Add coroutine that waits for the submission of this data. """
-        if self.data is _NULL:
-            self.coroutines.append(coroutine)
-        else:
-            coroutine.send(self.data)
     
     def add_databack(self, callback):
         """ Add databack (function that receives the the data-notifier data
@@ -159,6 +153,10 @@ class DataNotifier(object):
         else:
             callback(self.data)
         return self
+    
+    add_coroutine = add_databack
+    add_coroutine.__doc__ = ("Add coroutine that waits for the submission"
+                             " of this data. ")
     
     def add_callback(self, callback):
         """ Add callback (function that only receives the data upon
@@ -181,10 +179,7 @@ class DataNotifier(object):
             callback(data)
         for callback in self.rcallbacks:
             callback(self, data)
-        for coroutine in self.coroutines:
-            coroutine.send(data)
         
-        self.coroutines[:] = []
         self.rcallbacks[:] = []
         self.dcallbacks[:] = []
         
