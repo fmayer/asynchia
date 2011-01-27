@@ -34,7 +34,7 @@ def dnr_inject(self, map_):
     
     def in_thread(noti, container):
         noti.inject("foobar")
-        container.mainthread = threading.currentThread() == main_thread
+        container.main_thread = threading.currentThread() == main_thread
     
     def mkfun(container):
         def _fun(data):
@@ -54,7 +54,7 @@ def dnr_inject(self, map_):
     while not container.run and time.time() < s + 10:
         mo.poll(abs(10 - (time.time() - s)))
     self.assertEquals(container.run, True)
-    self.assertEquals(container.mainthread, False)
+    self.assertEquals(container.main_thread, False)
     
 
 def dnr_databack_beforedata(self, map_):
@@ -101,21 +101,21 @@ def dnr_coroutines(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.DataNotifier(mo)
+    noti = fc.Deferred(mo)
     
     def foo(noti):
         data = yield noti
-        yield fc.Coroutine.return_(data)
+        fc.Coroutine.return_(data)
     
     coroutine = fc.Coroutine(
-        foo(noti),datanotifier=fc.DataNotifier(mo)
+        foo(noti), mo, deferred=fc.Deferred(mo)
     )
-    conoti = coroutine.datanotifier
-    coroutine.call()
+    conoti = coroutine.deferred
+    coroutine.send()
     
-    conoti.add_databack(mkfun(container))
+    conoti.success_notifier.add_databack(mkfun(container))
     self.assertEquals(container.run, False)
-    noti.submit("foobar")
+    noti.success_notifier.submit("foobar")
     self.assertEquals(container.run, True)
 
 
