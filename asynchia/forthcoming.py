@@ -113,10 +113,10 @@ class Coroutine(object):
     
     __call__ = send
     
-    def success_databack(self, data):
+    def success_databack(self, data=None):
         self.send((SUCCESS, data))
     
-    def error_databack(self, data):
+    def error_databack(self, data=None):
         self.send((ERROR, data))
     
     @classmethod
@@ -180,12 +180,18 @@ class Deferred(object):
             error = FireOnceSignal(socket_map)
         self.success_signal = success
         self.error_signal = error
+        
+        self.event = threading.Event()
     
-    def submit_error(self, err):
-        self.error_signal.fire(err)
+    def submit_error(self, *args, **kwargs):
+        self.error_signal.fire(*args, **kwargs)
+        
+        self.event.set()
     
-    def submit_success(self, ret):
-        self.success_signal.fire(ret)
+    def submit_success(self, *args, **kwargs):
+        self.success_signal.fire(*args, **kwargs)
+        
+        self.event.set()
     
     def success(self, callback):
         self.success_signal.listen(callback)
@@ -225,7 +231,6 @@ if __name__ == '__main__':
     def bar():
         # Request result of network I/O.
         blub = (yield a)
-        raise HTTP404
         Coroutine.return_(blub)
     def foo():
         # Wait for completion of new coroutine which - in turn - waits
@@ -239,4 +244,4 @@ if __name__ == '__main__':
     c = Coroutine(foo(), None)
     c.send()
     # Network I/O complete.
-    a.success_notifier.submit('blub')
+    a.submit_success('yay')

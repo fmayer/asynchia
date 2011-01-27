@@ -33,8 +33,8 @@ def dnr_inject(self, map_):
     main_thread = threading.currentThread()
     
     def in_thread(noti, container):
-        noti.success_signal.fire_synchronized("foobar")
         container.main_thread = threading.currentThread() == main_thread
+        noti.success_signal.fire_synchronized("foobar")
     
     def mkfun(container):
         def _fun(data):
