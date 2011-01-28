@@ -40,6 +40,7 @@ Example:
 """
 
 import threading
+import itertools
 
 import asynchia
 from asynchia.util import b
@@ -50,24 +51,6 @@ ERROR = object()
 
 class CoroutineReturn(BaseException):
     pass
-
-
-class PauseContext(object):
-    """ Collection of Coroutines which are currently paused but not waiting
-    for any data. They are paused to prevent too much time to be spent in
-    them, preventing possibly important I/O from being done. """
-    def __init__(self):
-        self.paused = []
-    
-    def unpause(self):
-        """ Continue all paused coroutines. """
-        for coroutine in self.paused:
-            coroutine.call()
-        self.paused[:] = []
-    
-    def pause(self, coroutine):
-        """ Add coroutine to the list of paused coroutines. """
-        self.paused.append(coroutine)
 
 
 class Coroutine(object):
@@ -82,7 +65,6 @@ class Coroutine(object):
         if deferred is None:
             deferred = FireOnceDeferred(socket_map)
         self.deferred = deferred
-        self.pcontext = pcontext
     
     def send(self, data=None):
         """ Start (or resume) execution of the coroutine. """
@@ -102,14 +84,8 @@ class Coroutine(object):
         except Exception, e:
             self.deferred.submit_error(e)
         else:
-            if result is None:
-                if self.pcontext is not None:
-                    self.pcontext.pause(self)
-                else:
-                    raise ValueError("No PauseContext.")
-            else:
-                result.success_signal.listen(self.success_databack)
-                result.error_signal.listen(self.error_databack)
+            result.success_signal.listen_once(self.success_databack)
+            result.error_signal.listen_once(self.error_databack)
     
     __call__ = send
     
@@ -143,11 +119,15 @@ class Coroutine(object):
 class Signal(object):
     def __init__(self, socket_map):
         self.listeners = []
+        self.once_listeners = []
+        
         self.socket_map = socket_map
     
     def fire(self, *args, **kwargs):
-        for listener in self.listeners:
+        for listener in itertools.chain(self.listeners, self.once_listeners):
             listener(*args, **kwargs)
+        
+        self.once_listeners[:] = []
     
     def fire_synchronized(self, *args, **kwargs):
         self.socket_map.call_synchronized(
@@ -156,6 +136,9 @@ class Signal(object):
     
     def listen(self, listener):
         self.listeners.append(listener)
+    
+    def listen_once(self, listener):
+        self.once_listeners.append(listener)
 
 
 class FireOnceSignal(Signal):
@@ -178,6 +161,8 @@ class FireOnceSignal(Signal):
         else:
             args, kwargs = self.data
             listener(*args, **kwargs)
+    
+    listen_once = listen
 
 
 class Deferred(object):
