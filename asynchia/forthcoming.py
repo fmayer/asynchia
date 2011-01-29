@@ -60,10 +60,10 @@ class Coroutine(object):
     available. Yielding an instance of Coroutine.return_ will end execution
     of the coroutine and send the return value to any coroutines that may be
     waiting for it or calls any callbacks associated with it. """    
-    def __init__(self, itr, socket_map, pcontext=None, deferred=None):
+    def __init__(self, itr, deferred=None):
         self.itr = itr
         if deferred is None:
-            deferred = FireOnceDeferred(socket_map)
+            deferred = FireOnceDeferred()
         self.deferred = deferred
     
     def send(self, data=None):
@@ -117,22 +117,15 @@ class Coroutine(object):
 
 
 class Signal(object):
-    def __init__(self, socket_map):
+    def __init__(self):
         self.listeners = []
         self.once_listeners = []
-        
-        self.socket_map = socket_map
     
     def fire(self, *args, **kwargs):
         for listener in itertools.chain(self.listeners, self.once_listeners):
             listener(*args, **kwargs)
         
         self.once_listeners[:] = []
-    
-    def fire_synchronized(self, *args, **kwargs):
-        self.socket_map.call_synchronized(
-            lambda: self.fire(*args, **kwargs)
-        )
     
     def listen(self, listener):
         self.listeners.append(listener)
@@ -142,8 +135,8 @@ class Signal(object):
 
 
 class FireOnceSignal(Signal):
-    def __init__(self, socket_map):
-        super(FireOnceSignal, self).__init__(socket_map)
+    def __init__(self):
+        super(FireOnceSignal, self).__init__()
         self.data = _NULL
         self.event = threading.Event()
         self.finished = False
@@ -166,11 +159,11 @@ class FireOnceSignal(Signal):
 
 
 class Deferred(object):
-    def __init__(self, socket_map, success=None, error=None):
+    def __init__(self, success=None, error=None):
         if success is None:
-            success = FireOnceSignal(socket_map)
+            success = FireOnceSignal()
         if error is None:
-            error = FireOnceSignal(socket_map)
+            error = FireOnceSignal()
         self.success_signal = success
         self.error_signal = error
     
@@ -208,6 +201,21 @@ class Deferred(object):
             target=cls._coroutine, args=(obj, fun, args, kwargs)
         ).start()
         return obj
+    
+    @staticmethod
+    def maybe(fun, *args, **kwargs):
+        try:
+            value = fun(*args, **kwargs)
+        except Exception:
+            pass
+        else:
+            if isinstance(value, Deferred):
+                return value
+    
+    @classmethod
+    def fire_once(socket_map):
+        return cls(FireOnceSignal(socket_map), FireOnceSignal(socket_map))
+        
 
 
 class FireOnceDeferred(Deferred):

@@ -57,9 +57,9 @@ def dnr_forthcoming_wakeup(self, map_):
     
     mainthread = threading.currentThread()
     
-    def thr(nf):
+    def thr(mo, nf):
         time.sleep(2)
-        nf.fire_synchronized(12)
+        mo.call_synchronized(lambda: nf.fire(12))
     
     def callb(data):
         self.assertEquals(data, 12)
@@ -67,9 +67,9 @@ def dnr_forthcoming_wakeup(self, map_):
         
         container.flag = True
     
-    nf = asynchia.forthcoming.FireOnceSignal(mo)
+    nf = asynchia.forthcoming.FireOnceSignal()
     nf.listen(callb)
-    th = threading.Thread(target=thr, args=(nf,))
+    th = threading.Thread(target=thr, args=(mo, nf))
     th.start()
     
     s = time.time()

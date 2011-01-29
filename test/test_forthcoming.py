@@ -32,9 +32,9 @@ def dnr_inject(self, map_):
     
     main_thread = threading.currentThread()
     
-    def in_thread(noti, container):
+    def in_thread(mo, noti, container):
         container.main_thread = threading.currentThread() == main_thread
-        noti.success_signal.fire_synchronized("foobar")
+        mo.call_synchronized(lambda: noti.success_signal.fire("foobar"))
     
     def mkfun(container):
         def _fun(data):
@@ -44,11 +44,11 @@ def dnr_inject(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.Deferred(mo)
+    noti = fc.Deferred()
     noti.success_signal.listen(mkfun(container))
     self.assertEquals(container.run, False)
     
-    threading.Thread(target=in_thread, args=(noti, container)).start()
+    threading.Thread(target=in_thread, args=(mo, noti, container)).start()
     
     s = time.time()
     while not container.run and time.time() < s + 10:
@@ -67,7 +67,7 @@ def dnr_databack_beforedata(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.FireOnceSignal(mo)
+    noti = fc.FireOnceSignal()
     noti.listen(mkfun(container))
     self.assertEquals(container.run, False)
     noti.fire("foobar")
@@ -84,7 +84,7 @@ def dnr_databack_afterdata(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.FireOnceSignal(mo)
+    noti = fc.FireOnceSignal()
     noti.fire("foobar")
     noti.listen(mkfun(container))
     self.assertEquals(container.run, True)
@@ -101,14 +101,14 @@ def dnr_coroutines(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.Deferred(mo)
+    noti = fc.Deferred()
     
     def foo(noti):
         data = yield noti
         fc.Coroutine.return_(data)
     
     coroutine = fc.Coroutine(
-        foo(noti), mo, deferred=fc.Deferred(mo)
+        foo(noti), deferred=fc.Deferred()
     )
     conoti = coroutine.deferred
     coroutine.send()
