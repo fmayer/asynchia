@@ -68,7 +68,7 @@ class Coroutine(object):
     def __init__(self, itr, deferred=None):
         self.itr = itr
         if deferred is None:
-            deferred = FireOnceDeferred()
+            deferred = Deferred()
         self.deferred = deferred
     
     def send(self, data=None):
@@ -139,16 +139,20 @@ class Node(object):
             children = []
         self.children = children
         self.cachedsuccess = self.cachederror = _NULL
+        
+        self.event = threading.Event()
     
     def success_callback(self, data):
         for child in self.children:
             child.success(data)
         self.cachedsuccess = data
+        self.event.set()
     
     def error_callback(self, data):
         for child in self.children:
             child.err(data)
         self.cachederror = data
+        self.event.set()
     
     def add(self, callback=None, errback=None, children=None):
         node = CallbackNode(callback, errback, children)
@@ -160,6 +164,18 @@ class Node(object):
             self.children.append(node)
         return node
     
+    def wait(self, timeout=None):
+        self.event.wait(timeout)
+    
+    def synchronize(self, timeout=None):
+        self.wait(timeout)
+        
+        if self.cachederror is not _NULL:
+            # first element of args
+            raise self.cachederror
+        if self.cachedsuccess is not _NULL:
+            return self.cachedsuccess        
+
 
 class CallbackNode(Node):
     def __init__(self, callback=None, errback=None, children=None, data=None):
@@ -249,6 +265,12 @@ class Deferred(object):
         ).start()
         return obj
     
+    def wait(self, timeout=None):
+        self.callbacks.wait(timeout)
+    
+    def synchronize(self, timeout=None):
+        return self.callbacks.synchronize(timeout)
+    
     @staticmethod
     def maybe(fun, *args, **kwargs):
         try:
@@ -259,32 +281,6 @@ class Deferred(object):
             if isinstance(value, Deferred):
                 return value
             return Deferred(Node(data=(SUCCESS, value)))
-
-
-class FireOnceDeferred(Deferred):
-    def __init__(self, *args, **kwargs):
-        super(FireOnceDeferred, self).__init__(*args, **kwargs)
-        self.event = threading.Event()
-    
-    def submit_error(self, *args, **kwargs):
-        super(FireOnceDeferred, self).submit_error(*args, **kwargs)
-        self.event.set()
-    
-    def submit_success(self, *args, **kwargs):
-        super(FireOnceDeferred, self).submit_success(*args, **kwargs)
-        self.event.set()
-    
-    def wait(self, timeout=None):
-        self.event.wait(timeout)
-    
-    def synchronize(self, timeout=None):
-        self.wait(timeout)
-        
-        if self.callbacks.cachederror is not _NULL:
-            # first element of args
-            raise self.callbacks.cachederror
-        if self.callbacks.cachedsuccess is not _NULL:
-            return self.callbacks.cachedsuccess        
 
 
 if __name__ == '__main__':
@@ -328,4 +324,4 @@ if __name__ == '__main__':
     print 'foo'
     e.submit_success('world')
     print 'bar'
-    foo.add(callb2)
+    print foo.add(callb2).synchronize()
