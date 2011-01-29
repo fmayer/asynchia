@@ -53,6 +53,11 @@ class CoroutineReturn(BaseException):
     pass
 
 
+class DeferredWrap(object):
+    def __init__(self, deferred):
+        self.deferred = deferred
+
+
 class Coroutine(object):
     """ Create coroutine from given iterator. Yielding None will pause the co-
     routine until continuation by the given PauseContext. Yielding a
@@ -84,8 +89,7 @@ class Coroutine(object):
         except Exception, e:
             self.deferred.submit_error(e)
         else:
-            result.success_signal.listen_once(self.success_databack)
-            result.error_signal.listen_once(self.error_databack)
+            result.callbacks.add(self.success_databack, self.error_databack)
     
     __call__ = send
     
@@ -107,13 +111,8 @@ class Coroutine(object):
     def return_(obj):
         raise CoroutineReturn(obj)
     
-    def wait(self):
-        self.deferred.wait()
-        if self.deferred.error_signal.data is not _NULL:
-            # first element of args
-            raise self.deferred.error_signal.data[0][0]
-        if self.deferred.success_signal.data is not _NULL:
-            return self.deferred.success_signal.data[0][0]
+    def synchronize(self, timeout=None):
+        return self.deferred.synchronize(timeout)
 
 
 class Signal(object):
@@ -134,44 +133,92 @@ class Signal(object):
         self.once_listeners.append(listener)
 
 
-class FireOnceSignal(Signal):
-    def __init__(self):
-        super(FireOnceSignal, self).__init__()
-        self.data = _NULL
-        self.event = threading.Event()
-        self.finished = False
+class Node(object):
+    def __init__(self, children=None, data=None):
+        if children is None:
+            children = []
+        self.children = children
+        self.cachedsuccess = self.cachederror = _NULL
     
-    def fire(self, *args, **kwargs):
-        super(FireOnceSignal, self).fire(*args, **kwargs)
-        
-        self.data = (args, kwargs)
-        self.finished = True
-        self.event.set()
+    def success_callback(self, data):
+        for child in self.children:
+            child.success(data)
+        self.cachedsuccess = data
     
-    def listen(self, listener):
-        if self.data is _NULL:
-            super(FireOnceSignal, self).listen(listener)
+    def error_callback(self, data):
+        for child in self.children:
+            child.err(data)
+        self.cachederror = data
+    
+    def add(self, callback=None, errback=None, children=None):
+        node = CallbackNode(callback, errback, children)
+        if self.cachedsuccess is not _NULL:
+            node.success(self.cachedsuccess)
+        elif self.cachederror is not _NULL:
+            node.err(self.cachederror)
         else:
-            args, kwargs = self.data
-            listener(*args, **kwargs)
+            self.children.append(node)
+        return node
     
-    listen_once = listen
+
+class CallbackNode(Node):
+    def __init__(self, callback=None, errback=None, children=None, data=None):
+        super(CallbackNode, self).__init__(children, data)
+        if errback is None:
+            errback = self.default_errback
+        if callback is None:
+            callback = self.default_callback
+        self._callback = callback
+        self._errback = errback
+    
+    def visit(self, callback, data):
+        try:
+            value = callback(data)
+        except Exception, e:
+            self.error_callback(e)
+        else:
+            if isinstance(value, DeferredWrap):
+                value.deferred.callbacks.add(
+                    self.success_callback, self.error_callback
+                )
+            else:
+                self.success_callback(value)
+    
+    
+    def success(self, data):
+        self.visit(self._callback, data)
+    
+    def err(self, data):
+        self.visit(self._errback, data)
+
+    @staticmethod
+    def default_errback(err):
+        raise err
+    
+    @staticmethod
+    def default_callback(value):
+        return value
+    
+    def errback(self, errback):
+        self._errback = errback
+        return self
+    
+    def callback(self, callback):
+        self._callback = callback
+        return self
 
 
 class Deferred(object):
-    def __init__(self, success=None, error=None):
-        if success is None:
-            success = FireOnceSignal()
-        if error is None:
-            error = FireOnceSignal()
-        self.success_signal = success
-        self.error_signal = error
+    def __init__(self, callbacks=None):
+        if callbacks is None:
+            callbacks = Node() 
+        self.callbacks = callbacks
     
-    def submit_error(self, *args, **kwargs):
-        self.error_signal.fire(*args, **kwargs)
+    def submit_error(self, data):
+        self.callbacks.error_callback(data)
     
-    def submit_success(self, *args, **kwargs):
-        self.success_signal.fire(*args, **kwargs)
+    def submit_success(self, data):
+        self.callbacks.success_callback(data)
     
     def success(self, callback):
         self.success_signal.listen(callback)
@@ -206,16 +253,12 @@ class Deferred(object):
     def maybe(fun, *args, **kwargs):
         try:
             value = fun(*args, **kwargs)
-        except Exception:
-            pass
+        except Exception, e:
+            return Deferred(Node(data=(ERROR, e)))
         else:
             if isinstance(value, Deferred):
                 return value
-    
-    @classmethod
-    def fire_once(socket_map):
-        return cls(FireOnceSignal(socket_map), FireOnceSignal(socket_map))
-        
+            return Deferred(Node(data=(SUCCESS, value)))
 
 
 class FireOnceDeferred(Deferred):
@@ -233,6 +276,15 @@ class FireOnceDeferred(Deferred):
     
     def wait(self, timeout=None):
         self.event.wait(timeout)
+    
+    def synchronize(self, timeout=None):
+        self.wait(timeout)
+        
+        if self.callbacks.cachederror is not _NULL:
+            # first element of args
+            raise self.callbacks.cachederror
+        if self.callbacks.cachedsuccess is not _NULL:
+            return self.callbacks.cachedsuccess        
 
 
 if __name__ == '__main__':
@@ -257,4 +309,23 @@ if __name__ == '__main__':
     c.send()
     # Network I/O complete.
     a.submit_success('yay')
-    print c.wait()
+    print c.synchronize()
+    
+    e = Deferred()
+    def callb1(value):
+        print value
+        return DeferredWrap(e)
+    
+    def callb2(value):
+        print value
+        return value + '2'
+    
+    d = Deferred()
+    foo = d.callbacks.add(callb1).add(callb2).add(callb2)
+    d.submit_success('hello')
+    d.callbacks.add(callb1)
+    
+    print 'foo'
+    e.submit_success('world')
+    print 'bar'
+    foo.add(callb2)
