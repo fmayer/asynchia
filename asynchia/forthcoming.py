@@ -194,7 +194,7 @@ class CallbackNode(Node):
             self.error_callback(e)
         else:
             if isinstance(value, Deferred):
-                value.deferred.callbacks.add(
+                value.callbacks.add(
                     self.success_callback, self.error_callback
                 )
             if isinstance(value, Escape):
