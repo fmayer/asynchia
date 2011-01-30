@@ -10,10 +10,11 @@
 
 0.2.0
 =====
+[x] Deferreds.
 [ ] SSL Transport.
 [ ] Timer.
 [ ] Comprehensive IPv6 support.
-[ ] Use forthcoming facilities in asynchia core.
+[ ] Use defer facilities in asynchia core.
 
 0.3.0
 =====
