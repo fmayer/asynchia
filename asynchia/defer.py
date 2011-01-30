@@ -39,6 +39,7 @@ Example:
     a.submit('blub')
 """
 
+import copy
 import threading
 import itertools
 
@@ -136,7 +137,7 @@ class Signal(object):
 
 
 class Node(object):
-    def __init__(self, callback=None, errback=None, children=None, data=None):
+    def __init__(self, callback=None, errback=None, children=None):
         if children is None:
             children = []
         self.children = children
@@ -150,6 +151,11 @@ class Node(object):
             callback = self.default_callback
         self._callback = callback
         self._errback = errback
+    
+    def copy(self):
+        return self.__class__(
+            self._callback, self._errback, [c.copy() for c in self.children]
+        )
     
     def success_callback(self, data):
         for child in self.children:
@@ -173,6 +179,17 @@ class Node(object):
             self.children.append(node)
         return node
     
+    def add_blueprint(self, node):
+        node = node.copy()
+        
+        if self.cachedsuccess is not _NULL:
+            node.success(self.cachedsuccess)
+        elif self.cachederror is not _NULL:
+            node.err(self.cachederror)
+        else:
+            self.children.append(node)
+        return node
+    
     def wait(self, timeout=None):
         self.event.wait(timeout)
     
@@ -183,9 +200,9 @@ class Node(object):
         if self.cachedsuccess is not _NULL:
             return self.cachedsuccess
     
-    def visit(self, callback, data):
+    def visit(self, callback, *args, **kwargs):
         try:
-            value = callback(data)
+            value = callback(*args, **kwargs)
         except Exception, e:
             self.error_callback(e)
         else:
@@ -198,8 +215,8 @@ class Node(object):
                     value = value.deferred
                 self.success_callback(value)
     
-    def success(self, data):
-        self.visit(self._callback, data)
+    def success(self, *args, **kwargs):
+        self.visit(self._callback, *args, **kwargs)
     
     def err(self, data):
         self.visit(self._errback, data)
@@ -220,7 +237,13 @@ class Node(object):
         self._callback = callback
         return self
     
+    def wrap(self):
+        def _fun(*args, **kwargs):
+            return self(*args, **kwargs)
+        return _fun
+    
     __call__ = success
+    
 
 
 class Deferred(object):
@@ -315,7 +338,39 @@ if __name__ == '__main__':
     print foo.add(callb2).synchronize()
     
     f = Deferred()
-    c = Node(lambda _: f)
+    c = Node(lambda x, y: x + y)
     c.add(callb2)
-    c.success(None)
+    c.wrap()('foo', 'bar')
     f.submit_success('hey')
+
+    d = Deferred()
+    
+    class Foo(object):
+        c = Node(lambda self, y: d)
+        c.add(callb2)
+        
+        c = c.wrap()
+        
+        def __init__(self, x):
+            self.x = x
+    
+    f = Foo('foo')
+    f.c('bar')
+    f.c('baz')
+    d.submit_success('foo')
+    
+    c = Node()
+    c.add(callb2)
+    
+    a = Deferred()
+    b = Deferred()
+    
+    print '--'
+    n = Node()
+    n.add(callb2)
+    
+    a.callbacks.add_blueprint(n)
+    b.callbacks.add_blueprint(n).add(callb2)
+    
+    a.submit_success('foo')
+    b.submit_success('bar')
