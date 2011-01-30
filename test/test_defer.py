@@ -119,9 +119,121 @@ def dnr_coroutines(self, map_):
     self.assertEquals(container.run, True)
 
 
-class TestForthcoming(unittest.TestCase):
-    pass
+def mkcoroutine():
+    class HTTP404(Exception):
+        pass
+    
+    a = fc.Deferred()
+    def bar(err):
+        # Request result of network I/O.
+        blub = (yield a)
+        if err:
+            raise HTTP404
+        fc.Coroutine.return_(blub)
+    def foo(err):
+        # Wait for completion of new coroutine which - in turn - waits
+        # for I/O.
+        try:
+            blub = yield fc.Coroutine.call_itr(bar(err), None)
+        except HTTP404:
+            blub = 404
+        fc.Coroutine.return_("yay %s" % blub)
+    
+    return a, foo
 
+
+def callb2(value):
+    return value + '2'
+
+
+class TestForthcoming(unittest.TestCase):
+    def test_synchronize_coroutine(self):
+        a, test_coroutine = mkcoroutine()
+        c = fc.Coroutine(test_coroutine(False), None)
+        c.send()
+        # Network I/O complete.
+        a.submit_success('yay')
+        self.assertEquals(c.synchronize(), 'yay yay')
+    
+    def test_synchronize_coroutine_error(self):
+        a, test_coroutine = mkcoroutine()
+        c = fc.Coroutine(test_coroutine(True), None)
+        c.send()
+        # Network I/O complete.
+        a.submit_success('yay')
+        self.assertEquals(c.synchronize(), 'yay 404')
+    
+    def test_deferred_add_after_submit(self):
+            e = fc.Deferred()
+            def callb1(value):
+                return e
+            
+            d = fc.Deferred()
+            foo = d.callbacks.add(callb1).add(callb2).add(callb2)
+            d.submit_success('hello')
+            d.callbacks.add(callb1)
+            
+            e.submit_success('world')
+            self.assertEqual(foo.synchronize(), 'world22')
+            self.assertEqual(foo.add(callb2).synchronize(), 'world222')
+    
+    def test_wrap(self):        
+        c = fc.Node(lambda x, y: x + y)
+        d = c.add(callb2)
+        c.wrap()('foo', 'bar')
+        
+        self.assertEqual(d.synchronize(), 'foobar2')
+    
+    def test_class_wrapinstance(self):
+        class Foo(object):
+            c = fc.Blueprint(lambda self, y: self.x + y)
+            c.add(callb2)
+            
+            c = c.wrapinstance()
+            
+            def __init__(self, x):
+                self.x = x
+        
+        f = Foo('foo')
+        r1_1 = f.c('bar')
+        r1_2 = f.c('baz')
+        
+        b = Foo('spam')
+        r2_1 = b.c('bar')
+        r2_2 = b.c('baz')
+        
+        self.assertEqual(r1_1.synchronize(), 'foobar')
+        self.assertEqual(r1_2.synchronize(), 'foobaz')
+        
+        self.assertEqual(r2_1.synchronize(), 'spambar')
+        self.assertEqual(r2_2.synchronize(), 'spambaz')
+    
+    def test_ref(self):
+        b = fc.Blueprint()
+        b['end'] = b.add(lambda n: 2 * n).add(lambda n: 3 + n)
+         
+        n = fc.Node()
+        end = n.add_blueprint(b)['end'].add(lambda x: 2 * x)
+        n(1)
+        self.assertEqual(end.synchronize(), 10)
+    
+    def test_immutability(self):
+        c = fc.Chain()
+        c.add(lambda n: 2 * n).add(lambda n: 3 + n)
+        
+        e = fc.Chain()
+        e.add_chain(c).add(lambda n: 3 * n).add(lambda n: 2 + n)
+        
+        n = fc.Node()
+        end1 = n.add_chain(e)
+        
+        x = fc.Node()
+        end2 = x.add_chain(c)
+        n(1)
+        x(2)
+        
+        self.assertEqual(end1.synchronize(), 17)
+        self.assertEqual(end2.synchronize(), 7)
 
 def _genfun(map_, test):
     def _fun(self):
