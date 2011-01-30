@@ -169,9 +169,7 @@ class Node(object):
     
     def synchronize(self, timeout=None):
         self.wait(timeout)
-        
         if self.cachederror is not _NULL:
-            # first element of args
             raise self.cachederror
         if self.cachedsuccess is not _NULL:
             return self.cachedsuccess        
@@ -199,7 +197,6 @@ class CallbackNode(Node):
                 )
             else:
                 self.success_callback(value)
-    
     
     def success(self, data):
         self.visit(self._callback, data)
