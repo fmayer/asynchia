@@ -343,10 +343,10 @@ class Deferred(object):
             obj.submit_error(e)
     
     @classmethod
-    def threaded_coroutine(cls, socket_map, fun, *args, **kwargs):
+    def threaded_coroutine(cls, fun, *args, **kwargs):
         """ Run fun(*args, **kwargs) in a thread and return a DataNotifier
         notifying upon availability of the return value of the function. """
-        obj = cls(socket_map)
+        obj = cls()
         threading.Thread(
             target=cls._coroutine, args=(obj, fun, args, kwargs)
         ).start()
@@ -360,14 +360,19 @@ class Deferred(object):
     
     @staticmethod
     def maybe(fun, *args, **kwargs):
+        node = Node()
         try:
             value = fun(*args, **kwargs)
         except Exception, e:
-            return Deferred(Node(data=(ERROR, e)))
+            node.cachederror = e
         else:
             if isinstance(value, Deferred):
                 return value
-            return Deferred(Node(data=(SUCCESS, value)))
+            elif isinstance(value, Escape):
+                node.cachedsuccess = value.deferred
+            else:
+                node.cachedsuccess = value
+            return Deferred(node)
 
 
 if __name__ == '__main__':
