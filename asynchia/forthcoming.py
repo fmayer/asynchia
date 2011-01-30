@@ -53,7 +53,9 @@ class CoroutineReturn(BaseException):
     pass
 
 
-class DeferredWrap(object):
+class Escape(object):
+    """ Prevent the return value of a callback from being treated specially if
+    it is a Deferred """
     def __init__(self, deferred):
         self.deferred = deferred
 
@@ -191,10 +193,12 @@ class CallbackNode(Node):
         except Exception, e:
             self.error_callback(e)
         else:
-            if isinstance(value, DeferredWrap):
+            if isinstance(value, Deferred):
                 value.deferred.callbacks.add(
                     self.success_callback, self.error_callback
                 )
+            if isinstance(value, Escape):
+                value = value.deferred
             else:
                 self.success_callback(value)
     
@@ -307,7 +311,7 @@ if __name__ == '__main__':
     e = Deferred()
     def callb1(value):
         print value
-        return DeferredWrap(e)
+        return Escape(e)
     
     def callb2(value):
         print value
