@@ -1,0 +1,521 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asynchia.ee &mdash; asynchia v0.1.0a documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="asynchia v0.1.0a documentation" href="../index.html" />
+    <link rel="up" title="API Documentation" href="index.html" />
+    <link rel="next" title="asynchia.maps" href="asynchia.maps.html" />
+    <link rel="prev" title="asynchia.dsl" href="asynchia.dsl.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.maps.html" title="asynchia.maps"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.dsl.html" title="asynchia.dsl"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-asynchia.ee">
+<span id="asynchia-ee"></span><h1>asynchia.ee<a class="headerlink" href="#module-asynchia.ee" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="asynchia.ee.AutoFileInput">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">AutoFileInput</tt><big>(</big><em>fd</em>, <em>length=None</em>, <em>buffer_size=9096</em>, <em>closing=True</em>, <em>samples=None</em>, <em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.AutoFileInput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as FileInput, only that it stores samples to guess how big
+the buffer should be.</p>
+<dl class="method">
+<dt id="asynchia.ee.AutoFileInput.tick">
+<tt class="descname">tick</tt><big>(</big><em>sock</em><big>)</big><a class="headerlink" href="#asynchia.ee.AutoFileInput.tick" title="Permalink to this definition">¶</a></dt>
+<dd><p>See FileInput.tick.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.Collector">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">Collector</tt><big>(</big><em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.Collector" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the base-class for all collectors. Collectors read up to
+nbytes bytes of data from the protocol passed to them.</p>
+<dl class="method">
+<dt id="asynchia.ee.Collector.add_data">
+<tt class="descname">add_data</tt><big>(</big><em>prot</em>, <em>nbytes</em><big>)</big><a class="headerlink" href="#asynchia.ee.Collector.add_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override to read at most nbytes from prot and store them in the
+collector.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.Collector.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.Collector.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called after the last data has been added.</p>
+<p>IMPORTANT NOTE: This may be called without the Collector being
+initalised, so you need to explicitely check whether it is when you
+want to clean up resources allocated in init.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.Collector.init">
+<tt class="descname">init</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.Collector.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called before the first data is added to the collector.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.CollectorQueue">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">CollectorQueue</tt><big>(</big><em>collectors=None</em>, <em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.CollectorQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data to the first collector until CollectorFull is raised,
+afterwards repeat with next. When the CollectorQueue gets empty it
+raises CollectorFull.</p>
+<dl class="method">
+<dt id="asynchia.ee.CollectorQueue.add_collector">
+<tt class="descname">add_collector</tt><big>(</big><em>coll</em><big>)</big><a class="headerlink" href="#asynchia.ee.CollectorQueue.add_collector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add coll to queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.CollectorQueue.add_data">
+<tt class="descname">add_data</tt><big>(</big><em>prot</em>, <em>nbytes</em><big>)</big><a class="headerlink" href="#asynchia.ee.CollectorQueue.add_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add data to first collector until it is full.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.CollectorQueue.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.CollectorQueue.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close collectors contained in the queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.CollectorQueue.finish_collector">
+<tt class="descname">finish_collector</tt><big>(</big><em>coll</em><big>)</big><a class="headerlink" href="#asynchia.ee.CollectorQueue.finish_collector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called when a collector raises CollectorFull.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.CollectorQueue.full">
+<tt class="descname">full</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.CollectorQueue.full" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called when the last collector in the queue raises
+CollectorFull.</p>
+<p>Return True to prevent CollectorQueue from raising CollectorFull.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.DelimitedCollector">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">DelimitedCollector</tt><big>(</big><em>collector</em>, <em>size</em>, <em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.DelimitedCollector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect up to size bytes in collector and raise CollectorFull
+afterwards.</p>
+<dl class="method">
+<dt id="asynchia.ee.DelimitedCollector.add_data">
+<tt class="descname">add_data</tt><big>(</big><em>prot</em>, <em>nbytes</em><big>)</big><a class="headerlink" href="#asynchia.ee.DelimitedCollector.add_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add data until the received data exceeds size.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.DelimitedCollector.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.DelimitedCollector.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close wrapped collector.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.DelimitedCollector.init">
+<tt class="descname">init</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.DelimitedCollector.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialise wrapped collector.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.FactoryCollector">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">FactoryCollector</tt><big>(</big><em>factory</em>, <em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.FactoryCollector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call factory method to obtain the next collector until the factory
+raises the Depleted exception.</p>
+<dl class="method">
+<dt id="asynchia.ee.FactoryCollector.add_data">
+<tt class="descname">add_data</tt><big>(</big><em>prot</em>, <em>nbytes</em><big>)</big><a class="headerlink" href="#asynchia.ee.FactoryCollector.add_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add data to the current collector.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.FactoryCollector.init">
+<tt class="descname">init</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.FactoryCollector.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Obtain first collector from factory method.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="asynchia.ee.FactoryCollector.wrap_iterator">
+<em class="property">static </em><tt class="descname">wrap_iterator</tt><big>(</big><em>itr_next</em><big>)</big><a class="headerlink" href="#asynchia.ee.FactoryCollector.wrap_iterator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap the next method of an iterable in such a way that whenever
+it raises StopIteration, the wrapper raises Depleted. This is
+convenient when using FactoryCollector to obtain the collectors
+from an iterable.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.FactoryInput">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">FactoryInput</tt><big>(</big><em>factory</em>, <em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.FactoryInput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call factory method to obtain the next input until the factory
+raises the Depleted exception.</p>
+<dl class="method">
+<dt id="asynchia.ee.FactoryInput.init">
+<tt class="descname">init</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.FactoryInput.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Obtain first input from factory method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.FactoryInput.tick">
+<tt class="descname">tick</tt><big>(</big><em>sock</em><big>)</big><a class="headerlink" href="#asynchia.ee.FactoryInput.tick" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send data from the current input.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="asynchia.ee.FactoryInput.wrap_iterator">
+<em class="property">static </em><tt class="descname">wrap_iterator</tt><big>(</big><em>itr_next</em><big>)</big><a class="headerlink" href="#asynchia.ee.FactoryInput.wrap_iterator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap the next method of an iterable in such a way that whenever
+it raises StopIteration, the wrapper raises Depleted. This is
+convenient when using FactoryCollector to obtain the collectors
+from an iterable.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.FileCollector">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">FileCollector</tt><big>(</big><em>fd=None</em>, <em>closing=True</em>, <em>autoflush=False</em>, <em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.FileCollector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data received from the socket into a fd.</p>
+<dl class="method">
+<dt id="asynchia.ee.FileCollector.add_data">
+<tt class="descname">add_data</tt><big>(</big><em>prot</em>, <em>nbytes</em><big>)</big><a class="headerlink" href="#asynchia.ee.FileCollector.add_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write at most nbytes data from prot to fd.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.FileCollector.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.FileCollector.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the fd if the FileCollector is closing.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.FileInput">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">FileInput</tt><big>(</big><em>fd</em>, <em>length=None</em>, <em>buffer_size=9096</em>, <em>closing=True</em>, <em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.FileInput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Input that buffers at most buffer_size bytes read from the passed fd,
+and sends them in a buffered way. This can be used to &#8220;directly&#8221; send data
+contained in a file.</p>
+<dl class="method">
+<dt id="asynchia.ee.FileInput.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.FileInput.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>If FileInput is closing, close the fd.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="asynchia.ee.FileInput.from_filename">
+<em class="property">classmethod </em><tt class="descname">from_filename</tt><big>(</big><em>filename</em>, <em>mode='rb'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#asynchia.ee.FileInput.from_filename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as cls(fd, size, <a href="#id1"><span class="problematic" id="id2">*</span></a>args, <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs) while fd and size
+get constructed from the filename. If the mode attribute
+does not equal &#8216;rb&#8217;, the size cannot be determined
+efficienty.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.FileInput.tick">
+<tt class="descname">tick</tt><big>(</big><em>sock</em><big>)</big><a class="headerlink" href="#asynchia.ee.FileInput.tick" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send as much of the file as possible.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.Handler">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">Handler</tt><big>(</big><em>transport</em>, <em>collector=None</em>, <em>buffer_size=9046</em><big>)</big><a class="headerlink" href="#asynchia.ee.Handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>asynchia handler that adds all received data to a collector,
+and reads outgoing data from an Input.</p>
+<dl class="method">
+<dt id="asynchia.ee.Handler.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.Handler.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close top-level collector.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.Handler.handle_read">
+<tt class="descname">handle_read</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.Handler.handle_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the read call.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.Handler.handle_write">
+<tt class="descname">handle_write</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.Handler.handle_write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the write call.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.Handler.has_data">
+<tt class="descname">has_data</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.Handler.has_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tell whether the Handler has any data to be sent.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.Handler.send_input">
+<tt class="descname">send_input</tt><big>(</big><em>inp</em><big>)</big><a class="headerlink" href="#asynchia.ee.Handler.send_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add inp to the main input queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.Handler.send_str">
+<tt class="descname">send_str</tt><big>(</big><em>string</em><big>)</big><a class="headerlink" href="#asynchia.ee.Handler.send_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience method for .send_input(StringInput(string))</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.Handler.set_collector">
+<tt class="descname">set_collector</tt><big>(</big><em>collector</em>, <em>noclose=False</em><big>)</big><a class="headerlink" href="#asynchia.ee.Handler.set_collector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the top-level collector to collector. If noclose is False,
+the previous collector&#8217;s close method is called.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.Input">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">Input</tt><big>(</big><em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.Input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base-class for all Inputs. It implements __add__ to return an
+InputQueue consisting of the two operants.</p>
+<dl class="method">
+<dt id="asynchia.ee.Input.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.Input.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called after the last tick.</p>
+<p>IMPORTANT NOTE: This may be called without the Input being initalised,
+so you need to explicitely check whether it is when you want to clean
+up resources allocated in init.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.Input.init">
+<tt class="descname">init</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.Input.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called before the first tick.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.Input.tick">
+<tt class="descname">tick</tt><big>(</big><em>sock</em><big>)</big><a class="headerlink" href="#asynchia.ee.Input.tick" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abstract method to be overridden. This should send the data
+contained in the Input over sock.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.InputQueue">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">InputQueue</tt><big>(</big><em>inputs=None</em>, <em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.InputQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>An InputQueue calls the tick method an object until it raises
+InputEOF, then it goes on with the next object in the queue. If no
+object is in the queue anymore, InputQueue.tick raises InputEOF (like
+any other Input that doesn&#8217;t need data anymore).</p>
+<dl class="method">
+<dt id="asynchia.ee.InputQueue.add">
+<tt class="descname">add</tt><big>(</big><em>other</em><big>)</big><a class="headerlink" href="#asynchia.ee.InputQueue.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add input to queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.InputQueue.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.InputQueue.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close all inputs contained in the queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.InputQueue.eof">
+<tt class="descname">eof</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.InputQueue.eof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called when the last Input in the queue raises InputEOF.</p>
+<p>Return True to prevent InputQueue from raising InputEOF.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.InputQueue.tick">
+<tt class="descname">tick</tt><big>(</big><em>sock</em><big>)</big><a class="headerlink" href="#asynchia.ee.InputQueue.tick" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call tick method of the first object contained in the queue until
+it raises InputEOF.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.KeepingCollectorQueue">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">KeepingCollectorQueue</tt><big>(</big><em>collectors=None</em>, <em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.KeepingCollectorQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>CollectorQueue that does not discard the collectors contained within
+after they have finished but rather appends to them to the list accessible
+through its member collected.</p>
+<dl class="method">
+<dt id="asynchia.ee.KeepingCollectorQueue.finish_collector">
+<tt class="descname">finish_collector</tt><big>(</big><em>coll</em><big>)</big><a class="headerlink" href="#asynchia.ee.KeepingCollectorQueue.finish_collector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append finished collector to self.collected.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.MockHandler">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">MockHandler</tt><big>(</big><em>inbuf=''</em>, <em>outbuf=''</em><big>)</big><a class="headerlink" href="#asynchia.ee.MockHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>This mocks a handler by writing everything that&#8217;s passed
+to its send method to outbuf, while reading data from inbuf
+upon recv calls.</p>
+<dl class="method">
+<dt id="asynchia.ee.MockHandler.recv">
+<tt class="descname">recv</tt><big>(</big><em>bufsize</em><big>)</big><a class="headerlink" href="#asynchia.ee.MockHandler.recv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return up to bufsize bytes from inbuf. Raise ValueError
+when inbuf is empty.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.ee.MockHandler.send">
+<tt class="descname">send</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#asynchia.ee.MockHandler.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data to outbuf.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.SingleStructValueCollector">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">SingleStructValueCollector</tt><big>(</big><em>stru</em>, <em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.SingleStructValueCollector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Struct collector that makes the first item returned by unpack its
+value member.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.StringCollector">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">StringCollector</tt><big>(</big><em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.StringCollector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store data received from the socket in a string.</p>
+<dl class="method">
+<dt id="asynchia.ee.StringCollector.add_data">
+<tt class="descname">add_data</tt><big>(</big><em>prot</em>, <em>nbytes</em><big>)</big><a class="headerlink" href="#asynchia.ee.StringCollector.add_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write at most nbytes bytes from prot to string.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.StringInput">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">StringInput</tt><big>(</big><em>string</em>, <em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.StringInput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Input that bufferedly sends a string.</p>
+<dl class="method">
+<dt id="asynchia.ee.StringInput.tick">
+<tt class="descname">tick</tt><big>(</big><em>sock</em><big>)</big><a class="headerlink" href="#asynchia.ee.StringInput.tick" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send as much of the string as possible.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.ee.StructCollector">
+<em class="property">class </em><tt class="descclassname">asynchia.ee.</tt><tt class="descname">StructCollector</tt><big>(</big><em>stru</em>, <em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.ee.StructCollector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collect and unpack stru. Unpacked value can be found in .value and
+is available upon calling onclose.</p>
+<dl class="method">
+<dt id="asynchia.ee.StructCollector.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.ee.StructCollector.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack the data received and close the collector afterwards.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="asynchia.dsl.html"
+                        title="previous chapter">asynchia.dsl</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="asynchia.maps.html"
+                        title="next chapter">asynchia.maps</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/modules/asynchia.ee.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.maps.html" title="asynchia.maps"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.dsl.html" title="asynchia.dsl"
+             >previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009, Florian Mayer.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

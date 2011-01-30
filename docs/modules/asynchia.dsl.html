@@ -1,0 +1,348 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asynchia.dsl &mdash; asynchia v0.1.0a documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="asynchia v0.1.0a documentation" href="../index.html" />
+    <link rel="up" title="API Documentation" href="index.html" />
+    <link rel="next" title="asynchia.ee" href="asynchia.ee.html" />
+    <link rel="prev" title="asynchia" href="asynchia.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.ee.html" title="asynchia.ee"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.html" title="asynchia"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-asynchia.dsl">
+<span id="asynchia-dsl"></span><h1>asynchia.dsl<a class="headerlink" href="#module-asynchia.dsl" title="Permalink to this headline">¶</a></h1>
+<p>A domain-specific language to conveniently define the structure of packets
+in binary protocols.</p>
+<p>An elementary expression is an object implementing the Expr interface (which
+is preferably an interface of a subclass of Expr and thus consistenly
+integrates with other Exprs). It needs to implement the __call__(state)
+and the produce(value) methods where __call__ returns the appropriate
+collector to collect the data described by the expression and produce
+returns the input that encodes the value passed to it according to the
+expression.</p>
+<p>By default the following expressions are defined by the module:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="o">-</span> <span class="n">BinaryExpr</span> <span class="p">(</span><span class="n">BE</span><span class="p">)</span>
+<span class="o">-</span> <span class="n">SingleBinaryExpr</span> <span class="p">(</span><span class="n">SBE</span><span class="p">)</span>
+<span class="o">-</span> <span class="n">StringExpr</span> <span class="p">(</span><span class="n">SE</span><span class="p">)</span>
+<span class="o">-</span> <span class="n">FixedLenExpr</span> <span class="p">(</span><span class="n">FLE</span><span class="p">)</span>
+<span class="o">-</span> <span class="n">FileExpression</span> <span class="p">(</span><span class="n">FE</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Two methods are provided to lookback data earlier collected in order to
+construct the collector. binarylookback(ind, item=0) (also exported as bl)
+gets the item specified from the binary data parsed from the expression at
+the index ind (zero-index) of the ExprAdd the respective expression is
+contained within. It is also possible to use positions relative to the
+current one (-1 is the element before the one the lookback is passed to).
+singlebinarylookback (also exported as sbl) does likewise for
+SingleBinaryExpr (and is arguably more useful, see the Example section).
+The only Expr in this module that takes a lookback as a parameter is
+FixedLenExpr which limits whichever expression is contained in it
+to the number of bytes aquired by the lookback function.</p>
+<p>Attributes can be named by passing the name in square brackets. It is
+also possible to refer to expressions by the name given to them in
+lookbacks.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">e</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">L</span><span class="p">()[</span><span class="s">&#39;size&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="n">B</span><span class="p">()[</span><span class="s">&#39;blub&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">LFLSE</span><span class="p">(</span><span class="s">&#39;size&#39;</span><span class="p">)[</span><span class="s">&#39;string&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The tuple of values collected can be converted into a dictionary that
+maps the name of the expression to the respective value by calling the
+tonamed method of the ExprAdd.</p>
+<div class="highlight-python"><pre>a = e()
+[Collecting of data takes place]
+tup = a.values
+dic = e.tonamed(tup)</pre>
+</div>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>Packets are described by expressions which can be converted to collectors
+whenever a packet of that type should be parsed. Complex expressions can
+be created by adding expressions, resulting in ExprAdds (but that is semi-
+internal API which you do not necessarily need to care about, unless you
+try to write your own types of expressions).</p>
+<p>Let us henceforth consider the following simple example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">asynchia.dsl</span> <span class="kn">import</span> <span class="n">s</span><span class="p">,</span> <span class="n">SBLFLSE</span>
+<span class="n">e</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">L</span><span class="p">()</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="n">B</span><span class="p">()</span> <span class="o">+</span> <span class="n">LFLSE</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This might appear utterly complicated at first glance, but it is not. The
+first statement imports s (which is a container for binary numeric types)
+and LFLSE which expands to lookback fixed-length string-expression.</p>
+<p>The expression (which is the second statement) describes a packet which
+contains three parts. The first part is an unsigned long (which is named by its
+name in the struct module) in network byte-order (all binary types contained
+in <cite>s</cite> assume network byte-order (so s.L expands to the struct format &#8220;!L&#8221;);
+the second part is an unsigned byte; the interesting thing in the expression
+is the third part which describes a fixed-length string with the length equal
+to the first element in the expression (which is referred to by its index 0):
+the unsigned long.</p>
+<p>The expression can now be used to parse and to produce packets according to the
+given format. An asynchia.ee collector can be created by calling the
+expression</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">collector</span> <span class="o">=</span> <span class="n">e</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>You can now pass the protocol to the add_data method of the collector and it
+will collect the data as specified. Any other data (which appears after the
+whole packet has been read) is left in the protocol.</p>
+<p>To create a packet you need to call the expression&#8217;s produce method and pass
+a tuple of the data you want to construct a package of. This operation
+returns an asynchia.ee.Input that can directly be passed to be sent by
+an asynchia.Handler.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">produce</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;ABCDE&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In this case it is important that the first number equals the length of the
+string, as the system does not derive it from the length of the string
+(though you are advised to do so in your client code).</p>
+<dl class="attribute">
+<dt id="asynchia.dsl.BE">
+<tt class="descclassname">asynchia.dsl.</tt><tt class="descname">BE</tt><a class="headerlink" href="#asynchia.dsl.BE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Binary expression</p>
+<p>alias of <a class="reference internal" href="#asynchia.dsl.BinaryExpr" title="asynchia.dsl.BinaryExpr"><tt class="xref py py-class docutils literal"><span class="pre">BinaryExpr</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.dsl.BinaryExpr">
+<em class="property">class </em><tt class="descclassname">asynchia.dsl.</tt><tt class="descname">BinaryExpr</tt><big>(</big><em>pattern</em><big>)</big><a class="headerlink" href="#asynchia.dsl.BinaryExpr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents data that can be expressed by a Struct.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.dsl.Container">
+<em class="property">class </em><tt class="descclassname">asynchia.dsl.</tt><tt class="descname">Container</tt><a class="headerlink" href="#asynchia.dsl.Container" title="Permalink to this definition">¶</a></dt>
+<dd><p>Container to hold members, which are also exposed through getitem.
+Used as a container for the preconstruced SingleBinaryExpressions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.dsl.Expr">
+<em class="property">class </em><tt class="descclassname">asynchia.dsl.</tt><tt class="descname">Expr</tt><a class="headerlink" href="#asynchia.dsl.Expr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Baseclass for all expressions.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.dsl.ExprCollectorQueue">
+<em class="property">class </em><tt class="descclassname">asynchia.dsl.</tt><tt class="descname">ExprCollectorQueue</tt><big>(</big><em>exprs</em>, <em>parentstate=None</em>, <em>onclose=None</em><big>)</big><a class="headerlink" href="#asynchia.dsl.ExprCollectorQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Queue to collect the data specified by the list of expressions
+passed to it.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="asynchia.dsl.FE">
+<tt class="descclassname">asynchia.dsl.</tt><tt class="descname">FE</tt><a class="headerlink" href="#asynchia.dsl.FE" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#asynchia.dsl.FileExpr" title="asynchia.dsl.FileExpr"><tt class="xref py py-class docutils literal"><span class="pre">FileExpr</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="asynchia.dsl.FLE">
+<tt class="descclassname">asynchia.dsl.</tt><tt class="descname">FLE</tt><a class="headerlink" href="#asynchia.dsl.FLE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fixed-length expression</p>
+<p>alias of <a class="reference internal" href="#asynchia.dsl.FixedLenExpr" title="asynchia.dsl.FixedLenExpr"><tt class="xref py py-class docutils literal"><span class="pre">FixedLenExpr</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.dsl.FileExpr">
+<em class="property">class </em><tt class="descclassname">asynchia.dsl.</tt><tt class="descname">FileExpr</tt><big>(</big><em>fd</em>, <em>closing=False</em>, <em>autoflush=True</em><big>)</big><a class="headerlink" href="#asynchia.dsl.FileExpr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data that should be collected in an fd. Should be combined with a
+FixedLengthExpression, lest it greedily collects all data from the
+moment it is created until no data is available.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.dsl.FixedLenExpr">
+<em class="property">class </em><tt class="descclassname">asynchia.dsl.</tt><tt class="descname">FixedLenExpr</tt><big>(</big><em>glen</em>, <em>expr</em><big>)</big><a class="headerlink" href="#asynchia.dsl.FixedLenExpr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restrict the length of the expression contained to the value retuned
+by calling glen upon construction of the collector for said expression.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="asynchia.dsl.SBE">
+<tt class="descclassname">asynchia.dsl.</tt><tt class="descname">SBE</tt><a class="headerlink" href="#asynchia.dsl.SBE" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#asynchia.dsl.SingleBinaryExpr" title="asynchia.dsl.SingleBinaryExpr"><tt class="xref py py-class docutils literal"><span class="pre">SingleBinaryExpr</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="asynchia.dsl.SE">
+<tt class="descclassname">asynchia.dsl.</tt><tt class="descname">SE</tt><a class="headerlink" href="#asynchia.dsl.SE" title="Permalink to this definition">¶</a></dt>
+<dd><p>String expression</p>
+<p>alias of <a class="reference internal" href="#asynchia.dsl.StringExpr" title="asynchia.dsl.StringExpr"><tt class="xref py py-class docutils literal"><span class="pre">StringExpr</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.dsl.SingleBinaryExpr">
+<em class="property">class </em><tt class="descclassname">asynchia.dsl.</tt><tt class="descname">SingleBinaryExpr</tt><big>(</big><em>pattern</em><big>)</big><a class="headerlink" href="#asynchia.dsl.SingleBinaryExpr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents data that can be expressed by a Struct with a single
+member.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.dsl.State">
+<em class="property">class </em><tt class="descclassname">asynchia.dsl.</tt><tt class="descname">State</tt><big>(</big><em>parentstate=None</em><big>)</big><a class="headerlink" href="#asynchia.dsl.State" title="Permalink to this definition">¶</a></dt>
+<dd><p>State of the collection done by ExprCollectorQueue. Used to enable
+lookbacks.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.dsl.StringExpr">
+<em class="property">class </em><tt class="descclassname">asynchia.dsl.</tt><tt class="descname">StringExpr</tt><a class="headerlink" href="#asynchia.dsl.StringExpr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data that should be collected in a string. Should be combined with a
+FixedLengthExpression, lest it greedily collects all data from the
+moment it is created until no data is available.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="asynchia.dsl.binarylookback">
+<tt class="descclassname">asynchia.dsl.</tt><tt class="descname">binarylookback</tt><big>(</big><em>ind</em>, <em>item=0</em><big>)</big><a class="headerlink" href="#asynchia.dsl.binarylookback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience function for lookback(ind, lambda x: x.value[item]).</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="asynchia.dsl.bl">
+<tt class="descclassname">asynchia.dsl.</tt><tt class="descname">bl</tt><a class="headerlink" href="#asynchia.dsl.bl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Binary lookback</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="asynchia.dsl.const">
+<tt class="descclassname">asynchia.dsl.</tt><tt class="descname">const</tt><big>(</big><em>value</em><big>)</big><a class="headerlink" href="#asynchia.dsl.const" title="Permalink to this definition">¶</a></dt>
+<dd><p>Can be passed to expressions that expect a lookback and always
+returns the value passed to it.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="asynchia.dsl.lb">
+<tt class="descclassname">asynchia.dsl.</tt><tt class="descname">lb</tt><big>(</big><em>ind</em>, <em>fun=&lt;function &lt;lambda&gt; at 0x297c938&gt;</em><big>)</big><a class="headerlink" href="#asynchia.dsl.lb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Can be passed to expressions that expect a lookback.
+ind can either be a string, thus referring to the result of the expression
+with the specified name or an int referring to the result of the
+expression with the specified index.</p>
+<p>Fun can be altered to change the way the data is extracted from the 
+collector. Defaults to returning .value.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="asynchia.dsl.lookback">
+<tt class="descclassname">asynchia.dsl.</tt><tt class="descname">lookback</tt><big>(</big><em>ind</em>, <em>fun=&lt;function &lt;lambda&gt; at 0x297c938&gt;</em><big>)</big><a class="headerlink" href="#asynchia.dsl.lookback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Can be passed to expressions that expect a lookback.
+ind can either be a string, thus referring to the result of the expression
+with the specified name or an int referring to the result of the
+expression with the specified index.</p>
+<p>Fun can be altered to change the way the data is extracted from the 
+collector. Defaults to returning .value.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">asynchia.dsl</a><ul>
+<li><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="asynchia.html"
+                        title="previous chapter">asynchia</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="asynchia.ee.html"
+                        title="next chapter">asynchia.ee</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/modules/asynchia.dsl.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.ee.html" title="asynchia.ee"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.html" title="asynchia"
+             >previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009, Florian Mayer.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

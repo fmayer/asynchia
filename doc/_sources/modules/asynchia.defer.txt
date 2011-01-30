@@ -1,0 +1,5 @@
+asynchia.defer
+==============
+
+.. automodule:: asynchia.defer
+    :members:

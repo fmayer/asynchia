@@ -1,0 +1,477 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asynchia.maps &mdash; asynchia v0.1.0a documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="asynchia v0.1.0a documentation" href="../index.html" />
+    <link rel="up" title="API Documentation" href="index.html" />
+    <link rel="next" title="asynchia.protocols" href="asynchia.protocols.html" />
+    <link rel="prev" title="asynchia.ee" href="asynchia.ee.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.protocols.html" title="asynchia.protocols"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.ee.html" title="asynchia.ee"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-asynchia.maps">
+<span id="asynchia-maps"></span><h1>asynchia.maps<a class="headerlink" href="#module-asynchia.maps" title="Permalink to this headline">¶</a></h1>
+<p>Socket-maps are there to decide which sockets have I/O to be done
+and call the appropriate handle functions at the Handlers.</p>
+<p>If select.poll is available, you will have PollSocketMap available and
+also assigned to DefaultSocketMap, which otherwise defaults to
+SelectSocketMap.</p>
+<p>If select.epoll is available, you will have EPollSocketMap available and
+also assigned to DefaultSocketMap, which otherwise defaults to either
+PollSocketMap or SelectSocketMap.</p>
+<p>If select.kqueue is available, you will have KQueueSocketMap available and
+also assigned to DefaultSocketMap, which otherwise defaults to one
+of the other three.</p>
+<dl class="class">
+<dt id="asynchia.maps.ControlSocketSocketMap">
+<em class="property">class </em><tt class="descclassname">asynchia.maps.</tt><tt class="descname">ControlSocketSocketMap</tt><big>(</big><em>notifier</em><big>)</big><a class="headerlink" href="#asynchia.maps.ControlSocketSocketMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Socket-map with an internal socket-pair that can be used to
+interrupt it.</p>
+<dl class="method">
+<dt id="asynchia.maps.ControlSocketSocketMap.do_interrupt">
+<tt class="descname">do_interrupt</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.maps.ControlSocketSocketMap.do_interrupt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call this in the socket-map when you have found out that there is
+data to read on the controlreceiver.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.ControlSocketSocketMap.interrupt">
+<tt class="descname">interrupt</tt><big>(</big><em>changeflags=False</em><big>)</big><a class="headerlink" href="#asynchia.maps.ControlSocketSocketMap.interrupt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return context manager for the interruption of this
+socket-map.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="asynchia.maps.DefaultSocketMap">
+<tt class="descclassname">asynchia.maps.</tt><tt class="descname">DefaultSocketMap</tt><a class="headerlink" href="#asynchia.maps.DefaultSocketMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#asynchia.maps.EPollSocketMap" title="asynchia.maps.EPollSocketMap"><tt class="xref py py-class docutils literal"><span class="pre">EPollSocketMap</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.maps.EPollSocketMap">
+<em class="property">class </em><tt class="descclassname">asynchia.maps.</tt><tt class="descname">EPollSocketMap</tt><big>(</big><em>notifier=None</em><big>)</big><a class="headerlink" href="#asynchia.maps.EPollSocketMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decide which sockets have I/O to do using select.epoll.</p>
+<p>Do not refer to this class without explicitely checking whether its
+functionality is available on your operation system by checking
+the <cite>available</cite> class-member, it may not exist on some platforms
+(it is known not to on Windows and BSD).</p>
+<dl class="method">
+<dt id="asynchia.maps.EPollSocketMap.add_reader">
+<tt class="descname">add_reader</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.EPollSocketMap.add_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update flags for handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.EPollSocketMap.add_transport">
+<tt class="descname">add_transport</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.EPollSocketMap.add_transport" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.add_transport.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.EPollSocketMap.add_writer">
+<tt class="descname">add_writer</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.EPollSocketMap.add_writer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update flags for handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.EPollSocketMap.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.maps.EPollSocketMap.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.close</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="asynchia.maps.EPollSocketMap.create_flags">
+<em class="property">static </em><tt class="descname">create_flags</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.EPollSocketMap.create_flags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate appropriate flags for handler. These flags will
+represent the current state of the handler (if it is readable,
+the flags say so too).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.EPollSocketMap.del_reader">
+<tt class="descname">del_reader</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.EPollSocketMap.del_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update flags for handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.EPollSocketMap.del_transport">
+<tt class="descname">del_transport</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.EPollSocketMap.del_transport" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.del_transport.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.EPollSocketMap.del_writer">
+<tt class="descname">del_writer</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.EPollSocketMap.del_writer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update flags for handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.EPollSocketMap.handler_changed">
+<tt class="descname">handler_changed</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.EPollSocketMap.handler_changed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update flags for handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.EPollSocketMap.poll">
+<tt class="descname">poll</tt><big>(</big><em>timeout</em><big>)</big><a class="headerlink" href="#asynchia.maps.EPollSocketMap.poll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Poll for I/O.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.maps.FragileSocketMap">
+<em class="property">class </em><tt class="descclassname">asynchia.maps.</tt><tt class="descname">FragileSocketMap</tt><big>(</big><em>notifier</em><big>)</big><a class="headerlink" href="#asynchia.maps.FragileSocketMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>The socket-map has to be interrupted before internals are
+changed.</p>
+<dl class="method">
+<dt id="asynchia.maps.FragileSocketMap.end_interrupt">
+<tt class="descname">end_interrupt</tt><big>(</big><em>changeflags=False</em><big>)</big><a class="headerlink" href="#asynchia.maps.FragileSocketMap.end_interrupt" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.end_interrupt.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.FragileSocketMap.start_interrupt">
+<tt class="descname">start_interrupt</tt><big>(</big><em>changeflags=False</em><big>)</big><a class="headerlink" href="#asynchia.maps.FragileSocketMap.start_interrupt" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.start_interrupt.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.maps.InterruptContextManager">
+<em class="property">class </em><tt class="descclassname">asynchia.maps.</tt><tt class="descname">InterruptContextManager</tt><big>(</big><em>socket_map</em>, <em>changeflags</em><big>)</big><a class="headerlink" href="#asynchia.maps.InterruptContextManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allow with socketmap.interrupt()</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.maps.KQueueSocketMap">
+<em class="property">class </em><tt class="descclassname">asynchia.maps.</tt><tt class="descname">KQueueSocketMap</tt><big>(</big><em>nevents=100</em>, <em>notifier=None</em><big>)</big><a class="headerlink" href="#asynchia.maps.KQueueSocketMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decide which sockets have I/O to do using select.kqueue.</p>
+<p>Do not refer to this class without explicitely checking whether its
+functionality is available on your operation system by checking
+the <cite>available</cite> class-member, it may not exist on some platforms
+(it only exists on BSD).</p>
+<dl class="method">
+<dt id="asynchia.maps.KQueueSocketMap.add_reader">
+<tt class="descname">add_reader</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.KQueueSocketMap.add_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.add_reader.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.KQueueSocketMap.add_transport">
+<tt class="descname">add_transport</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.KQueueSocketMap.add_transport" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.add_transport.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.KQueueSocketMap.add_writer">
+<tt class="descname">add_writer</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.KQueueSocketMap.add_writer" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.add_writer.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.KQueueSocketMap.del_reader">
+<tt class="descname">del_reader</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.KQueueSocketMap.del_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.del_reader.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.KQueueSocketMap.del_transport">
+<tt class="descname">del_transport</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.KQueueSocketMap.del_transport" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.del_transport.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.KQueueSocketMap.del_writer">
+<tt class="descname">del_writer</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.KQueueSocketMap.del_writer" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.del_writer.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.maps.PollSocketMap">
+<em class="property">class </em><tt class="descclassname">asynchia.maps.</tt><tt class="descname">PollSocketMap</tt><big>(</big><em>notifier=None</em><big>)</big><a class="headerlink" href="#asynchia.maps.PollSocketMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decide which sockets have I/O to do using select.poll.</p>
+<p>Do not refer to this class without explicitely checking whether its
+functionality is available on your operation system by checking
+the <cite>available</cite> class-member, it may not exist on some platforms
+(it is known not to on Windows).</p>
+<dl class="method">
+<dt id="asynchia.maps.PollSocketMap.add_reader">
+<tt class="descname">add_reader</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.PollSocketMap.add_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update flags for handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.PollSocketMap.add_transport">
+<tt class="descname">add_transport</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.PollSocketMap.add_transport" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.add_transport.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.PollSocketMap.add_writer">
+<tt class="descname">add_writer</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.PollSocketMap.add_writer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update flags for handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.PollSocketMap.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.maps.PollSocketMap.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.close</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="asynchia.maps.PollSocketMap.create_flags">
+<em class="property">static </em><tt class="descname">create_flags</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.PollSocketMap.create_flags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate appropriate flags for handler. These flags will
+represent the current state of the handler (if it is readable,
+the flags say so too).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.PollSocketMap.del_reader">
+<tt class="descname">del_reader</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.PollSocketMap.del_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update flags for handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.PollSocketMap.del_transport">
+<tt class="descname">del_transport</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.PollSocketMap.del_transport" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.del_transport.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.PollSocketMap.del_writer">
+<tt class="descname">del_writer</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.PollSocketMap.del_writer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update flags for handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.PollSocketMap.handler_changed">
+<tt class="descname">handler_changed</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.PollSocketMap.handler_changed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update flags for handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.PollSocketMap.poll">
+<tt class="descname">poll</tt><big>(</big><em>timeout</em><big>)</big><a class="headerlink" href="#asynchia.maps.PollSocketMap.poll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Poll for I/O.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.maps.RobustSocketMap">
+<em class="property">class </em><tt class="descclassname">asynchia.maps.</tt><tt class="descname">RobustSocketMap</tt><big>(</big><em>notifier=None</em><big>)</big><a class="headerlink" href="#asynchia.maps.RobustSocketMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>The socket-map has to be stopped and resumed after internals
+are changed.</p>
+<dl class="method">
+<dt id="asynchia.maps.RobustSocketMap.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.maps.RobustSocketMap.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Signal the interrupt is finished to any thread that may be
+waiting, as the program, waiting for the thread to finish,
+would not be able to exit otherwise.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.RobustSocketMap.end_interrupt">
+<tt class="descname">end_interrupt</tt><big>(</big><em>changeflags=False</em><big>)</big><a class="headerlink" href="#asynchia.maps.RobustSocketMap.end_interrupt" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.end_interrupt.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.RobustSocketMap.start_interrupt">
+<tt class="descname">start_interrupt</tt><big>(</big><em>changeflags=False</em><big>)</big><a class="headerlink" href="#asynchia.maps.RobustSocketMap.start_interrupt" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.start_interrupt.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.maps.RockSolidSocketMap">
+<em class="property">class </em><tt class="descclassname">asynchia.maps.</tt><tt class="descname">RockSolidSocketMap</tt><big>(</big><em>notifier</em><big>)</big><a class="headerlink" href="#asynchia.maps.RockSolidSocketMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>The socket-map automatically refreshes its internal while it&#8217;s
+&#8220;sleeping&#8221;.</p>
+<dl class="method">
+<dt id="asynchia.maps.RockSolidSocketMap.end_interrupt">
+<tt class="descname">end_interrupt</tt><big>(</big><em>changeflags=False</em><big>)</big><a class="headerlink" href="#asynchia.maps.RockSolidSocketMap.end_interrupt" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.end_interrupt.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.RockSolidSocketMap.start_interrupt">
+<tt class="descname">start_interrupt</tt><big>(</big><em>changeflags=False</em><big>)</big><a class="headerlink" href="#asynchia.maps.RockSolidSocketMap.start_interrupt" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.start_interrupt.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.maps.SelectSocketMap">
+<em class="property">class </em><tt class="descclassname">asynchia.maps.</tt><tt class="descname">SelectSocketMap</tt><big>(</big><em>notifier=None</em><big>)</big><a class="headerlink" href="#asynchia.maps.SelectSocketMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decide which sockets have I/O to do using select.select.</p>
+<dl class="method">
+<dt id="asynchia.maps.SelectSocketMap.add_reader">
+<tt class="descname">add_reader</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.SelectSocketMap.add_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.add_reader.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.SelectSocketMap.add_transport">
+<tt class="descname">add_transport</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.SelectSocketMap.add_transport" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.add_transport.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.SelectSocketMap.add_writer">
+<tt class="descname">add_writer</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.SelectSocketMap.add_writer" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.add_writer.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.SelectSocketMap.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.maps.SelectSocketMap.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.close</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.SelectSocketMap.del_reader">
+<tt class="descname">del_reader</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.SelectSocketMap.del_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.del_reader.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.SelectSocketMap.del_transport">
+<tt class="descname">del_transport</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.SelectSocketMap.del_transport" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.del_transport.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.SelectSocketMap.del_writer">
+<tt class="descname">del_writer</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.maps.SelectSocketMap.del_writer" title="Permalink to this definition">¶</a></dt>
+<dd><p>See SocketMap.del_writer.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.maps.SelectSocketMap.poll">
+<tt class="descname">poll</tt><big>(</big><em>timeout</em><big>)</big><a class="headerlink" href="#asynchia.maps.SelectSocketMap.poll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Poll for I/O.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="asynchia.maps.mp">
+<tt class="descclassname">asynchia.maps.</tt><tt class="descname">mp</tt><a class="headerlink" href="#asynchia.maps.mp" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#asynchia.maps.KQueueSocketMap" title="asynchia.maps.KQueueSocketMap"><tt class="xref py py-class docutils literal"><span class="pre">KQueueSocketMap</span></tt></a></p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="asynchia.ee.html"
+                        title="previous chapter">asynchia.ee</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="asynchia.protocols.html"
+                        title="next chapter">asynchia.protocols</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/modules/asynchia.maps.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.protocols.html" title="asynchia.protocols"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.ee.html" title="asynchia.ee"
+             >previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009, Florian Mayer.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

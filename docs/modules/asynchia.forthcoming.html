@@ -1,0 +1,265 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asynchia.forthcoming &mdash; asynchia v0.1.0a documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="asynchia v0.1.0a documentation" href="../index.html" />
+    <link rel="up" title="API Documentation" href="index.html" />
+    <link rel="next" title="asynchia.maps" href="asynchia.maps.html" />
+    <link rel="prev" title="asynchia.ee" href="asynchia.ee.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.maps.html" title="asynchia.maps"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.ee.html" title="asynchia.ee"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-asynchia.forthcoming">
+<span id="asynchia-forthcoming"></span><h1>asynchia.forthcoming<a class="headerlink" href="#module-asynchia.forthcoming" title="Permalink to this headline">¶</a></h1>
+<p>Facilities to refer to data that is not yet available.</p>
+<p>Example:</p>
+<blockquote>
+<p># Usually acquired by a call that results in network I/O.
+# Global variable for demostration purposes.
+a = DataNotifier()
+def bar():</p>
+<blockquote>
+# Request result of network I/O.
+blub = yield a
+yield Coroutine.return_(blub)</blockquote>
+<dl class="docutils">
+<dt>def foo():</dt>
+<dd># Wait for completion of new coroutine which - in turn - waits
+# for I/O. 
+blub = yield Coroutine.call_itr(bar())
+print &#8220;yay %s&#8221; % blub</dd>
+</dl>
+<p>c = Coroutine(foo())
+c.call()
+# Network I/O complete.
+a.submit(&#8216;blub&#8217;)</p>
+</blockquote>
+<dl class="class">
+<dt id="asynchia.forthcoming.Coroutine">
+<em class="property">class </em><tt class="descclassname">asynchia.forthcoming.</tt><tt class="descname">Coroutine</tt><big>(</big><em>itr</em>, <em>pcontext=None</em>, <em>datanotifier=None</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.Coroutine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create coroutine from given iterator. Yielding None will pause the co-
+routine until continuation by the given PauseContext. Yielding a
+DataNotifier will send the requested value to the coroutine once
+available. Yielding an instance of <a href="#id5"><span class="problematic" id="id6">Coroutine.return_</span></a> will end execution
+of the coroutine and send the return value to any coroutines that may be
+waiting for it or calls any callbacks associated with it.</p>
+<dl class="method">
+<dt id="asynchia.forthcoming.Coroutine.call">
+<tt class="descname">call</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.forthcoming.Coroutine.call" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start (or resume) execution of the coroutine.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="asynchia.forthcoming.Coroutine.call_itr">
+<em class="property">classmethod </em><tt class="descname">call_itr</tt><big>(</big><em>itr</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.Coroutine.call_itr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a coroutine from the given iterator, start it
+and return the DataNotifier.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.forthcoming.Coroutine.handle_result">
+<tt class="descname">handle_result</tt><big>(</big><em>result</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.Coroutine.handle_result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Internal.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.forthcoming.Coroutine.return_">
+<em class="property">class </em><tt class="descname">return_</tt><big>(</big><em>obj=None</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.Coroutine.return_" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield an instance of this to signal that the coroutine finished
+with the given return value (defaults to None).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.forthcoming.Coroutine.send">
+<tt class="descclassname">Coroutine.</tt><tt class="descname">send</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.Coroutine.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send requested data to coroutine.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.forthcoming.DataNotifier">
+<em class="property">class </em><tt class="descclassname">asynchia.forthcoming.</tt><tt class="descname">DataNotifier</tt><big>(</big><em>socket_map</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.DataNotifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call registered callbacks and send data to registered coroutines
+at submission of data.</p>
+<dl class="method">
+<dt id="asynchia.forthcoming.DataNotifier.add_callback">
+<tt class="descname">add_callback</tt><big>(</big><em>callback</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.DataNotifier.add_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add callback (function that only receives the data upon
+submission as an argument).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.forthcoming.DataNotifier.add_coroutine">
+<tt class="descname">add_coroutine</tt><big>(</big><em>coroutine</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.DataNotifier.add_coroutine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add coroutine that waits for the submission of this data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.forthcoming.DataNotifier.add_databack">
+<tt class="descname">add_databack</tt><big>(</big><em>callback</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.DataNotifier.add_databack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add databack (function that receives the the data-notifier data
+upon submission as arguments).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.forthcoming.DataNotifier.inject">
+<tt class="descname">inject</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.DataNotifier.inject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit data and ensure their callbacks are called in the main
+thread.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.forthcoming.DataNotifier.poll">
+<tt class="descname">poll</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.forthcoming.DataNotifier.poll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Poll whether result has already been submitted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.forthcoming.DataNotifier.submit">
+<tt class="descname">submit</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.DataNotifier.submit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit data; send it to any coroutines that may be registered and
+call any data- and callbacks that may be registered.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="asynchia.forthcoming.DataNotifier.threaded_coroutine">
+<em class="property">classmethod </em><tt class="descname">threaded_coroutine</tt><big>(</big><em>socket_map</em>, <em>fun</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.DataNotifier.threaded_coroutine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run fun(<a href="#id1"><span class="problematic" id="id2">*</span></a>args, <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs) in a thread and return a DataNotifier
+notifying upon availability of the return value of the function.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.forthcoming.DataNotifier.wait">
+<tt class="descname">wait</tt><big>(</big><em>timeout=None</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.DataNotifier.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Block execution of current thread until the data is available.
+Return requested data.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.forthcoming.PauseContext">
+<em class="property">class </em><tt class="descclassname">asynchia.forthcoming.</tt><tt class="descname">PauseContext</tt><a class="headerlink" href="#asynchia.forthcoming.PauseContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collection of Coroutines which are currently paused but not waiting
+for any data. They are paused to prevent too much time to be spent in
+them, preventing possibly important I/O from being done.</p>
+<dl class="method">
+<dt id="asynchia.forthcoming.PauseContext.pause">
+<tt class="descname">pause</tt><big>(</big><em>coroutine</em><big>)</big><a class="headerlink" href="#asynchia.forthcoming.PauseContext.pause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add coroutine to the list of paused coroutines.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.forthcoming.PauseContext.unpause">
+<tt class="descname">unpause</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.forthcoming.PauseContext.unpause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Continue all paused coroutines.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="asynchia.ee.html"
+                        title="previous chapter">asynchia.ee</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="asynchia.maps.html"
+                        title="next chapter">asynchia.maps</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/modules/asynchia.forthcoming.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.maps.html" title="asynchia.maps"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.ee.html" title="asynchia.ee"
+             >previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009, Florian Mayer.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

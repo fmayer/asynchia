@@ -1,0 +1,254 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asynchia.util &mdash; asynchia v0.1.0a documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="asynchia v0.1.0a documentation" href="../index.html" />
+    <link rel="up" title="API Documentation" href="index.html" />
+    <link rel="prev" title="asynchia.qtmap" href="asynchia.qtmap.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.qtmap.html" title="asynchia.qtmap"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-asynchia.util">
+<span id="asynchia-util"></span><h1>asynchia.util<a class="headerlink" href="#module-asynchia.util" title="Permalink to this headline">¶</a></h1>
+<p>Auxiliary functions.</p>
+<dl class="class">
+<dt id="asynchia.util.GradualAverage">
+<em class="property">class </em><tt class="descclassname">asynchia.util.</tt><tt class="descname">GradualAverage</tt><big>(</big><em>values=None</em><big>)</big><a class="headerlink" href="#asynchia.util.GradualAverage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Memory-efficient average to which values may gradually be added
+over time. Its value can be accessed via the avg member.</p>
+<dl class="method">
+<dt id="asynchia.util.GradualAverage.add_value">
+<tt class="descname">add_value</tt><big>(</big><em>value</em><big>)</big><a class="headerlink" href="#asynchia.util.GradualAverage.add_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add value to the average.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.util.GradualAverage.add_values">
+<tt class="descname">add_values</tt><big>(</big><em>values</em><big>)</big><a class="headerlink" href="#asynchia.util.GradualAverage.add_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add values to the average. This is more effective than using
+add_value multiple times.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.util.IDPool">
+<em class="property">class </em><tt class="descclassname">asynchia.util.</tt><tt class="descname">IDPool</tt><a class="headerlink" href="#asynchia.util.IDPool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pool that returns unique identifiers.</p>
+<p>Identifierers obtained using the get method are guaranteed to not be
+returned by it again until they are released using the release method.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pool</span> <span class="o">=</span> <span class="n">IDPool</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pool</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<span class="go">0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pool</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<span class="go">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pool</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pool</span><span class="o">.</span><span class="n">release</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pool</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<span class="go">1</span>
+<span class="gp">&gt;&gt;&gt; </span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="asynchia.util.IDPool.get">
+<tt class="descname">get</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.util.IDPool.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new integer that is unique in this pool until
+it is released.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.util.IDPool.release">
+<tt class="descname">release</tt><big>(</big><em>id_</em><big>)</big><a class="headerlink" href="#asynchia.util.IDPool.release" title="Permalink to this definition">¶</a></dt>
+<dd><p>Release the id. It can now be returned by get again.</p>
+<p>Will reset the IDPool if the last id in use is released.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.util.IDPool.reset">
+<tt class="descname">reset</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.util.IDPool.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the state of the IDPool. This should only be called when
+no identifier is in use.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.util.LimitedAverage">
+<em class="property">class </em><tt class="descclassname">asynchia.util.</tt><tt class="descname">LimitedAverage</tt><big>(</big><em>samples</em>, <em>values=None</em><big>)</big><a class="headerlink" href="#asynchia.util.LimitedAverage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Average considering the last samples values added to it. Its value
+can be accessed via the avg member. Stores up to samples objects in a
+deque and thus has a higher memory usage than GradualAverage (and a
+different use case).</p>
+<dl class="method">
+<dt id="asynchia.util.LimitedAverage.add_value">
+<tt class="descname">add_value</tt><big>(</big><em>value</em><big>)</big><a class="headerlink" href="#asynchia.util.LimitedAverage.add_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add value to the average.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.util.LimitedAverage.add_values">
+<tt class="descname">add_values</tt><big>(</big><em>values</em><big>)</big><a class="headerlink" href="#asynchia.util.LimitedAverage.add_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add values to the average. This is more effective than using
+add_value multiple times.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="asynchia.util.goodsize">
+<tt class="descclassname">asynchia.util.</tt><tt class="descname">goodsize</tt><big>(</big><em>maxsize</em><big>)</big><a class="headerlink" href="#asynchia.util.goodsize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return biggest power of two that is less or equal to maxsize.</p>
+<p>Powers of two are considered good values to be passed to the recv
+method of sockets. To quote the python documentation of the socket
+module:</p>
+<blockquote>
+For best match with hardware and network realities,
+the value of bufsize should be a relatively small power of 2,
+for example, 4096.</blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="asynchia.util.is_closed">
+<tt class="descclassname">asynchia.util.</tt><tt class="descname">is_closed</tt><big>(</big><em>sock</em><big>)</big><a class="headerlink" href="#asynchia.util.is_closed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find out whether a socked is closed or not.
+Does only work on non-blocking sockets!</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="asynchia.util.is_unconnected">
+<tt class="descclassname">asynchia.util.</tt><tt class="descname">is_unconnected</tt><big>(</big><em>sock</em><big>)</big><a class="headerlink" href="#asynchia.util.is_unconnected" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find out whether a socket has not yet been connected.
+Does only work on non-blocking sockets!</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="asynchia.util.parse_ip">
+<tt class="descclassname">asynchia.util.</tt><tt class="descname">parse_ip</tt><big>(</big><em>string</em>, <em>default_port=-1</em><big>)</big><a class="headerlink" href="#asynchia.util.parse_ip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return (host, port) from input string. This tries to automatically
+determine whether the address is IPv4 or IPv6.</p>
+<p>If no port is found default_port, which defaults to -1 is used.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">parse_ip</span><span class="p">(</span><span class="s">&#39;127.0.0.1:1234&#39;</span><span class="p">)</span>
+<span class="go">(&#39;127.0.0.1&#39;, 1234)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">parse_ip</span><span class="p">(</span><span class="s">&#39;[2001:0db8:85a3:08d3:1319:8a2e:0370:7344]:443&#39;</span><span class="p">)</span>
+<span class="go">(&#39;2001:0db8:85a3:08d3:1319:8a2e:0370:7344&#39;, 443)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="asynchia.util.parse_ipv4">
+<tt class="descclassname">asynchia.util.</tt><tt class="descname">parse_ipv4</tt><big>(</big><em>string</em>, <em>default_port=-1</em><big>)</big><a class="headerlink" href="#asynchia.util.parse_ipv4" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return (host, port) from IPv4 IP.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="asynchia.util.parse_ipv6">
+<tt class="descclassname">asynchia.util.</tt><tt class="descname">parse_ipv6</tt><big>(</big><em>string</em>, <em>default_port=-1</em><big>)</big><a class="headerlink" href="#asynchia.util.parse_ipv6" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return (host, port) from IPv6 IP.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="asynchia.util.socketpair">
+<tt class="descclassname">asynchia.util.</tt><tt class="descname">socketpair</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.util.socketpair" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return pair of connected sockets. Unlike socket.socketpair this
+is platform independant. However, if socket.socketpair is available,
+it is used here as well.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="asynchia.qtmap.html"
+                        title="previous chapter">asynchia.qtmap</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/modules/asynchia.util.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.qtmap.html" title="asynchia.qtmap"
+             >previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009, Florian Mayer.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

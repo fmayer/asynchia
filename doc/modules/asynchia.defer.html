@@ -1,0 +1,172 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asynchia.defer &mdash; asynchia v0.1.0a documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="asynchia v0.1.0a documentation" href="../index.html" />
+    <link rel="up" title="API Documentation" href="index.html" />
+    <link rel="next" title="asynchia.dsl" href="asynchia.dsl.html" />
+    <link rel="prev" title="asynchia" href="asynchia.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.dsl.html" title="asynchia.dsl"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.html" title="asynchia"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-asynchia.defer">
+<span id="asynchia-defer"></span><h1>asynchia.defer<a class="headerlink" href="#module-asynchia.defer" title="Permalink to this headline">¶</a></h1>
+<p>Facilities to refer to data that is not yet available.</p>
+<p>Example:</p>
+<blockquote>
+<p># Usually acquired by a call that results in network I/O.
+# Global variable for demostration purposes.
+a = DataNotifier()
+def bar():</p>
+<blockquote>
+# Request result of network I/O.
+blub = yield a
+yield Coroutine.return_(blub)</blockquote>
+<dl class="docutils">
+<dt>def foo():</dt>
+<dd># Wait for completion of new coroutine which - in turn - waits
+# for I/O. 
+blub = yield Coroutine.call_itr(bar())
+print &#8220;yay %s&#8221; % blub</dd>
+</dl>
+<p>c = Coroutine(foo())
+c.send()
+# Network I/O complete.
+a.submit(&#8216;blub&#8217;)</p>
+</blockquote>
+<dl class="class">
+<dt id="asynchia.defer.Coroutine">
+<em class="property">class </em><tt class="descclassname">asynchia.defer.</tt><tt class="descname">Coroutine</tt><big>(</big><em>itr</em>, <em>deferred=None</em><big>)</big><a class="headerlink" href="#asynchia.defer.Coroutine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create coroutine from given iterator. Yielding None will pause the co-
+routine until continuation by the given PauseContext. Yielding a
+DataNotifier will send the requested value to the coroutine once
+available. Yielding an instance of <a href="#id1"><span class="problematic" id="id2">Coroutine.return_</span></a> will end execution
+of the coroutine and send the return value to any coroutines that may be
+waiting for it or calls any callbacks associated with it.</p>
+<dl class="classmethod">
+<dt id="asynchia.defer.Coroutine.call_itr">
+<em class="property">classmethod </em><tt class="descname">call_itr</tt><big>(</big><em>itr</em>, <em>socket_map</em><big>)</big><a class="headerlink" href="#asynchia.defer.Coroutine.call_itr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a coroutine from the given iterator, start it
+and return the DataNotifier.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.defer.Coroutine.send">
+<tt class="descname">send</tt><big>(</big><em>data=None</em><big>)</big><a class="headerlink" href="#asynchia.defer.Coroutine.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start (or resume) execution of the coroutine.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.defer.Escape">
+<em class="property">class </em><tt class="descclassname">asynchia.defer.</tt><tt class="descname">Escape</tt><big>(</big><em>deferred</em><big>)</big><a class="headerlink" href="#asynchia.defer.Escape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prevent the return value of a callback from being treated specially if
+it is a Deferred</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="asynchia.html"
+                        title="previous chapter">asynchia</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="asynchia.dsl.html"
+                        title="next chapter">asynchia.dsl</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/modules/asynchia.defer.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.dsl.html" title="asynchia.dsl"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.html" title="asynchia"
+             >previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009, Florian Mayer.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

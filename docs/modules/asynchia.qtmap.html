@@ -1,0 +1,210 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asynchia.qtmap &mdash; asynchia v0.1.0a documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="asynchia v0.1.0a documentation" href="../index.html" />
+    <link rel="up" title="API Documentation" href="index.html" />
+    <link rel="next" title="asynchia.util" href="asynchia.util.html" />
+    <link rel="prev" title="asynchia.protocols" href="asynchia.protocols.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.util.html" title="asynchia.util"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.protocols.html" title="asynchia.protocols"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-asynchia.qtmap">
+<span id="asynchia-qtmap"></span><h1>asynchia.qtmap<a class="headerlink" href="#module-asynchia.qtmap" title="Permalink to this headline">¶</a></h1>
+<p>This module is - unlike the rest of asynchia - licensed under the terms
+of the GNU GPL!</p>
+<dl class="class">
+<dt id="asynchia.qtmap.QSocketMap">
+<em class="property">class </em><tt class="descclassname">asynchia.qtmap.</tt><tt class="descname">QSocketMap</tt><big>(</big><em>notifier=None</em><big>)</big><a class="headerlink" href="#asynchia.qtmap.QSocketMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decide which sockets have I/O to do using Qt facilities.</p>
+<dl class="method">
+<dt id="asynchia.qtmap.QSocketMap.add_reader">
+<tt class="descname">add_reader</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.qtmap.QSocketMap.add_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>See asynchia.SocketMap.add_reader</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.qtmap.QSocketMap.add_transport">
+<tt class="descname">add_transport</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.qtmap.QSocketMap.add_transport" title="Permalink to this definition">¶</a></dt>
+<dd><p>See asynchia.SocketMap.add_transport</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.qtmap.QSocketMap.add_writer">
+<tt class="descname">add_writer</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.qtmap.QSocketMap.add_writer" title="Permalink to this definition">¶</a></dt>
+<dd><p>See asynchia.SocketMap.add_writer</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.qtmap.QSocketMap.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.qtmap.QSocketMap.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>See asynchia.SocketMap.close</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.qtmap.QSocketMap.del_reader">
+<tt class="descname">del_reader</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.qtmap.QSocketMap.del_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>See asynchia.SocketMap.del_reader</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.qtmap.QSocketMap.del_transport">
+<tt class="descname">del_transport</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.qtmap.QSocketMap.del_transport" title="Permalink to this definition">¶</a></dt>
+<dd><p>See asynchia.SocketMap.del_transport</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.qtmap.QSocketMap.del_writer">
+<tt class="descname">del_writer</tt><big>(</big><em>handler</em><big>)</big><a class="headerlink" href="#asynchia.qtmap.QSocketMap.del_writer" title="Permalink to this definition">¶</a></dt>
+<dd><p>See asynchia.SocketMap.del_writer</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="asynchia.qtmap.SocketNotifier">
+<em class="property">class </em><tt class="descclassname">asynchia.qtmap.</tt><tt class="descname">SocketNotifier</tt><big>(</big><em>watched</em>, <em>notifier</em>, <em>type_</em><big>)</big><a class="headerlink" href="#asynchia.qtmap.SocketNotifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Notificate about socket I/O using Qt facilities</p>
+<dl class="method">
+<dt id="asynchia.qtmap.SocketNotifier.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.qtmap.SocketNotifier.disable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Temporarily disable notification on I/O.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.qtmap.SocketNotifier.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.qtmap.SocketNotifier.enable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Re-enable notification on I/O.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.qtmap.SocketNotifier.except_">
+<tt class="descname">except_</tt><big>(</big><em>_sock=None</em><big>)</big><a class="headerlink" href="#asynchia.qtmap.SocketNotifier.except_" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception I/O to do.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.qtmap.SocketNotifier.read">
+<tt class="descname">read</tt><big>(</big><em>_sock=None</em><big>)</big><a class="headerlink" href="#asynchia.qtmap.SocketNotifier.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read I/O to do.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.qtmap.SocketNotifier.shutdown">
+<tt class="descname">shutdown</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.qtmap.SocketNotifier.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Permanentely disable notification on I/O.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.qtmap.SocketNotifier.write">
+<tt class="descname">write</tt><big>(</big><em>_sock=None</em><big>)</big><a class="headerlink" href="#asynchia.qtmap.SocketNotifier.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write I/O to do.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="asynchia.protocols.html"
+                        title="previous chapter">asynchia.protocols</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="asynchia.util.html"
+                        title="next chapter">asynchia.util</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/modules/asynchia.qtmap.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.util.html" title="asynchia.util"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.protocols.html" title="asynchia.protocols"
+             >previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009, Florian Mayer.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

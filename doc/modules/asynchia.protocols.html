@@ -1,0 +1,158 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>asynchia.protocols &mdash; asynchia v0.1.0a documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0a',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="asynchia v0.1.0a documentation" href="../index.html" />
+    <link rel="up" title="API Documentation" href="index.html" />
+    <link rel="next" title="asynchia.qtmap" href="asynchia.qtmap.html" />
+    <link rel="prev" title="asynchia.maps" href="asynchia.maps.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.qtmap.html" title="asynchia.qtmap"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.maps.html" title="asynchia.maps"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-asynchia.protocols">
+<span id="asynchia-protocols"></span><h1>asynchia.protocols<a class="headerlink" href="#module-asynchia.protocols" title="Permalink to this headline">¶</a></h1>
+<p>Commonly used protocols.</p>
+<dl class="class">
+<dt id="asynchia.protocols.LineHandler">
+<em class="property">class </em><tt class="descclassname">asynchia.protocols.</tt><tt class="descname">LineHandler</tt><big>(</big><em>transport</em><big>)</big><a class="headerlink" href="#asynchia.protocols.LineHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use this for line-based protocols.</p>
+<dl class="method">
+<dt id="asynchia.protocols.LineHandler.handle_read">
+<tt class="descname">handle_read</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.protocols.LineHandler.handle_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>We got inbound data. Extend our buffer and see if we have
+got lines in it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.protocols.LineHandler.line_received">
+<tt class="descname">line_received</tt><big>(</big><em>line</em><big>)</big><a class="headerlink" href="#asynchia.protocols.LineHandler.line_received" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.protocols.LineHandler.parse_buffer">
+<tt class="descname">parse_buffer</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.protocols.LineHandler.parse_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the line_received method for any lines delimited by
+self.delimited that are in the buffer.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.protocols.LineHandler.send_line">
+<tt class="descname">send_line</tt><big>(</big><em>line</em><big>)</big><a class="headerlink" href="#asynchia.protocols.LineHandler.send_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send line. To use this SendallTrait must be mixed into
+your transport!</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="asynchia.protocols.LineHandler.split_buffer">
+<tt class="descname">split_buffer</tt><big>(</big><big>)</big><a class="headerlink" href="#asynchia.protocols.LineHandler.split_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split buffer into the different lines.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="asynchia.maps.html"
+                        title="previous chapter">asynchia.maps</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="asynchia.qtmap.html"
+                        title="next chapter">asynchia.qtmap</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/modules/asynchia.protocols.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="asynchia.qtmap.html" title="asynchia.qtmap"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="asynchia.maps.html" title="asynchia.maps"
+             >previous</a> |</li>
+        <li><a href="../index.html">asynchia v0.1.0a documentation</a> &raquo;</li>
+          <li><a href="index.html" >API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2009, Florian Mayer.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>
