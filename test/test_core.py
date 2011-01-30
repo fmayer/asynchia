@@ -27,7 +27,7 @@ import asynchia
 import asynchia.maps
 import asynchia.util
 
-import asynchia.forthcoming
+import asynchia.defer
 
 b = asynchia.util.b
 
@@ -59,7 +59,7 @@ def dnr_forthcoming_wakeup(self, map_):
     
     def thr(mo, nf):
         time.sleep(2)
-        mo.call_synchronized(lambda: nf.fire(12))
+        mo.call_synchronized(lambda: nf.success_callback(12))
     
     def callb(data):
         self.assertEquals(data, 12)
@@ -67,8 +67,8 @@ def dnr_forthcoming_wakeup(self, map_):
         
         container.flag = True
     
-    nf = asynchia.forthcoming.FireOnceSignal()
-    nf.listen(callb)
+    nf = asynchia.defer.Node()
+    nf.add(callb)
     th = threading.Thread(target=thr, args=(mo, nf))
     th.start()
     

@@ -21,7 +21,7 @@ import unittest
 import threading
 
 import asynchia.maps
-import asynchia.forthcoming as fc
+import asynchia.defer as fc
 
 class Container(object): pass
 
@@ -34,7 +34,7 @@ def dnr_inject(self, map_):
     
     def in_thread(mo, noti, container):
         container.main_thread = threading.currentThread() == main_thread
-        mo.call_synchronized(lambda: noti.success_signal.fire("foobar"))
+        mo.call_synchronized(lambda: noti.submit_success("foobar"))
     
     def mkfun(container):
         def _fun(data):
@@ -45,7 +45,7 @@ def dnr_inject(self, map_):
     
     mo = map_()
     noti = fc.Deferred()
-    noti.success_signal.listen(mkfun(container))
+    noti.callbacks.add(mkfun(container))
     self.assertEquals(container.run, False)
     
     threading.Thread(target=in_thread, args=(mo, noti, container)).start()
@@ -67,10 +67,10 @@ def dnr_databack_beforedata(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.FireOnceSignal()
-    noti.listen(mkfun(container))
+    noti = fc.Node()
+    noti.add(mkfun(container))
     self.assertEquals(container.run, False)
-    noti.fire("foobar")
+    noti.success_callback("foobar")
     self.assertEquals(container.run, True)
 
 
@@ -84,9 +84,9 @@ def dnr_databack_afterdata(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.FireOnceSignal()
-    noti.fire("foobar")
-    noti.listen(mkfun(container))
+    noti = fc.Node()
+    noti.success_callback("foobar")
+    noti.add(mkfun(container))
     self.assertEquals(container.run, True)
 
 
@@ -113,7 +113,7 @@ def dnr_coroutines(self, map_):
     conoti = coroutine.deferred
     coroutine.send()
     
-    conoti.success_signal.listen(mkfun(container))
+    conoti.callbacks.add(mkfun(container))
     self.assertEquals(container.run, False)
     noti.submit_success("foobar")
     self.assertEquals(container.run, True)

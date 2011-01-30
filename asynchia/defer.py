@@ -237,17 +237,6 @@ class Deferred(object):
     def submit_success(self, data):
         self.callbacks.success_callback(data)
     
-    def success(self, callback):
-        self.success_signal.listen(callback)
-        return self
-    
-    def error(self, callback):
-        self.error_signal.listen(callback)
-        return self
-    
-    def __call__(self, *args, **kwargs):
-        self.success(*args, **kwargs)
-    
     @staticmethod
     def _coroutine(obj, fun, args, kwargs):
         """ Implementation detail. """
