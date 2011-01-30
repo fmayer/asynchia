@@ -23,7 +23,7 @@ script_path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 mod_path = os.path.abspath(os.path.join(script_path, 'doc', 'modules'))
 args = [
     'asynchia' + x for x in
-    ['.dsl', '.ee', '.forthcoming', '', '.maps', '.protocols',
+    ['.dsl', '.ee', '.defer', '', '.maps', '.protocols',
      '.qtmap', '.util']
 ]
 

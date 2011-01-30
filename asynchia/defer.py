@@ -136,13 +136,20 @@ class Signal(object):
 
 
 class Node(object):
-    def __init__(self, children=None, data=None):
+    def __init__(self, callback=None, errback=None, children=None, data=None):
         if children is None:
             children = []
         self.children = children
         self.cachedsuccess = self.cachederror = _NULL
         
         self.event = threading.Event()
+        
+        if errback is None:
+            errback = self.default_errback
+        if callback is None:
+            callback = self.default_callback
+        self._callback = callback
+        self._errback = errback
     
     def success_callback(self, data):
         for child in self.children:
@@ -157,7 +164,7 @@ class Node(object):
         self.event.set()
     
     def add(self, callback=None, errback=None, children=None):
-        node = CallbackNode(callback, errback, children)
+        node = Node(callback, errback, children)
         if self.cachedsuccess is not _NULL:
             node.success(self.cachedsuccess)
         elif self.cachederror is not _NULL:
@@ -174,18 +181,7 @@ class Node(object):
         if self.cachederror is not _NULL:
             raise self.cachederror
         if self.cachedsuccess is not _NULL:
-            return self.cachedsuccess        
-
-
-class CallbackNode(Node):
-    def __init__(self, callback=None, errback=None, children=None, data=None):
-        super(CallbackNode, self).__init__(children, data)
-        if errback is None:
-            errback = self.default_errback
-        if callback is None:
-            callback = self.default_callback
-        self._callback = callback
-        self._errback = errback
+            return self.cachedsuccess
     
     def visit(self, callback, data):
         try:
@@ -197,9 +193,9 @@ class CallbackNode(Node):
                 value.callbacks.add(
                     self.success_callback, self.error_callback
                 )
-            if isinstance(value, Escape):
-                value = value.deferred
             else:
+                if isinstance(value, Escape):
+                    value = value.deferred
                 self.success_callback(value)
     
     def success(self, data):
@@ -223,6 +219,8 @@ class CallbackNode(Node):
     def callback(self, callback):
         self._callback = callback
         return self
+    
+    __call__ = success
 
 
 class Deferred(object):
@@ -300,7 +298,7 @@ if __name__ == '__main__':
     e = Deferred()
     def callb1(value):
         print value
-        return Escape(e)
+        return e
     
     def callb2(value):
         print value
@@ -315,3 +313,9 @@ if __name__ == '__main__':
     e.submit_success('world')
     print 'bar'
     print foo.add(callb2).synchronize()
+    
+    f = Deferred()
+    c = Node(lambda _: f)
+    c.add(callb2)
+    c.success(None)
+    f.submit_success('hey')
