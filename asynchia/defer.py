@@ -136,8 +136,11 @@ class Signal(object):
         self.once_listeners.append(listener)
 
 
-class Node(object):
-    def __init__(self, callback=None, errback=None, children=None):
+class Blueprint(object):
+    def __init__(self, callback=None, errback=None, children=None, refs=None):
+        if refs is None:
+            refs = {}
+        
         if children is None:
             children = []
         self.children = children
@@ -151,44 +154,107 @@ class Node(object):
             callback = self.default_callback
         self._callback = callback
         self._errback = errback
+        
+        self.refs = refs
+    
+    def instance(self):
+        return Node(
+            self._callback, self._errback,
+            [c.instance() for c in self.children], copy.deepcopy(self.refs)
+        )
     
     def copy(self):
         return self.__class__(
-            self._callback, self._errback, [c.copy() for c in self.children]
+            self._callback, self._errback,
+            [c.instance() for c in self.children], copy.deepcopy(self.refs)
         )
     
-    def success_callback(self, data):
-        for child in self.children:
-            child.success(data)
-        self.cachedsuccess = data
-        self.event.set()
+    def add_node(self, node):
+        node = node.copy()
+        if self.cachedsuccess is not _NULL:
+            node.success(self.cachedsuccess)
+        elif self.cachederror is not _NULL:
+            node.err(self.cachederror)
+        else:
+            self.children.append(node)
+        return node
     
-    def error_callback(self, data):
-        for child in self.children:
-            child.err(data)
-        self.cachederror = data
-        self.event.set()
+    def add_chain(self, chain):
+        node = self.add_node(chain)
+        while True:
+            try:
+                node = node.children[0]
+            except IndexError:
+                break
+        return node
     
     def add(self, callback=None, errback=None, children=None):
-        node = Node(callback, errback, children)
-        if self.cachedsuccess is not _NULL:
-            node.success(self.cachedsuccess)
-        elif self.cachederror is not _NULL:
-            node.err(self.cachederror)
-        else:
-            self.children.append(node)
-        return node
+        node = self.__class__(callback, errback, children)
+        return self.add_node(node)
     
-    def add_blueprint(self, node):
-        node = node.copy()
-        
-        if self.cachedsuccess is not _NULL:
-            node.success(self.cachedsuccess)
-        elif self.cachederror is not _NULL:
-            node.err(self.cachederror)
-        else:
-            self.children.append(node)
-        return node
+    add_blueprint = add_node
+
+    @staticmethod
+    def default_errback(err):
+        raise err
+    
+    @staticmethod
+    def default_callback(value):
+        return value
+    
+    def errback(self, errback):
+        self._errback = errback
+        return self
+    
+    def callback(self, callback):
+        self._callback = callback
+        return self
+    
+    def wrapinstance(self):
+        # As self is no real callable, it does not get bound to
+        # instances.
+        def _fun(*args, **kwargs):
+            node = self.instance()
+            node(*args, **kwargs)
+            return node
+        return _fun
+    
+    def ref(self, item):
+        for n, elem in enumerate(self.children):
+            if elem is item:
+                return [n]
+            else:
+                npos = elem.ref(item)
+                if npos is not None:
+                    return [n] + npos
+    
+    def deref(self, pos):
+        item = self
+        for n in pos:
+            item = item.children[n]
+        return item
+    
+    def __setitem__(self, name, item):
+        self.refs[name] = self.ref(item)
+    
+    def __getitem__(self, name):
+        return self.deref(self.refs[name])
+
+
+class Chain(Blueprint):
+    def add_node(self, node):
+        if self.children:
+            raise TypeError
+        return super(Chain, self).add_node(node)
+
+
+class Node(Blueprint):
+    def wrap(self):
+        # As self is no real callable, it does not get bound to
+        # instances.
+        def _fun(*args, **kwargs):
+            return self(*args, **kwargs)
+        return _fun
     
     def wait(self, timeout=None):
         self.event.wait(timeout)
@@ -220,30 +286,40 @@ class Node(object):
     
     def err(self, data):
         self.visit(self._errback, data)
-
-    @staticmethod
-    def default_errback(err):
-        raise err
     
-    @staticmethod
-    def default_callback(value):
-        return value
+    def add_blueprint(self, node):
+        node = node.instance()
+        
+        if self.cachedsuccess is not _NULL:
+            node.success(self.cachedsuccess)
+        elif self.cachederror is not _NULL:
+            node.err(self.cachederror)
+        else:
+            self.children.append(node)
+        return node
     
-    def errback(self, errback):
-        self._errback = errback
-        return self
+    def add_chain(self, chain):
+        node = self.add_node(chain.instance())
+        while True:
+            try:
+                node = node.children[0]
+            except IndexError:
+                break
+        return node
     
-    def callback(self, callback):
-        self._callback = callback
-        return self
+    def success_callback(self, data):
+        for child in self.children:
+            child.success(data)
+        self.cachedsuccess = data
+        self.event.set()
     
-    def wrap(self):
-        def _fun(*args, **kwargs):
-            return self(*args, **kwargs)
-        return _fun
+    def error_callback(self, data):
+        for child in self.children:
+            child.err(data)
+        self.cachederror = data
+        self.event.set()
     
     __call__ = success
-    
 
 
 class Deferred(object):
@@ -298,6 +374,10 @@ if __name__ == '__main__':
     class HTTP404(Exception):
         pass
     
+    def print_(x):
+        print x
+        return x
+    
     a = Deferred(None)
     def bar():
         # Request result of network I/O.
@@ -346,10 +426,10 @@ if __name__ == '__main__':
     d = Deferred()
     
     class Foo(object):
-        c = Node(lambda self, y: d)
+        c = Blueprint(lambda self, y: d)
         c.add(callb2)
         
-        c = c.wrap()
+        c = c.wrapinstance()
         
         def __init__(self, x):
             self.x = x
@@ -366,7 +446,7 @@ if __name__ == '__main__':
     b = Deferred()
     
     print '--'
-    n = Node()
+    n = Blueprint()
     n.add(callb2)
     
     a.callbacks.add_blueprint(n)
@@ -374,3 +454,59 @@ if __name__ == '__main__':
     
     a.submit_success('foo')
     b.submit_success('bar')
+    
+    print '===='
+    class Foo(object):
+        c = Blueprint(lambda self, y: self.x + y)
+        c.add(callb2)
+        
+        c = c.wrapinstance()
+        
+        def __init__(self, x):
+            self.x = x
+    
+    f = Foo('foo')
+    f.c('bar')
+    f.c('baz')
+    
+    b = Foo('spam')
+    b.c('bar')
+    b.c('baz')
+    
+    print '===='
+    def xtimes(x):
+        return lambda n: x * n
+    
+    def plus(x):
+        return lambda n: x + n
+    
+    b = Blueprint()
+    b['end'] = b.add(xtimes(2)).add(plus(3))
+    
+    n = Node()
+    n.add_blueprint(b)['end'].add(print_)
+    n(1)
+    
+    print '==='
+    
+    c = Chain()
+    c.add(xtimes(2)).add(plus(3))
+    
+    n = Node()
+    n.add_chain(b).add(print_)
+    n(1)
+    
+    print '!!!!'
+    c = Chain()
+    c.add(xtimes(2)).add(plus(3))
+    
+    e = Chain()
+    e.add_chain(c).add(xtimes(3)).add(plus(2))
+    
+    n = Node()
+    n.add_chain(e).add(print_)
+    
+    x = Node()
+    x.add_chain(c).add(print_)
+    n(1)
+    x(1)
