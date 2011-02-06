@@ -12,3 +12,15 @@
 * Misc. bugfixes.
 * Add SocketMap.is_empty.
 * Fix critical bug in PollSocketMap on OSX.
+
+0.1.2
+=====
+* Introduce SocketMap.call_synchronized.
+* Bugfix in forthcoming when data was None.
+* Introduce available class-member for socket-maps that shows whether the
+  socket-map is available on the system. Referencing a socket-map that may
+  not exist and catching name errors NO LONGER WORKS.
+* Fix is_empty for all standard socket-maps.
+* Make asynchia.util.IDPool thread-safe.
+* Add benchmark suite.
+* Migrate API docs to use sphinx.
