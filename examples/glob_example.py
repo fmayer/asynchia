@@ -83,13 +83,6 @@ if __name__ == '__main__':
         c.transport.set_writeable(False)
     
     try:
-        EchoAcceptor()
-    except AttributeError:
-        assert True
-    else:
-        assert False
-    
-    try:
         print m.run()
     finally:
         m.close()
