@@ -28,3 +28,4 @@
 * Make asynchia.util.IDPool thread-safe.
 * Add benchmark suite.
 * Migrate API docs to use sphinx.
+* Bugfix in testsuite.
