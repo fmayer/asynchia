@@ -21,11 +21,14 @@
 import os
 import errno
 import socket
+import threading
 import Queue as queue
 
 import traceback
 
-from asynchia.util import EMPTY_BYTES, is_unconnected, socketpair, b
+from asynchia.util import (
+    EMPTY_BYTES, is_unconnected, socketpair, b, LookupStack
+)
 from asynchia.const import trylater, connection_lost, inprogress
 
 __version__ = '0.1.2'
@@ -309,9 +312,9 @@ class SocketTransport(Transport):
         # Make no assumptions on what we want to do with the handler.
         # The user will need to explicitely make it read- or writeable.
         if sock is None:
-            sock = defaultsocket_factory()
+            sock = defaults['factory']()
         if socket_map is None:
-            socket_map = global_socketmap
+            socket_map = defaults['socket_map']
         self._readable = False
         self._writeable = False
         
@@ -627,7 +630,7 @@ class Handler(object):
     # Dummy handlers.
     def __init__(self, transport=None):
         if transport is None:
-            transport = defaulttransport(global_socketmap)
+            transport = defaults['transport'](defaults['socket_map'])
         
         self.transport = transport
         
@@ -731,6 +734,47 @@ class _CallSynchronizedHandler(Handler):
                 break
 
 
-defaultsocket_factory = socket.socket
-global_socketmap = None
-defaulttransport = SocketTransport
+LAST = object()
+class DefaultStack(object):
+    def __init__(self, local):
+        self.local = local
+        self.global_state = {
+            'factory': socket.socket,
+            'socket_map': None,
+            'transport': SocketTransport,
+        }
+    
+    @property
+    def state(self):
+        if not hasattr(self.local, 'state'):
+            self.local.state = LookupStack(self.global_state)
+        return self.local.state
+    
+    
+    def __getitem__(self, name):
+        return self.state[name]
+    
+    def __setitem__(self, name, value):
+        self.global_state[name] = name
+    
+    def with_(socket_map=LAST, transport=LAST, factory=LAST):
+        dct = {}
+        if socket_map is not LAST:
+            dct['socket_map'] = socket_map
+        if transport is not LAST:
+            dct['transport'] = transport
+        if factory is not LAST:
+            dct['factory'] = factory
+        return self.state.with_push(dct)
+    
+    def with_socket_map(self, socket_map):
+        return self.state.with_push({'socket_map': socket_map})
+    
+    def with_transport(self, transport):
+        return self.state.with_push({'transport': transport})
+    
+    def with_factory(self, factory):
+        return self.state.with_push({'factory': factory})
+
+
+defaults = DefaultStack(threading.local())

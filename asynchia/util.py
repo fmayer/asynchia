@@ -26,6 +26,44 @@ import collections
 
 import asynchia.const
 
+class _LookupStackContextManager(object):
+    def __init__(self, stack, item):
+        self.item = item
+        self.stack = stack
+    
+    def __enter__(self):
+        self.stack.push(self.item)
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stack.pop()
+
+
+class LookupStack(object):
+    def __init__(self, fallback=None):
+        if fallback is None:
+            fallback = {}
+        self.fallback = fallback
+        self.items = collections.deque([])
+    
+    # FIXME: Name.
+    def with_push(self, item):
+        return _LookupStackContextManager(self, item)
+    
+    def push(self, item):
+        self.items.appendleft(item)
+    
+    def pop(self):
+        return self.items.popleft()
+    
+    # FIXME: O(n). We could get O(1) lookup by requiring more memory and
+    # fully storing all states.
+    def __getitem__(self, name):
+        for item in self.items:
+            if name in item:
+                return item[name]
+        return self.fallback[name]
+
+
 class GradualAverage(object):
     """ Memory-efficient average to which values may gradually be added
     over time. Its value can be accessed via the avg member. """
