@@ -131,11 +131,7 @@ class DataNotifier(object):
         
         self.event = threading.Event()
         
-        self.wakeup, other = asynchia.util.socketpair()
-        self.handler = _ThreadedDataHandler(
-            asynchia.SocketTransport(socket_map, other),
-            self
-        )
+        self.socket_map = socket_map
     
     def add_coroutine(self, coroutine):
         """ Add coroutine that waits for the submission of this data. """
@@ -187,8 +183,7 @@ class DataNotifier(object):
     def inject(self, data):
         """ Submit data and ensure their callbacks are called in the main
         thread. """
-        self.injected = data
-        self.wakeup.send(b('a'))
+        self.socket_map.call_synchronized(lambda: self.submit(data))
     
     def wait(self, timeout=None):
         """ Block execution of current thread until the data is available.
@@ -210,19 +205,3 @@ class DataNotifier(object):
             target=cls._coroutine, args=(datanot, fun, args, kwargs)
         ).start()
         return datanot
-
-
-class _ThreadedDataHandler(asynchia.Handler):
-    """ Implementation detail. """
-    def __init__(self, transport, datanotifier):
-        asynchia.Handler.__init__(self, transport)
-        self.transport.set_readable(True)
-        
-        self.datanotifier = datanotifier
-    
-    def handle_read(self):
-        """ Implementation detail. """
-        self.transport.recv(1)
-        self.datanotifier.submit(self.datanotifier.injected)
-        # Not needed anymore.
-        self.transport.close()
