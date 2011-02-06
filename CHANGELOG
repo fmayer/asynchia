@@ -15,6 +15,10 @@
 
 0.1.2
 =====
+* Enable pip installation on 3.x.
+
+0.1.3
+=====
 * Introduce SocketMap.call_synchronized.
 * Bugfix in forthcoming when data was None.
 * Introduce available class-member for socket-maps that shows whether the
