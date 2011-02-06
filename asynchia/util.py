@@ -96,7 +96,7 @@ class LimitedAverage(object):
 
 class IDPool(object):
     """
-    Pool that returns unique identifiers.
+    Pool that returns unique identifiers in a thread-safe way.
     
     Identifierers obtained using the get method are guaranteed to not be
     returned by it again until they are released using the release method.
