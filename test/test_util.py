@@ -143,6 +143,7 @@ class TestUtil(unittest.TestCase):
             self.assertRaises(KeyError, stack.__getitem__, 'spam')
         self.assertEqual(stack['fall'], 'back')
         self.assertRaises(KeyError, stack.__getitem__, 'foo')
+        self.assertRaises(KeyError, stack.__getitem__, 'spam')
 
 if __name__ == '__main__':
     unittest.main()
