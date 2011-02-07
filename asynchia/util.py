@@ -62,7 +62,7 @@ class LookupStack(object):
     def push(self, item):
         """ Update object with the dictionary item. """
         self.undo.append(
-            [(key, getattr(self.map_, key, _NULL)) for key in item]
+            [(key, self.map_.get(key, _NULL)) for key in item]
         )
         
         self.map_.update(item)
