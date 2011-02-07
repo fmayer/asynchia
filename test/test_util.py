@@ -126,6 +126,7 @@ class TestUtil(unittest.TestCase):
             stack.pop()
         self.assertEqual(stack['fall'], 'back')
         self.assertRaises(KeyError, stack.__getitem__, 'foo')
+        self.assertRaises(KeyError, stack.__getitem__, 'spam')
     
     def test_lookupstack_with(self):
         stack = asynchia.util.LookupStack({'fall': 'back'})
