@@ -47,6 +47,26 @@ class TestDefaults(unittest.TestCase):
         self.assertRaises(AttributeError, asynchia.Handler)
         self.assertTrue(check_list(m.socket_list, h))
         self.assertTrue(check_list(m.socket_list, a))
+        a.transport.close()
+        h.transport.close()
+    
+    def test_nested(self):
+        def nestedfn():
+            a = asynchia.Handler()
+            a.transport.reuse_addr()
+            a.transport.bind(('127.0.0.1', 25000))
+            a.transport.listen(0)
+            
+            h = asynchia.Handler()
+            
+            a.transport.set_writeable(False)
+            return a, h
+        m = asynchia.maps.SelectSocketMap()
+        with asynchia.defaults.with_socket_map(m):
+            a, h = nestedfn()
+        self.assertRaises(AttributeError, asynchia.Handler)
+        self.assertTrue(check_list(m.socket_list, h))
+        self.assertTrue(check_list(m.socket_list, a))
 
 if __name__ == '__main__':
     unittest.main()
