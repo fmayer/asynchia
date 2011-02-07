@@ -28,6 +28,7 @@ import collections
 import asynchia.const
 
 class _LookupStackContextManager(object):
+    """ Implementation detail. """
     def __init__(self, stack, item):
         self.item = item
         self.stack = stack
@@ -41,6 +42,10 @@ class _LookupStackContextManager(object):
 
 _NULL = object()
 class LookupStack(object):
+    """ Dictionary-like object where data can be pushed on and the previous
+    state can be returned by using pop. A context-manager that automatically
+    pops the value after the with-block is left. This can be combined with
+    thread-local data to provide context-dependant global data. """
     def __init__(self, fallback=None):
         if fallback is None:
             fallback = {}
@@ -50,9 +55,12 @@ class LookupStack(object):
     
     # FIXME: Name.
     def with_push(self, item):
+        """ Update object with the dictionary item and revert the push after
+        with-block is left. """
         return _LookupStackContextManager(self, item)
     
     def push(self, item):
+        """ Update object with the dictionary item. """
         self.undo.append(
             [(key, getattr(self.map_, key, _NULL)) for key in item]
         )
@@ -60,6 +68,7 @@ class LookupStack(object):
         self.map_.update(item)
     
     def pop(self):
+        """ Revert last push. """
         for key, value in self.undo.pop():
             if value is _NULL:
                 del self.map_[key]
