@@ -38,29 +38,36 @@ class _LookupStackContextManager(object):
         self.stack.pop()
 
 
+_NULL = object()
 class LookupStack(object):
     def __init__(self, fallback=None):
         if fallback is None:
             fallback = {}
         self.fallback = fallback
-        self.items = collections.deque([])
+        self.undo = collections.deque([])
+        self.map_ = {}
     
     # FIXME: Name.
     def with_push(self, item):
         return _LookupStackContextManager(self, item)
     
     def push(self, item):
-        self.items.appendleft(item)
+        self.undo.append(
+            [(key, getattr(self.map_, key, _NULL)) for key in item]
+        )
+        
+        self.map_.update(item)
     
     def pop(self):
-        return self.items.popleft()
+        for key, value in self.undo.pop():
+            if value is _NULL:
+                del self.map_[key]
+            else:
+                self.map_[key] = value
     
-    # FIXME: O(n). We could get O(1) lookup by requiring more memory and
-    # fully storing all states.
     def __getitem__(self, name):
-        for item in self.items:
-            if name in item:
-                return item[name]
+        if name in self.map_:
+            return self.map_[name]
         return self.fallback[name]
 
 
