@@ -126,7 +126,23 @@ class TestUtil(unittest.TestCase):
             stack.pop()
         self.assertEqual(stack['fall'], 'back')
         self.assertRaises(KeyError, stack.__getitem__, 'foo')
-
+    
+    def test_lookupstack_with(self):
+        stack = asynchia.util.LookupStack({'fall': 'back'})
+        with stack.with_push({'fall': 'front', 'foo': 'bar'}):
+            self.assertEqual(stack['fall'], 'front')
+            self.assertEqual(stack['foo'], 'bar')
+            with stack.with_push(
+                {'fall': '42', 'foo': 'quuz', 'spam': 'eggs'}
+                ):
+                self.assertEqual(stack['fall'], '42')
+                self.assertEqual(stack['foo'], 'quuz')
+                self.assertEqual(stack['spam'], 'eggs')
+            self.assertEqual(stack['fall'], 'front')
+            self.assertEqual(stack['foo'], 'bar')
+            self.assertRaises(KeyError, stack.__getitem__, 'spam')
+        self.assertEqual(stack['fall'], 'back')
+        self.assertRaises(KeyError, stack.__getitem__, 'foo')
 
 if __name__ == '__main__':
     unittest.main()
