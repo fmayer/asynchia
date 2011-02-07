@@ -31,7 +31,7 @@ from asynchia.util import (
 )
 from asynchia.const import trylater, connection_lost, inprogress
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 class CallSynchronized(object):
     def __init__(self, handler, sock):
