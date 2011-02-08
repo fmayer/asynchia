@@ -28,6 +28,7 @@ import collections
 import asynchia.const
 
 class _LookupStackContextManager(object):
+    """ Implementation detail. """
     def __init__(self, stack, item):
         self.item = item
         self.stack = stack
@@ -39,29 +40,44 @@ class _LookupStackContextManager(object):
         self.stack.pop()
 
 
+_NULL = object()
 class LookupStack(object):
+    """ Dictionary-like object where data can be pushed on and the previous
+    state can be returned by using pop. A context-manager that automatically
+    pops the value after the with-block is left. This can be combined with
+    thread-local data to provide context-dependant global data. """
     def __init__(self, fallback=None):
         if fallback is None:
             fallback = {}
         self.fallback = fallback
-        self.items = collections.deque([])
+        self.undo = collections.deque([])
+        self.map_ = {}
     
     # FIXME: Name.
     def with_push(self, item):
+        """ Update object with the dictionary item and revert the push after
+        with-block is left. """
         return _LookupStackContextManager(self, item)
     
     def push(self, item):
-        self.items.appendleft(item)
+        """ Update object with the dictionary item. """
+        self.undo.append(
+            [(key, self.map_.get(key, _NULL)) for key in item]
+        )
+        
+        self.map_.update(item)
     
     def pop(self):
-        return self.items.popleft()
+        """ Revert last push. """
+        for key, value in self.undo.pop():
+            if value is _NULL:
+                del self.map_[key]
+            else:
+                self.map_[key] = value
     
-    # FIXME: O(n). We could get O(1) lookup by requiring more memory and
-    # fully storing all states.
     def __getitem__(self, name):
-        for item in self.items:
-            if name in item:
-                return item[name]
+        if name in self.map_:
+            return self.map_[name]
         return self.fallback[name]
 
 
