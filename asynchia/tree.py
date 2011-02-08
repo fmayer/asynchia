@@ -66,12 +66,12 @@ def get(tree, coords):
     else:
         return get(children[coords[0]], coords[1:])
 
-def add(tree, coords, newvalue):
+def add_tree(tree, coords, newvalue):
     value, children =  tree
     try:
         n = coords[0]
     except IndexError:
-        return (value, children + [(newvalue, [])]), [len(children)]
+        return (value, children + [newvalue]), [len(children)]
     
     coords = coords[1:]
     
@@ -86,12 +86,16 @@ def add(tree, coords, newvalue):
     ), [n] + newcoords
 
 
-def _iadd(tree, coords, newvalue):
+def add(tree, coords, newvalue):
+    return add_tree(tree, coords, (newvalue, []))
+
+
+def _iadd_tree(tree, coords, newvalue):
     value, children =  tree
     try:
         n = coords[0]
     except IndexError:
-        children.append((newvalue, []))
+        children.append(newvalue, [])
         return len(children) - 1
     
     coords = coords[1:]
@@ -101,8 +105,16 @@ def _iadd(tree, coords, newvalue):
     return _iadd(children[n], coords, newvalue)
 
 
+def _iadd(tree, coords, newvalue):
+    return _iadd_tree(tree, coords, (newvalue, []))
+
+
 def iadd(tree, coords, newvalue):
     return tree, coords + [_iadd(tree, coords, newvalue)]
+
+
+def iadd_tree(tree, coords, newvalue):
+    return tree, coords + [_iadd_tree(tree, coords, newvalue)]
 
 
 def map_(tree, fn):
