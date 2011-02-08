@@ -17,21 +17,54 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from itertools import izip_longest
-from pprint import pprint
+NULL = object()
 
 class Tree(object):
-    def __init__(self, tree=None, coords=None):
-        if tree is None:
-            tree = (None, [])
+    def __init__(self, tree=None, coords=None, root=NULL):
+        if tree is None and root is not NULL:
+            tree = (root, [])
+        elif not (tree is not None and root is NULL):
+            raise ValueError
+        
         if coords is None:
-            coords = [0]
+            coords = []
         self.tree = tree
         self.coords = coords
     
     def __add__(self, item):
-        return Tree(add(self.tree, self.coords, item))
+        return Tree(*add(self.tree, self.coords, item))
+    
+    def __iadd__(self, item):
+        self.tree, coords = iadd(self.tree, self.coords, item)
+        return Tree(self.tree, coords)
+    
+    def map(self, fn):
+        return Tree(map_(tree, fn), self.coords)
+    
+    def add(self, old, item):
+        return Tree(*add(self.tree, old.coords, item))
+    
+    def iadd(self, old, item):
+        self.tree, coords = iadd(self.tree, old.coords, item)
+        return Tree(self.tree, coords)
+    
+    def __repr__(self):
+        return "<Tree(%r, %r)>" % (self.tree, self.coords)
+    
+    def __getitem__(self, item):
+        if item is None:
+            item = []
+        if isinstance(item, (long, int)):
+            item = [item]
+        return get(self.tree, item)
 
+
+def get(tree, coords):
+    value, children = tree
+    if not coords:
+        return value
+    else:
+        return get(children[coords[0]], coords[1:])
 
 def add(tree, coords, newvalue):
     value, children =  tree
@@ -72,9 +105,9 @@ def iadd(tree, coords, newvalue):
     return tree, coords + [_iadd(tree, coords, newvalue)]
 
 
-def map_(fn, tree):
+def map_(tree, fn):
     value, children = tree
-    return (fn(value), [map_(fn, child) for child in children])
+    return (fn(value), [map_(child, fn) for child in children])
 
 
 if __name__ == '__main__':
@@ -83,11 +116,30 @@ if __name__ == '__main__':
     assert added is not orig
     assert added == (2, [(4, [(6, [])])])
     assert coords == [0, 0]
+    assert get(added, coords) == 6
     
     iadded, coords = iadd(orig, [0], 6)
     assert iadded is orig
     assert iadded == (2, [(4, [(6, [])])])
     assert coords == [0, 0]
+    assert get(iadded, coords) == 6
     
-    assert map_(lambda x: 2 * x, orig) == (4, [(8, [(12, [])])])
-    pprint(add(orig, [0], 2))
+    assert map_(orig, lambda x: 2 * x) == (4, [(8, [(12, [])])])
+    
+    tree = Tree(root=None)
+    a = (tree + 0)
+    b = a + 1
+    c = b.iadd(a, 2)
+    assert b.tree == c.tree == (None, [(0, [(1, []), (2, [])])])
+    assert b.tree is c.tree
+    assert a.tree == (None, [(0, [])])
+    assert b.coords == [0, 0]
+    assert c.coords == [0, 1]
+    
+    assert a[0] == 0
+    assert b[0, 0] == 1
+    assert b[0, 1] == 2
+    assert c[0, 1] == 2
+    
+    # Get root item.
+    assert a[None] is None
