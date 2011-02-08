@@ -22,6 +22,7 @@ import sys
 import errno
 import math
 import socket
+import threading
 import collections
 
 import asynchia.const
@@ -133,7 +134,7 @@ class LimitedAverage(object):
 
 class IDPool(object):
     """
-    Pool that returns unique identifiers.
+    Pool that returns unique identifiers in a thread-safe way.
     
     Identifierers obtained using the get method are guaranteed to not be
     returned by it again until they are released using the release method.
@@ -153,23 +154,33 @@ class IDPool(object):
     def __init__(self):
         self.max_id = -1
         self.free_ids = []
+        
+        self._lock = threading.Lock()
     
     def get(self):
         """ Return a new integer that is unique in this pool until
         it is released. """
-        if self.free_ids:
-            return self.free_ids.pop()
-        else:
-            self.max_id += 1
-            return self.max_id
+        self._lock.acquire()
+        try:
+            if self.free_ids:
+                return self.free_ids.pop()
+            else:
+                self.max_id += 1
+                return self.max_id
+        finally:
+            self._lock.release()
     
     def release(self, id_):
         """ Release the id. It can now be returned by get again.
         
         Will reset the IDPool if the last id in use is released. """
-        self.free_ids.append(id_)
-        if len(self.free_ids) == self.max_id + 1:
-            self.reset()
+        self._lock.acquire()
+        try:
+            self.free_ids.append(id_)
+            if len(self.free_ids) == self.max_id + 1:
+                self.reset()
+        finally:
+            self._lock.release()
     
     def reset(self):
         """ Reset the state of the IDPool. This should only be called when
