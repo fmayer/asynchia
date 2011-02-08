@@ -50,6 +50,24 @@ _NULL = object()
 SUCCESS = object()
 ERROR = object()
 
+def _coroutine(obj, fun, args, kwargs):
+    """ Implementation detail. """
+    try:
+        obj.submit_success(fun(*args, **kwargs))
+    except Exception, e:
+        obj.submit_error(e)
+
+
+def threaded_coroutine(fun, *args, **kwargs):
+    """ Run fun(*args, **kwargs) in a thread and return a DataNotifier
+    notifying upon availability of the return value of the function. """
+    obj = Deferred()
+    threading.Thread(
+        target=_coroutine, args=(obj, fun, args, kwargs)
+    ).start()
+    return obj
+
+
 class CoroutineReturn(BaseException):
     pass
 
@@ -92,7 +110,7 @@ class Coroutine(object):
         except Exception, e:
             self.deferred.submit_error(e)
         else:
-            result.callbacks.add(self.success_databack, self.error_databack)
+            result.add(self.success_databack, self.error_databack)
     
     __call__ = send
     
@@ -273,7 +291,7 @@ class Node(Blueprint):
             self.error_callback(e)
         else:
             if isinstance(value, Deferred):
-                value.callbacks.add(
+                value.add(
                     self.success_callback, self.error_callback
                 )
             else:
@@ -319,57 +337,10 @@ class Node(Blueprint):
         self.cachederror = data
         self.event.set()
     
+    submit_success = success
+    submit_error = err
+    
     __call__ = success
 
 
-class Deferred(object):
-    def __init__(self, callbacks=None):
-        if callbacks is None:
-            callbacks = Node() 
-        self.callbacks = callbacks
-    
-    def submit_error(self, data):
-        self.callbacks.error_callback(data)
-    
-    def submit_success(self, data):
-        self.callbacks.success_callback(data)
-    
-    @staticmethod
-    def _coroutine(obj, fun, args, kwargs):
-        """ Implementation detail. """
-        try:
-            obj.submit_success(fun(*args, **kwargs))
-        except Exception, e:
-            obj.submit_error(e)
-    
-    @classmethod
-    def threaded_coroutine(cls, fun, *args, **kwargs):
-        """ Run fun(*args, **kwargs) in a thread and return a DataNotifier
-        notifying upon availability of the return value of the function. """
-        obj = cls()
-        threading.Thread(
-            target=cls._coroutine, args=(obj, fun, args, kwargs)
-        ).start()
-        return obj
-    
-    def wait(self, timeout=None):
-        self.callbacks.wait(timeout)
-    
-    def synchronize(self, timeout=None):
-        return self.callbacks.synchronize(timeout)
-    
-    @staticmethod
-    def maybe(fun, *args, **kwargs):
-        node = Node()
-        try:
-            value = fun(*args, **kwargs)
-        except Exception, e:
-            node.cachederror = e
-        else:
-            if isinstance(value, Deferred):
-                return value
-            elif isinstance(value, Escape):
-                node.cachedsuccess = value.deferred
-            else:
-                node.cachedsuccess = value
-            return Deferred(node)
+Deferred = Node

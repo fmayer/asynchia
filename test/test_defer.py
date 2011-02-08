@@ -45,7 +45,7 @@ def dnr_inject(self, map_):
     
     mo = map_()
     noti = fc.Deferred()
-    noti.callbacks.add(mkfun(container))
+    noti.add(mkfun(container))
     self.assertEquals(container.run, False)
     
     threading.Thread(target=in_thread, args=(mo, noti, container)).start()
@@ -113,7 +113,7 @@ def dnr_coroutines(self, map_):
     conoti = coroutine.deferred
     coroutine.send()
     
-    conoti.callbacks.add(mkfun(container))
+    conoti.add(mkfun(container))
     self.assertEquals(container.run, False)
     noti.submit_success("foobar")
     self.assertEquals(container.run, True)
@@ -169,9 +169,9 @@ class TestForthcoming(unittest.TestCase):
                 return e
             
             d = fc.Deferred()
-            foo = d.callbacks.add(callb1).add(callb2).add(callb2)
+            foo = d.add(callb1).add(callb2).add(callb2)
             d.submit_success('hello')
-            d.callbacks.add(callb1)
+            d.add(callb1)
             
             e.submit_success('world')
             self.assertEqual(foo.synchronize(), 'world22')
