@@ -178,17 +178,17 @@ class Blueprint(object):
     def instance(self):
         return Node(
             self._callback, self._errback,
-            [c.instance() for c in self.children], copy.deepcopy(self.refs)
+            [c.instance() for c in self.children], copy.copy(self.refs)
         )
     
-    def copy(self):
+    def __copy__(self):
         return self.__class__(
             self._callback, self._errback,
-            [c.instance() for c in self.children], copy.deepcopy(self.refs)
+            [c.instance() for c in self.children], copy.copy(self.refs)
         )
     
     def add_node(self, node):
-        node = node.copy()
+        node = copy.copy(node)
         if self.cachedsuccess is not _NULL:
             node.success(self.cachedsuccess)
         elif self.cachederror is not _NULL:
