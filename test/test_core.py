@@ -59,7 +59,7 @@ def dnr_forthcoming_wakeup(self, map_):
     
     def thr(mo, nf):
         time.sleep(2)
-        mo.call_synchronized(lambda: nf.success_callback(12))
+        mo.call_synchronized(lambda: nf.success(12))
     
     def callb(data):
         self.assertEquals(data, 12)

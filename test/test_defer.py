@@ -34,7 +34,7 @@ def dnr_inject(self, map_):
     
     def in_thread(mo, noti, container):
         container.main_thread = threading.currentThread() == main_thread
-        mo.call_synchronized(lambda: noti.submit_success("foobar"))
+        mo.call_synchronized(lambda: noti.success("foobar"))
     
     def mkfun(container):
         def _fun(data):
@@ -70,7 +70,7 @@ def dnr_databack_beforedata(self, map_):
     noti = fc.Node()
     noti.add(mkfun(container))
     self.assertEquals(container.run, False)
-    noti.success_callback("foobar")
+    noti.success("foobar")
     self.assertEquals(container.run, True)
 
 
@@ -85,7 +85,7 @@ def dnr_databack_afterdata(self, map_):
     
     mo = map_()
     noti = fc.Node()
-    noti.success_callback("foobar")
+    noti.success("foobar")
     noti.add(mkfun(container))
     self.assertEquals(container.run, True)
 
@@ -115,7 +115,7 @@ def dnr_coroutines(self, map_):
     
     conoti.add(mkfun(container))
     self.assertEquals(container.run, False)
-    noti.submit_success("foobar")
+    noti.success("foobar")
     self.assertEquals(container.run, True)
 
 
@@ -152,7 +152,7 @@ class TestForthcoming(unittest.TestCase):
         c = fc.Coroutine(test_coroutine(False), None)
         c.send()
         # Network I/O complete.
-        a.submit_success('yay')
+        a.success('yay')
         self.assertEquals(c.synchronize(), 'yay yay')
     
     def test_synchronize_coroutine_error(self):
@@ -160,7 +160,7 @@ class TestForthcoming(unittest.TestCase):
         c = fc.Coroutine(test_coroutine(True), None)
         c.send()
         # Network I/O complete.
-        a.submit_success('yay')
+        a.success('yay')
         self.assertEquals(c.synchronize(), 'yay 404')
     
     def test_deferred_add_after_submit(self):
@@ -170,10 +170,10 @@ class TestForthcoming(unittest.TestCase):
             
             d = fc.Deferred()
             foo = d.add(callb1).add(callb2).add(callb2)
-            d.submit_success('hello')
+            d.success('hello')
             d.add(callb1)
             
-            e.submit_success('world')
+            e.success('world')
             self.assertEqual(foo.synchronize(), 'world22')
             self.assertEqual(foo.add(callb2).synchronize(), 'world222')
     

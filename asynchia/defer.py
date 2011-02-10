@@ -53,9 +53,9 @@ ERROR = object()
 def _coroutine(obj, fun, args, kwargs):
     """ Implementation detail. """
     try:
-        obj.submit_success(fun(*args, **kwargs))
+        obj.success(fun(*args, **kwargs))
     except Exception, e:
-        obj.submit_error(e)
+        obj.err(e)
 
 
 def threaded_coroutine(fun, *args, **kwargs):
@@ -104,11 +104,11 @@ class Coroutine(object):
             else:
                 result = self.itr.throw(data)
         except StopIteration, e:
-            self.deferred.submit_success(None)
+            self.deferred.success(None)
         except CoroutineReturn, e:
-            self.deferred.submit_success(e.args[0])
+            self.deferred.success(e.args[0])
         except Exception, e:
-            self.deferred.submit_error(e)
+            self.deferred.err(e)
         else:
             result.add(self.success_databack, self.error_databack)
     
@@ -167,9 +167,9 @@ class Blueprint(object):
         self.event = threading.Event()
         
         if errback is None:
-            errback = self.default_errback
+            errback = self._default_errback
         if callback is None:
-            callback = self.default_callback
+            callback = self._default_callback
         self._callback = callback
         self._errback = errback
         
@@ -184,7 +184,7 @@ class Blueprint(object):
     def __copy__(self):
         return self.__class__(
             self._callback, self._errback,
-            [c.instance() for c in self.children], copy.copy(self.refs)
+            [copy.copy(c) for c in self.children], copy.copy(self.refs)
         )
     
     def add_node(self, node):
@@ -213,11 +213,11 @@ class Blueprint(object):
     add_blueprint = add_node
 
     @staticmethod
-    def default_errback(err):
+    def _default_errback(err):
         raise err
     
     @staticmethod
-    def default_callback(value):
+    def _default_callback(value):
         return value
     
     def errback(self, errback):
@@ -284,26 +284,26 @@ class Node(Blueprint):
         if self.cachedsuccess is not _NULL:
             return self.cachedsuccess
     
-    def visit(self, callback, *args, **kwargs):
+    def _visit(self, callback, *args, **kwargs):
         try:
             value = callback(*args, **kwargs)
         except Exception, e:
-            self.error_callback(e)
+            self._error_callback(e)
         else:
             if isinstance(value, Deferred):
                 value.add(
-                    self.success_callback, self.error_callback
+                    self._success_callback, self._error_callback
                 )
             else:
                 if isinstance(value, Escape):
                     value = value.deferred
-                self.success_callback(value)
+                self._success_callback(value)
     
     def success(self, *args, **kwargs):
-        self.visit(self._callback, *args, **kwargs)
+        self._visit(self._callback, *args, **kwargs)
     
     def err(self, data):
-        self.visit(self._errback, data)
+        self._visit(self._errback, data)
     
     def add_blueprint(self, node):
         node = node.instance()
@@ -325,20 +325,17 @@ class Node(Blueprint):
                 break
         return node
     
-    def success_callback(self, data):
+    def _success_callback(self, data):
         for child in self.children:
             child.success(data)
         self.cachedsuccess = data
         self.event.set()
     
-    def error_callback(self, data):
+    def _error_callback(self, data):
         for child in self.children:
             child.err(data)
         self.cachederror = data
         self.event.set()
-    
-    submit_success = success
-    submit_error = err
     
     __call__ = success
 
