@@ -67,7 +67,7 @@ def dnr_databack_beforedata(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.Node()
+    noti = fc.Deferred()
     noti.add(mkfun(container))
     self.assertEquals(container.run, False)
     noti.success("foobar")
@@ -84,7 +84,7 @@ def dnr_databack_afterdata(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.Node()
+    noti = fc.Deferred()
     noti.success("foobar")
     noti.add(mkfun(container))
     self.assertEquals(container.run, True)
@@ -178,7 +178,7 @@ class TestForthcoming(unittest.TestCase):
             self.assertEqual(foo.add(callb2).synchronize(), 'world222')
     
     def test_wrap(self):        
-        c = fc.Node(lambda x, y: x + y)
+        c = fc.Deferred(lambda x, y: x + y)
         d = c.add(callb2)
         c.wrap()('foo', 'bar')
         
@@ -212,7 +212,7 @@ class TestForthcoming(unittest.TestCase):
         b = fc.Blueprint()
         b['end'] = b.add(lambda n: 2 * n).add(lambda n: 3 + n)
          
-        n = fc.Node()
+        n = fc.Deferred()
         end = n.add_blueprint(b)['end'].add(lambda x: 2 * x)
         n(1)
         self.assertEqual(end.synchronize(), 10)
@@ -224,10 +224,10 @@ class TestForthcoming(unittest.TestCase):
         e = fc.Chain()
         e.add_chain(c).add(lambda n: 3 * n).add(lambda n: 2 + n)
         
-        n = fc.Node()
+        n = fc.Deferred()
         end1 = n.add_chain(e)
         
-        x = fc.Node()
+        x = fc.Deferred()
         end2 = x.add_chain(c)
         n(1)
         x(2)

@@ -67,7 +67,7 @@ def dnr_forthcoming_wakeup(self, map_):
         
         container.flag = True
     
-    nf = asynchia.defer.Node()
+    nf = asynchia.defer.Deferred()
     nf.add(callb)
     th = threading.Thread(target=thr, args=(mo, nf))
     th.start()

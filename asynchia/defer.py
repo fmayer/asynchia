@@ -176,7 +176,7 @@ class Blueprint(object):
         self.refs = refs
     
     def instance(self):
-        return Node(
+        return Deferred(
             self._callback, self._errback,
             [c.instance() for c in self.children], copy.copy(self.refs)
         )
@@ -266,7 +266,7 @@ class Chain(Blueprint):
         return super(Chain, self).add_node(node)
 
 
-class Node(Blueprint):
+class Deferred(Blueprint):
     def wrap(self):
         # As self is no real callable, it does not get bound to
         # instances.
@@ -338,6 +338,3 @@ class Node(Blueprint):
         self.event.set()
     
     __call__ = success
-
-
-Deferred = Node
