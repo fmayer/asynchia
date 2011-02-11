@@ -317,13 +317,9 @@ class Deferred(Blueprint):
         return node
     
     def add_chain(self, chain):
-        node = self.add_node(chain.instance())
-        while True:
-            try:
-                node = node.children[0]
-            except IndexError:
-                break
-        return node
+        return super(Deferred, self).add_chain(
+            chain.instance()
+        )
     
     def _success_callback(self, data):
         for child in self.children:
