@@ -240,21 +240,42 @@ class TestForthcoming(unittest.TestCase):
         container.run = False
         
         def callback(x):
-            container.run = True
+            container.run = x == 1
+        
+        def errback(x):
+            container.run = isinstance(x, ValueError)
         
         d = fc.Deferred()
+        e = fc.Deferred()
         def foo():
             return 1
         
         def bar():
             return d
         
+        def spam():
+            raise ValueError
+        
+        def eggs():
+            return e
+        
         fc.Deferred.maybe(foo).add(callback)
         self.assertTrue(container.run)
         container.run = False
+        
         fc.Deferred.maybe(bar).add(callback)
         self.assertFalse(container.run)
         d.success(1)
+        self.assertTrue(container.run)
+        container.run = False
+        
+        fc.Deferred.maybe(spam).add(None, errback)
+        self.assertTrue(container.run)
+        container.run = False
+        
+        fc.Deferred.maybe(eggs).add(None, errback)
+        self.assertFalse(container.run)
+        e.err(ValueError)
         self.assertTrue(container.run)
 
 
