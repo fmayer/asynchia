@@ -333,4 +333,16 @@ class Deferred(Blueprint):
         self.cachederror = data
         self.event.set()
     
+    @classmethod
+    def maybe(cls, fun, *args, **kwargs):
+        
+        deferred = cls()
+        try:
+            value = fun(*args, **kwargs)
+        except Exception, e:
+            deferred.err(e)
+        else:
+            deferred.success(value)
+        return deferred
+    
     __call__ = success

@@ -234,6 +234,29 @@ class TestForthcoming(unittest.TestCase):
         
         self.assertEqual(end1.synchronize(), 17)
         self.assertEqual(end2.synchronize(), 7)
+    
+    def test_maybe(self):
+        container = Container()
+        container.run = False
+        
+        def callback(x):
+            container.run = True
+        
+        d = fc.Deferred()
+        def foo():
+            return 1
+        
+        def bar():
+            return d
+        
+        fc.Deferred.maybe(foo).add(callback)
+        self.assertTrue(container.run)
+        container.run = False
+        fc.Deferred.maybe(bar).add(callback)
+        self.assertFalse(container.run)
+        d.success(1)
+        self.assertTrue(container.run)
+
 
 def _genfun(map_, test):
     def _fun(self):
