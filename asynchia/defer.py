@@ -335,7 +335,6 @@ class Deferred(Blueprint):
     
     @classmethod
     def maybe(cls, fun, *args, **kwargs):
-        
         deferred = cls()
         try:
             value = fun(*args, **kwargs)
