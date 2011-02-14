@@ -28,7 +28,7 @@ import traceback
 from asynchia.util import EMPTY_BYTES, is_unconnected, socketpair, b
 from asynchia.const import trylater, connection_lost, inprogress
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 class CallSynchronized(object):
     def __init__(self, handler, sock):
