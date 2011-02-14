@@ -154,6 +154,8 @@ class SelectSocketMap(FragileSocketMap):
         self.socket_list = []
         
         self.socket_list.append(self.controlreceiver)
+        
+        self.constructed()
     
     def add_transport(self, handler):
         """ See SocketMap.add_transport. """
@@ -258,6 +260,8 @@ class PollSocketMap(RobustSocketMap):
         
         self.controlfd = self.controlreceiver.fileno()
         self.poller.register(self.controlfd, select.POLLIN | select.POLLPRI)
+        
+        self.constructed()
     
     def add_transport(self, handler):
         """ See SocketMap.add_transport. """
@@ -371,6 +375,8 @@ class EPollSocketMap(RockSolidSocketMap):
         
         self.controlfd = self.controlreceiver.fileno()
         self.poller.register(self.controlfd, select.EPOLLIN | select.EPOLLPRI)
+        
+        self.constructed()
     
     def add_transport(self, handler):
         """ See SocketMap.add_transport. """
@@ -489,6 +495,8 @@ class KQueueSocketMap(RockSolidSocketMap):
                            select.KQ_FILTER_READ,
                            select.KQ_EV_ADD)], 0
         )
+        
+        self.constructed()
     
     def add_transport(self, handler):
         """ See SocketMap.add_transport. """
