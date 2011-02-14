@@ -186,27 +186,6 @@ class TestForthcoming(unittest.TestCase):
         
         self.assertEqual(d.synchronize(), 'foobar2')
     
-    def test_deco(self):
-        class Foo(object):
-            def __init__(self, x):
-                self.x = x
-            
-            @fc.Deferred
-            def _c(self, y):
-                return self.x + y
-            
-            c = _c.wrapinstance()
-            
-            @_c.add
-            def d(self, x):
-                return x + '1'
-            
-            _c['result'] = d
-        
-        foo = Foo('foo')
-        d = foo.c('bar')
-        self.assertEquals(d['result'].synchronize(), 'foobar1')
-    
     def test_class_wrapinstance(self):
         class Foo(object):
             c = fc.Blueprint(lambda self, y: self.x + y)
