@@ -768,13 +768,13 @@ class DefaultStack(object):
         return self.state.with_push(dct)
     
     def with_socket_map(self, socket_map):
-        return self.state.with_push({'socket_map': socket_map})
+        return self.state.with_push({'socket_map': socket_map}, socket_map)
     
     def with_transport(self, transport):
-        return self.state.with_push({'transport': transport})
+        return self.state.with_push({'transport': transport}, transport)
     
     def with_factory(self, factory):
-        return self.state.with_push({'factory': factory})
+        return self.state.with_push({'factory': factory}, factory)
 
 
 defaults = DefaultStack(threading.local())
