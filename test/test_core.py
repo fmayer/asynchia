@@ -270,7 +270,6 @@ def dnr_remove2(self, map_):
 def dnr_close(self, map_):
     mo = map_()
     container = {'done': False}
-    container['done'] = False
     
     a, b = asynchia.util.socketpair()
     
