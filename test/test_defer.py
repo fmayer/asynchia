@@ -23,7 +23,7 @@ import threading
 from copy import copy
 
 import asynchia.maps
-import asynchia.defer as fc
+from asynchia import defer
 
 class Container(object): pass
 
@@ -46,7 +46,7 @@ def dnr_inject(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.Deferred()
+    noti = defer.Deferred()
     noti.add(mkfun(container))
     self.assertEquals(container.run, False)
     
@@ -69,7 +69,7 @@ def dnr_databack_beforedata(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.Deferred()
+    noti = defer.Deferred()
     noti.add(mkfun(container))
     self.assertEquals(container.run, False)
     noti.success("foobar")
@@ -86,7 +86,7 @@ def dnr_databack_afterdata(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.Deferred()
+    noti = defer.Deferred()
     noti.success("foobar")
     noti.add(mkfun(container))
     self.assertEquals(container.run, True)
@@ -103,14 +103,14 @@ def dnr_coroutines(self, map_):
         return _fun
     
     mo = map_()
-    noti = fc.Deferred()
+    noti = defer.Deferred()
     
     def foo(noti):
         data = yield noti
-        fc.Coroutine.return_(data)
+        defer.Coroutine.return_(data)
     
-    coroutine = fc.Coroutine(
-        foo(noti), deferred=fc.Deferred()
+    coroutine = defer.Coroutine(
+        foo(noti), deferred=defer.Deferred()
     )
     conoti = coroutine.deferred
     coroutine.send()
@@ -125,21 +125,21 @@ def mkcoroutine():
     class HTTP404(Exception):
         pass
     
-    a = fc.Deferred()
+    a = defer.Deferred()
     def bar(err):
         # Request result of network I/O.
         blub = (yield a)
         if err:
             raise HTTP404
-        fc.Coroutine.return_(blub)
+        defer.Coroutine.return_(blub)
     def foo(err):
         # Wait for completion of new coroutine which - in turn - waits
         # for I/O.
         try:
-            blub = yield fc.Coroutine.call_itr(bar(err), None)
+            blub = yield defer.Coroutine.call_itr(bar(err), None)
         except HTTP404:
             blub = 404
-        fc.Coroutine.return_("yay %s" % blub)
+        defer.Coroutine.return_("yay %s" % blub)
     
     return a, foo
 
@@ -151,7 +151,7 @@ def callb2(value):
 class TestForthcoming(unittest.TestCase):
     def test_synchronize_coroutine(self):
         a, test_coroutine = mkcoroutine()
-        c = fc.Coroutine(test_coroutine(False), None)
+        c = defer.Coroutine(test_coroutine(False), None)
         c.send()
         # Network I/O complete.
         a.success('yay')
@@ -159,18 +159,18 @@ class TestForthcoming(unittest.TestCase):
     
     def test_synchronize_coroutine_error(self):
         a, test_coroutine = mkcoroutine()
-        c = fc.Coroutine(test_coroutine(True), None)
+        c = defer.Coroutine(test_coroutine(True), None)
         c.send()
         # Network I/O complete.
         a.success('yay')
         self.assertEquals(c.synchronize(), 'yay 404')
     
     def test_deferred_add_after_submit(self):
-            e = fc.Deferred()
+            e = defer.Deferred()
             def callb1(value):
                 return e
             
-            d = fc.Deferred()
+            d = defer.Deferred()
             foo = d.add(callb1).add(callb2).add(callb2)
             d.success('hello')
             d.add(callb1)
@@ -180,7 +180,7 @@ class TestForthcoming(unittest.TestCase):
             self.assertEqual(foo.add(callb2).synchronize(), 'world222')
     
     def test_wrap(self):        
-        c = fc.Deferred(lambda x, y: x + y)
+        c = defer.Deferred(lambda x, y: x + y)
         d = c.add(callb2)
         c.wrap()('foo', 'bar')
         
@@ -188,7 +188,7 @@ class TestForthcoming(unittest.TestCase):
     
     def test_class_wrapinstance(self):
         class Foo(object):
-            c = fc.Blueprint(lambda self, y: self.x + y)
+            c = defer.Blueprint(lambda self, y: self.x + y)
             c.add(callb2)
             
             c = c.wrapinstance()
@@ -211,25 +211,25 @@ class TestForthcoming(unittest.TestCase):
         self.assertEqual(r2_2.synchronize(), 'spambaz')
     
     def test_ref(self):
-        b = fc.Blueprint()
+        b = defer.Blueprint()
         b['end'] = b.add(lambda n: 2 * n).add(lambda n: 3 + n)
          
-        n = fc.Deferred()
+        n = defer.Deferred()
         end = n.add_blueprint(b)['end'].add(lambda x: 2 * x)
         n(1)
         self.assertEqual(end.synchronize(), 10)
     
     def test_immutability(self):
-        c = fc.Chain()
+        c = defer.Chain()
         c.add(lambda n: 2 * n).add(lambda n: 3 + n)
         
-        e = fc.Chain()
+        e = defer.Chain()
         e.add_chain(c).add(lambda n: 3 * n).add(lambda n: 2 + n)
         
-        n = fc.Deferred()
+        n = defer.Deferred()
         end1 = n.add_chain(e)
         
-        x = fc.Deferred()
+        x = defer.Deferred()
         end2 = x.add_chain(c)
         n(1)
         x(2)
@@ -247,8 +247,8 @@ class TestForthcoming(unittest.TestCase):
         def errback(x):
             container.run = isinstance(x, ValueError)
         
-        d = fc.Deferred()
-        e = fc.Deferred()
+        d = defer.Deferred()
+        e = defer.Deferred()
         def foo():
             return 1
         
@@ -261,21 +261,21 @@ class TestForthcoming(unittest.TestCase):
         def eggs():
             return e
         
-        fc.Deferred.maybe(foo).add(callback)
+        defer.Deferred.maybe(foo).add(callback)
         self.assertTrue(container.run)
         container.run = False
         
-        fc.Deferred.maybe(bar).add(callback)
+        defer.Deferred.maybe(bar).add(callback)
         self.assertFalse(container.run)
         d.success(1)
         self.assertTrue(container.run)
         container.run = False
         
-        fc.Deferred.maybe(spam).add(None, errback)
+        defer.Deferred.maybe(spam).add(None, errback)
         self.assertTrue(container.run)
         container.run = False
         
-        fc.Deferred.maybe(eggs).add(None, errback)
+        defer.Deferred.maybe(eggs).add(None, errback)
         self.assertFalse(container.run)
         e.err(ValueError)
         self.assertTrue(container.run)
