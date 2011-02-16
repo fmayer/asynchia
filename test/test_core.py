@@ -165,7 +165,6 @@ def t_changeflag(subthread):
 def dnr_remove(self, map_):
     mo = map_()
     container = {'done': False}
-    container['done'] = False
     
     class Serv(asynchia.Server):
         def __init__(
@@ -216,7 +215,6 @@ def dnr_remove(self, map_):
 def dnr_remove2(self, map_):
     mo = map_()
     container = {'done': False}
-    container['done'] = False
     
     class Serv(asynchia.Server):
         def __init__(
