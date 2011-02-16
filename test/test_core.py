@@ -33,6 +33,8 @@ b = asynchia.util.b
 
 import unittest
 
+TIMEOUT = 5
+
 def _override_socketpair(fun):
     def _fun(*args, **kwargs):
         bu = getattr(socket, 'socketpair', None)
@@ -58,7 +60,6 @@ def dnr_forthcoming_wakeup(self, map_):
     mainthread = threading.currentThread()
     
     def thr(nf):
-        time.sleep(2)
         nf.inject(12)
     
     def callb(data):
@@ -73,8 +74,8 @@ def dnr_forthcoming_wakeup(self, map_):
     th.start()
     
     s = time.time()
-    while not container.flag and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    while not container.flag and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
     self.assertEquals(container.flag, True)
 
 
@@ -85,14 +86,14 @@ def dnr_interrupt(self, map_):
     def thread(container):
         mo.start_interrupt()
         try:
-            time.sleep(4)
+            time.sleep(1)
         finally:
             container.flag = True
             mo.end_interrupt()
     threading.Thread(target=thread, args=(container, )).start()
     s = time.time()
-    while not container.flag and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    while not container.flag and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
     self.assertEqual(container.flag, True)
 
 
@@ -101,7 +102,6 @@ cf_thr = None
 
         
 def std(mo, hand):
-    time.sleep(1)
     mo.start_interrupt(True)
     try:
         hand.set_writeable(True)
@@ -110,7 +110,6 @@ def std(mo, hand):
 
 
 def ctx(mo, hand):
-    time.sleep(1)
     with mo.interrupt(True):
         hand.set_writeable(True)
 
@@ -162,11 +161,11 @@ def t_changeflag(subthread):
         c.transport.connect(s.transport.socket.getsockname())
         n = 0
         s = time.time()
-        while not container.done and time.time() < s + 10:
-            mo.poll(abs(10 - (time.time() - s)))
+        while not container.done and time.time() < s + TIMEOUT:
+            mo.poll(abs(TIMEOUT - (time.time() - s)))
         self.assertEqual(container.done, True)
         mo.close()
-        container.thr.join(10)
+        container.thr.join(TIMEOUT)
         self.assertEqual(container.thr.isAlive(), False)
     return dnr_changeflag
     
@@ -208,14 +207,15 @@ def dnr_remove(self, map_):
     c = Handler(asynchia.SocketTransport(mo), container)
     c.transport.connect(s.transport.socket.getsockname())
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    while not container.done and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
     self.assertEqual(container.done, True)
     mo.del_transport(c.transport)
     container.done = False
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    
+    mo.poll(0)
+    
     mo.close()
     self.assertEqual(container.done, False)
 
@@ -261,14 +261,15 @@ def dnr_remove2(self, map_):
     c.transport.connect(s.transport.socket.getsockname())
     s = time.time()
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    while not container.done and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
     self.assertEqual(container.done,  True)
     mo.del_transport(c.transport)
     container.done = False
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    
+    mo.poll(0)
+    
     mo.close()
     self.assertEqual(container.done, False)
 
@@ -294,8 +295,8 @@ def dnr_close(self, map_):
     c = Handler(asynchia.SocketTransport(mo, a), container)
     b.close()
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    while not container.done and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
     mo.close()
     self.assertEqual(container.done, True)
 
@@ -323,8 +324,8 @@ def dnr_close_read(self, map_):
     c = Handler(asynchia.SocketTransport(mo, a), container)
     b.close()
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    while not container.done and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
     mo.close()
     self.assertEqual(container.done, True)
 
@@ -352,8 +353,8 @@ def dnr_close_write(self, map_):
     c = Handler(asynchia.SocketTransport(mo, a), container)
     b.close()
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    while not container.done and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
     mo.close()
     self.assertEqual(container.done, True)
 
@@ -379,8 +380,8 @@ def dnr_connfailed(self, map_):
         
     
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    while not container.done and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
     self.assertEqual(container.done, True)
 
 def dnr_connfailed2(self, map_):
@@ -420,14 +421,14 @@ def dnr_connfailed2(self, map_):
     
     s = time.time()
     while not container.done and time.time() < s + 30:
-        mo.poll(abs(10 - (time.time() - s)))
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
     self.assertEqual(container.done, True)
 
     
 def dnr_closed(self, map_):
     mo = map_()
     mo.close()
-    self.assertRaises(asynchia.SocketMapClosedError, mo.poll, 10)
+    self.assertRaises(asynchia.SocketMapClosedError, mo.poll, TIMEOUT)
 
 
 class TestCore(unittest.TestCase):    
@@ -470,8 +471,8 @@ class TestCore(unittest.TestCase):
         c.transport.set_writeable(True)
         
         s = time.time()
-        while not container.done and time.time() < s + 10:
-            mo.poll(abs(10 - (time.time() - s)))
+        while not container.done and time.time() < s + TIMEOUT:
+            mo.poll(abs(TIMEOUT - (time.time() - s)))
         self.assertEqual(container.done, True)
     
     
