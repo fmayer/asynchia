@@ -74,6 +74,7 @@ def dnr_forthcoming_wakeup(self, map_):
     self.assertEquals(container['done'], True)
 
 
+# FIXME: This does not even make sense.
 def dnr_interrupt(self, map_):
     container = {'done': False}
     
@@ -81,7 +82,7 @@ def dnr_interrupt(self, map_):
     def thread(container):
         mo.start_interrupt()
         try:
-            time.sleep(1)
+            pass
         finally:
             container['done'] = True
             mo.end_interrupt()
