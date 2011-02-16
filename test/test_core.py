@@ -33,6 +33,8 @@ b = asynchia.util.b
 
 import unittest
 
+TIMEOUT = 5
+
 def _override_socketpair(fun):
     def _fun(*args, **kwargs):
         bu = getattr(socket, 'socketpair', None)
@@ -45,27 +47,21 @@ def _override_socketpair(fun):
     return _fun
 
 
-class Container(object):
-    pass
-
-
 def dnr_forthcoming_wakeup(self, map_):
-    container = Container()
-    container.flag = False
+    container = {'done': False}
     
     mo = map_()
     
     mainthread = threading.currentThread()
     
     def thr(nf):
-        time.sleep(2)
         nf.inject(12)
     
     def callb(data):
         self.assertEquals(data, 12)
         self.assertEquals(threading.currentThread(), mainthread)
         
-        container.flag = True
+        container['done'] = True
     
     nf = asynchia.forthcoming.DataNotifier(mo)
     nf.add_databack(callb)
@@ -73,27 +69,27 @@ def dnr_forthcoming_wakeup(self, map_):
     th.start()
     
     s = time.time()
-    while not container.flag and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
-    self.assertEquals(container.flag, True)
+    while not container['done'] and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
+    self.assertEquals(container['done'], True)
 
 
 def dnr_interrupt(self, map_):
-    container = Container()
-    container.flag = False
+    container = {'done': False}
+    
     mo = map_()
     def thread(container):
         mo.start_interrupt()
         try:
-            time.sleep(4)
+            time.sleep(1)
         finally:
-            container.flag = True
+            container['done'] = True
             mo.end_interrupt()
     threading.Thread(target=thread, args=(container, )).start()
     s = time.time()
-    while not container.flag and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
-    self.assertEqual(container.flag, True)
+    while not container['done'] and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
+    self.assertEqual(container['done'], True)
 
 
 cf_done = False
@@ -101,7 +97,6 @@ cf_thr = None
 
         
 def std(mo, hand):
-    time.sleep(1)
     mo.start_interrupt(True)
     try:
         hand.set_writeable(True)
@@ -110,16 +105,13 @@ def std(mo, hand):
 
 
 def ctx(mo, hand):
-    time.sleep(1)
     with mo.interrupt(True):
         hand.set_writeable(True)
 
 
 def t_changeflag(subthread):
     def dnr_changeflag(self, map_):
-        container = Container()
-        container.done = False
-        container.thr = None        
+        container = {'done': False, 'thr': None}
         
         class Serv(asynchia.Server):
             def __init__(
@@ -138,14 +130,14 @@ def t_changeflag(subthread):
                 self.container = container
             
             def handle_connect(self):
-                container.thr = threading.Thread(
+                container['thr'] = threading.Thread(
                     target=subthread,
                     args=[self.transport.socket_map, self.transport]
                 )
-                container.thr.start()
+                container['thr'].start()
             
             def handle_write(self):
-                container.done = True
+                container['done'] = True
                 self.transport.set_writeable(False)
             
             # Prevent exception from being suppressed.
@@ -162,18 +154,17 @@ def t_changeflag(subthread):
         c.transport.connect(s.transport.socket.getsockname())
         n = 0
         s = time.time()
-        while not container.done and time.time() < s + 10:
-            mo.poll(abs(10 - (time.time() - s)))
-        self.assertEqual(container.done, True)
+        while not container['done'] and time.time() < s + TIMEOUT:
+            mo.poll(abs(TIMEOUT - (time.time() - s)))
+        self.assertEqual(container['done'], True)
         mo.close()
-        container.thr.join(10)
-        self.assertEqual(container.thr.isAlive(), False)
+        container['thr'].join(TIMEOUT)
+        self.assertEqual(container['thr'].isAlive(), False)
     return dnr_changeflag
     
 def dnr_remove(self, map_):
     mo = map_()
-    container = Container()
-    container.done = False
+    container = {'done': False}
     
     class Serv(asynchia.Server):
         def __init__(
@@ -193,7 +184,7 @@ def dnr_remove(self, map_):
             self.transport.set_writeable(True)
         
         def handle_write(self):
-            container.done = True
+            container['done'] = True
             
         # Prevent exception from being suppressed.
         def handle_error(self):
@@ -208,22 +199,22 @@ def dnr_remove(self, map_):
     c = Handler(asynchia.SocketTransport(mo), container)
     c.transport.connect(s.transport.socket.getsockname())
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
-    self.assertEqual(container.done, True)
+    while not container['done'] and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
+    self.assertEqual(container['done'], True)
     mo.del_transport(c.transport)
-    container.done = False
+    container['done'] = False
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    
+    mo.poll(0)
+    
     mo.close()
-    self.assertEqual(container.done, False)
+    self.assertEqual(container['done'], False)
 
 
 def dnr_remove2(self, map_):
     mo = map_()
-    container = Container()
-    container.done = False
+    container = {'done': False}
     
     class Serv(asynchia.Server):
         def __init__(
@@ -245,7 +236,7 @@ def dnr_remove2(self, map_):
             self.transport.set_writeable(True)
         
         def handle_write(self):
-            container.done = True
+            container['done'] = True
             
         # Prevent exception from being suppressed.
         def handle_error(self):
@@ -261,22 +252,22 @@ def dnr_remove2(self, map_):
     c.transport.connect(s.transport.socket.getsockname())
     s = time.time()
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
-    self.assertEqual(container.done,  True)
+    while not container['done'] and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
+    self.assertEqual(container['done'],  True)
     mo.del_transport(c.transport)
-    container.done = False
+    container['done'] = False
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    
+    mo.poll(0)
+    
     mo.close()
-    self.assertEqual(container.done, False)
+    self.assertEqual(container['done'], False)
 
 
 def dnr_close(self, map_):
     mo = map_()
-    container = Container()
-    container.done = False
+    container = {'done': False}
     
     a, b = asynchia.util.socketpair()
     
@@ -286,7 +277,7 @@ def dnr_close(self, map_):
             self.container = container
         
         def handle_close(self):
-            container.done = True
+            container['done'] = True
     
     
     mo = map_()
@@ -294,16 +285,15 @@ def dnr_close(self, map_):
     c = Handler(asynchia.SocketTransport(mo, a), container)
     b.close()
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    while not container['done'] and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
     mo.close()
-    self.assertEqual(container.done, True)
+    self.assertEqual(container['done'], True)
 
 
 def dnr_close_read(self, map_):
     mo = map_()
-    container = Container()
-    container.done = False
+    container = {'done': False}
     
     a, b = asynchia.util.socketpair()
     
@@ -315,7 +305,7 @@ def dnr_close_read(self, map_):
             self.transport.set_readable(True)
         
         def handle_close(self):
-            container.done = True
+            container['done'] = True
     
     
     mo = map_()
@@ -323,16 +313,15 @@ def dnr_close_read(self, map_):
     c = Handler(asynchia.SocketTransport(mo, a), container)
     b.close()
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    while not container['done'] and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
     mo.close()
-    self.assertEqual(container.done, True)
+    self.assertEqual(container['done'], True)
 
 
 def dnr_close_write(self, map_):
     mo = map_()
-    container = Container()
-    container.done = False
+    container = {'done': False}
     
     a, b = asynchia.util.socketpair()
     
@@ -344,7 +333,7 @@ def dnr_close_write(self, map_):
             self.transport.set_writeable(True)
         
         def handle_close(self):
-            container.done = True
+            container['done'] = True
     
     
     mo = map_()
@@ -352,15 +341,14 @@ def dnr_close_write(self, map_):
     c = Handler(asynchia.SocketTransport(mo, a), container)
     b.close()
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
+    while not container['done'] and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
     mo.close()
-    self.assertEqual(container.done, True)
+    self.assertEqual(container['done'], True)
 
 
 def dnr_connfailed(self, map_):
-    container = Container()
-    container.done = False
+    container = {'done': False}
     
     class Handler(asynchia.Handler):
         def __init__(self, transport, container=None):
@@ -368,24 +356,23 @@ def dnr_connfailed(self, map_):
             self.container = container
         
         def handle_connect_failed(self, err):
-            container.done = True
+            container['done'] = True
     
     mo = map_()
     c = Handler(asynchia.SocketTransport(mo), container)
     try:
         c.transport.connect(('wrong.invalid', 81))
     except socket.error:
-        container.done = True
+        container['done'] = True
         
     
     s = time.time()
-    while not container.done and time.time() < s + 10:
-        mo.poll(abs(10 - (time.time() - s)))
-    self.assertEqual(container.done, True)
+    while not container['done'] and time.time() < s + TIMEOUT:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
+    self.assertEqual(container['done'], True)
 
 def dnr_connfailed2(self, map_):
-    container = Container()
-    container.done = False
+    container = {'done': False}
     
     class Handler(asynchia.Handler):
         def __init__(self, transport, container=None):
@@ -395,7 +382,7 @@ def dnr_connfailed2(self, map_):
         def handle_connect_failed(salf, err):
             if err != errno.ECONNREFUSED:
                 self.assertEqual(True, False)
-            container.done = True
+            container['done'] = True
         
         def handle_connect(salf):
             self.assertEqual(True, False)
@@ -416,24 +403,23 @@ def dnr_connfailed2(self, map_):
     try:
         c.transport.connect(name)
     except socket.error:
-        container.done = True
+        container['done'] = True
     
     s = time.time()
-    while not container.done and time.time() < s + 30:
-        mo.poll(abs(10 - (time.time() - s)))
-    self.assertEqual(container.done, True)
+    while not container['done'] and time.time() < s + 30:
+        mo.poll(abs(TIMEOUT - (time.time() - s)))
+    self.assertEqual(container['done'], True)
 
     
 def dnr_closed(self, map_):
     mo = map_()
     mo.close()
-    self.assertRaises(asynchia.SocketMapClosedError, mo.poll, 10)
+    self.assertRaises(asynchia.SocketMapClosedError, mo.poll, TIMEOUT)
 
 
 class TestCore(unittest.TestCase):    
     def test_error(self):
-        container = Container()
-        container.done = False
+        container = {'done': False}
         
         class Serv(asynchia.Server):
             def __init__(
@@ -456,7 +442,7 @@ class TestCore(unittest.TestCase):
             
             # Prevent exception from being suppressed.
             def handle_error(self):
-                self.container.done = True
+                self.container['done'] = True
         
         mo = asynchia.maps.DefaultSocketMap()
         s = Serv(asynchia.SocketTransport(mo))
@@ -470,9 +456,9 @@ class TestCore(unittest.TestCase):
         c.transport.set_writeable(True)
         
         s = time.time()
-        while not container.done and time.time() < s + 10:
-            mo.poll(abs(10 - (time.time() - s)))
-        self.assertEqual(container.done, True)
+        while not container['done'] and time.time() < s + TIMEOUT:
+            mo.poll(abs(TIMEOUT - (time.time() - s)))
+        self.assertEqual(container['done'], True)
     
     
     def test_pingpong(self):

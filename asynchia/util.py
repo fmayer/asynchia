@@ -29,12 +29,14 @@ import asynchia.const
 
 class _LookupStackContextManager(object):
     """ Implementation detail. """
-    def __init__(self, stack, item):
+    def __init__(self, stack, item, value=None):
         self.item = item
         self.stack = stack
+        self.value = value
     
     def __enter__(self):
         self.stack.push(self.item)
+        return self.value
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stack.pop()
@@ -54,10 +56,10 @@ class LookupStack(object):
         self.map_ = {}
     
     # FIXME: Name.
-    def with_push(self, item):
+    def with_push(self, item, value=None):
         """ Update object with the dictionary item and revert the push after
         with-block is left. """
-        return _LookupStackContextManager(self, item)
+        return _LookupStackContextManager(self, item, value)
     
     def push(self, item):
         """ Update object with the dictionary item. """
