@@ -296,7 +296,6 @@ def dnr_close(self, map_):
 def dnr_close_read(self, map_):
     mo = map_()
     container = {'done': False}
-    container['done'] = False
     
     a, b = asynchia.util.socketpair()
     
@@ -325,7 +324,6 @@ def dnr_close_read(self, map_):
 def dnr_close_write(self, map_):
     mo = map_()
     container = {'done': False}
-    container['done'] = False
     
     a, b = asynchia.util.socketpair()
     
@@ -353,7 +351,6 @@ def dnr_close_write(self, map_):
 
 def dnr_connfailed(self, map_):
     container = {'done': False}
-    container['done'] = False
     
     class Handler(asynchia.Handler):
         def __init__(self, transport, container=None):
@@ -378,7 +375,6 @@ def dnr_connfailed(self, map_):
 
 def dnr_connfailed2(self, map_):
     container = {'done': False}
-    container['done'] = False
     
     class Handler(asynchia.Handler):
         def __init__(self, transport, container=None):
@@ -426,7 +422,6 @@ def dnr_closed(self, map_):
 class TestCore(unittest.TestCase):    
     def test_error(self):
         container = {'done': False}
-        container['done'] = False
         
         class Serv(asynchia.Server):
             def __init__(
