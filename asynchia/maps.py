@@ -186,7 +186,7 @@ class SelectSocketMap(FragileSocketMap):
         """ See SocketMap.del_writer. """
         self.writers.remove(handler)
     
-    def add_reader(self, handler):
+    def add_reader(self, handler, hint=None):
         """ See SocketMap.add_reader. """
         pass
     
@@ -322,7 +322,7 @@ class PollSocketMap(RobustSocketMap):
         if interrupted:
             self.do_interrupt()
     
-    def handler_changed(self, handler):
+    def handler_changed(self, handler, hint=None):
         """ Update flags for handler. """
         # self.poller.register is compatible to 2.5 whilst
         # self.poller.modify is not.
@@ -432,7 +432,7 @@ class EPollSocketMap(RockSolidSocketMap):
         if interrupted:
             self.do_interrupt()
     
-    def handler_changed(self, handler):
+    def handler_changed(self, handler, hint=None):
         """ Update flags for handler. """
         self.poller.modify(handler.fileno(), self.create_flags(handler))
     
@@ -530,9 +530,27 @@ class KQueueSocketMap(RockSolidSocketMap):
         if handler.writeable or handler.awaiting_connect:
             self.del_writer(handler)
     
-    def add_reader(self, handler):
+    def add_reader(self, handler, hint=None):
         """ See SocketMap.add_reader. """
-        pass
+        if hint is None:
+            self.queue.control(
+                [
+                    select.kevent(
+                        handler, select.KQ_FILTER_READ, select.KQ_EV_ADD
+                    )
+                    ],
+                0
+            )
+        else:
+            self.queue.control(
+                [
+                    select.kevent(
+                        handler, select.KQ_FILTER_READ, select.KQ_EV_ADD,
+                        select.KQ_NOTE_LOWAT, hint
+                    )
+                    ],
+                0
+            )
     
     def del_reader(self, handler):
         """ See SocketMap.del_reader. """

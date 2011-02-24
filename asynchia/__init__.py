@@ -158,6 +158,9 @@ class Notifier(object):
         if obj.awaiting_connect:
             _unawait_conn(obj)
         
+        if obj.sizehint is not None:
+            obj.set_readable(obj.readable)
+        
         if not obj.readable:
             # This shouldn't be happening!
             return
@@ -227,6 +230,7 @@ class Transport(object):
     in a generic way and used with different transports. """
     def __init__(self, handler=None):
         self.handler = None
+        self.sizehint = None
         
         self.closed = False
         self.cleanedup = False
@@ -368,16 +372,21 @@ class SocketTransport(Transport):
         """ Check whether handler wants to read data. """
         return self._readable
     
-    def set_readable(self, value):
+    def set_readable(self, value, hint=None):
         """ Set whether handler wants to read data. """
+        if not value and hint is not None:
+            raise ValueError
+        
         if self._readable == value:
             # The state hasn't changed. Calling the SocketMap's handlers
             # again might confuse it.
             return
         
         self._readable = value
+        self.sizehint = hint
+        
         if value:
-            self.socket_map.add_reader(self)
+            self.socket_map.add_reader(self, hint)
         else:
             self.socket_map.del_reader(self)
     
