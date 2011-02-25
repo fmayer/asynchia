@@ -377,13 +377,14 @@ class SocketTransport(Transport):
         if not value and hint is not None:
             raise ValueError
         
+        self.sizehint = hint
+        
         if self._readable == value:
             # The state hasn't changed. Calling the SocketMap's handlers
             # again might confuse it.
             return
         
         self._readable = value
-        self.sizehint = hint
         
         if value:
             self.socket_map.add_reader(self, hint)
