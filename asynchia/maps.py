@@ -36,6 +36,7 @@ of the other three.
 import select
 import socket
 import errno
+import time
 
 import asynchia
 from asynchia.util import socketpair, b, EMPTY_BYTES, is_closed
@@ -70,11 +71,19 @@ class ControlSocketSocketMap(asynchia.SocketMap):
         """ Call this in the socket-map when you have found out that there is
         data to read on the controlreceiver. """
         # Read the "s" that started the interrupt
-        self.controlreceiver.recv(1)
-        # Send the "i" that signals the interrupt succeeded.
-        self.controlreceiver.send(b('i'))
-        # Read the "e" that will end the interrupt.
-        self.controlreceiver.recv(1)
+        recv = self.controlreceiver.recv(1)
+        if recv == 's':
+            # Send the "i" that signals the interrupt succeeded.
+            self.controlreceiver.send(b('i'))
+            # Read the "e" that will end the interrupt.
+            self.controlreceiver.recv(1)
+        elif recv == 'b':
+            return
+        else:
+            raise ValueError
+    
+    def wakeup(self):
+        self.controlsender.send('b')
 
 
 class FragileSocketMap(ControlSocketSocketMap):
@@ -124,7 +133,6 @@ class RobustSocketMap(ControlSocketSocketMap):
             self.controlreceiver.send(b('i'))
             self.needresp = False
         super(RobustSocketMap, self).close()
-        
 
 
 class RockSolidSocketMap(ControlSocketSocketMap):
@@ -199,6 +207,8 @@ class SelectSocketMap(FragileSocketMap):
         if self.closed:
             raise asynchia.SocketMapClosedError
         
+        timeout = self._get_timeout(timeout)
+        
         interrupted = False
         
         try:
@@ -228,6 +238,8 @@ class SelectSocketMap(FragileSocketMap):
         
         if interrupted:
             self.do_interrupt()
+        
+        self._run_timers()
     
     def close(self):
         """ See SocketMap.close """
@@ -285,6 +297,8 @@ class PollSocketMap(RobustSocketMap):
         
         interrupted = False
         
+        timeout = self._get_timeout(timeout)
+        
         # Stupidest API ever. epoll accepts a float in seconds whereas
         # poll accepts an int in millseconds.
         if timeout is not None:
@@ -321,6 +335,7 @@ class PollSocketMap(RobustSocketMap):
                 self.notifier.close_obj(obj)
         if interrupted:
             self.do_interrupt()
+        self._run_timers()
     
     def handler_changed(self, handler):
         """ Update flags for handler. """
@@ -398,6 +413,9 @@ class EPollSocketMap(RockSolidSocketMap):
         if self.closed:
             raise asynchia.SocketMapClosedError
         
+        
+        timeout = self._get_timeout(timeout)
+        
         # While select.poll is alright with None, select.epoll expects
         # -1 for no timeout,
         if timeout is None:
@@ -431,6 +449,7 @@ class EPollSocketMap(RockSolidSocketMap):
                 self.notifier.close_obj(obj)
         if interrupted:
             self.do_interrupt()
+        self._run_timers()
     
     def handler_changed(self, handler):
         """ Update flags for handler. """
