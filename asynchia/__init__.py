@@ -19,11 +19,14 @@
 """ asynchia is a minimalist asynchronous networking library. """
 
 import os
+import time
 import errno
 import socket
 import Queue as queue
 
 import traceback
+
+import bisect
 
 from asynchia.util import EMPTY_BYTES, is_unconnected, socketpair, b
 from asynchia.const import trylater, connection_lost, inprogress
@@ -70,6 +73,8 @@ class SocketMap(object):
             notifier = Notifier()
         self.notifier = notifier
         self.closed = False
+        
+        self.timers = []
     
     def constructed(self):
         wakeup, other = socketpair()
@@ -146,6 +151,12 @@ class SocketMap(object):
     
     def is_empty(self):
         raise NotImplementedError
+    
+    def execute_in(self, sec, fun):
+        bisect.insort(self.timers, (time.time() + sec, fun))
+    
+    def execute_at(self, epoch, fun):
+        bisect.insort(self.timers, (epoch, fun))
 
 
 class Notifier(object):

@@ -36,6 +36,7 @@ of the other three.
 import select
 import socket
 import errno
+import time
 
 import asynchia
 from asynchia.util import socketpair, b, EMPTY_BYTES, is_closed
@@ -124,7 +125,6 @@ class RobustSocketMap(ControlSocketSocketMap):
             self.controlreceiver.send(b('i'))
             self.needresp = False
         super(RobustSocketMap, self).close()
-        
 
 
 class RockSolidSocketMap(ControlSocketSocketMap):
@@ -199,6 +199,9 @@ class SelectSocketMap(FragileSocketMap):
         if self.closed:
             raise asynchia.SocketMapClosedError
         
+        if self.timers:
+            timeout = min(timeout, self.timers[0][0] - time.time()) 
+        
         interrupted = False
         
         try:
@@ -228,6 +231,10 @@ class SelectSocketMap(FragileSocketMap):
         
         if interrupted:
             self.do_interrupt()
+        
+        now = time.time()
+        while self.timers and self.timers[-1][0] < now:
+            self.timer.pop(0
     
     def close(self):
         """ See SocketMap.close """
