@@ -31,7 +31,7 @@ printhelp() {
 
 SCRIPTDIR=`dirname "$0"`
 LOGFILE="$SCRIPTDIR/runtests.log"
-TESTMAIN="$SCRIPTDIR/test/__main__.py"
+TESTMAIN="$SCRIPTDIR/asynchia/test/__main__.py"
 PYTHON=`which python`
 
 export PYTHONPATH="$SCRIPTDIR":"$PYTHONPATH"

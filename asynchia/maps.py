@@ -150,10 +150,10 @@ class SelectSocketMap(FragileSocketMap):
     
     def __init__(self, notifier=None):
         FragileSocketMap.__init__(self, notifier)
-        self.writers = []
-        self.socket_list = []
+        self.writers = set()
+        self.socket_list = set()
         
-        self.socket_list.append(self.controlreceiver)
+        self.socket_list.add(self.controlreceiver)
         
         self.constructed()
     
@@ -161,7 +161,7 @@ class SelectSocketMap(FragileSocketMap):
         """ See SocketMap.add_transport. """
         if handler in self.socket_list:
             raise ValueError("Handler %r already in socket map!" % handler)
-        self.socket_list.append(handler)
+        self.socket_list.add(handler)
         if handler.readable:
             self.add_reader(handler)
         if handler.writeable:
@@ -180,7 +180,7 @@ class SelectSocketMap(FragileSocketMap):
     
     def add_writer(self, handler):
         """ See SocketMap.add_writer. """
-        self.writers.append(handler)
+        self.writers.add(handler)
     
     def del_writer(self, handler):
         """ See SocketMap.del_writer. """
@@ -231,11 +231,11 @@ class SelectSocketMap(FragileSocketMap):
     
     def close(self):
         """ See SocketMap.close """
-        for handler in self.socket_list[1:]:
+        for handler in self.socket_list ^ set([self.controlreceiver]):
             self.notifier.cleanup_obj(handler)
         
-        self.writers = []
-        self.socket_list = []
+        self.writers = set()
+        self.socket_list = set()
         
         super(SelectSocketMap, self).close()
     

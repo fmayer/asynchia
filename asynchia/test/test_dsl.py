@@ -226,6 +226,13 @@ class TestDSL(unittest.TestCase):
         until_done(lambda: c.add_data(m, 10))
         self.assertEqual(exhaust(c.value), [3, [[1, 2, 5], [4, 5, 6]]])
     
+    def test_and(self):
+        net16 = db.H() + LFLSE(-1)
+        net32 = db.L() + LFLSE(-1)
+
+        pair = net16 & net32
+        pair.produce(((5, 'hello'), (5, 'world')))
+
 
 if __name__ == '__main__':
     unittest.main()
