@@ -37,4 +37,4 @@
   matically reset the thread-global value to the previous state if the context
   manager block is left. See examples/glob_example.py for an example.
 * Introduce SocketMap.call_in and SocketMap.call_at.
-
+* Improve test-run facilites.
