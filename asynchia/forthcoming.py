@@ -44,6 +44,8 @@ import threading
 import asynchia
 from asynchia.util import b
 
+_NULL = object()
+
 class PauseContext(object):
     """ Collection of Coroutines which are currently paused but not waiting
     for any data. They are paused to prevent too much time to be spent in
@@ -125,19 +127,15 @@ class DataNotifier(object):
         self.rcallbacks = []
         self.coroutines = []
         self.finished = False
-        self.data = None
+        self.data = _NULL
         
         self.event = threading.Event()
         
-        self.wakeup, other = asynchia.util.socketpair()
-        self.handler = _ThreadedDataHandler(
-            asynchia.SocketTransport(socket_map, other),
-            self
-        )
+        self.socket_map = socket_map
     
     def add_coroutine(self, coroutine):
         """ Add coroutine that waits for the submission of this data. """
-        if self.data is None:
+        if self.data is _NULL:
             self.coroutines.append(coroutine)
         else:
             coroutine.send(self.data)
@@ -145,7 +143,7 @@ class DataNotifier(object):
     def add_databack(self, callback):
         """ Add databack (function that receives the the data-notifier data
         upon submission as arguments). """
-        if self.data is None:
+        if self.data is _NULL:
             self.dcallbacks.append(callback)
         else:
             callback(self.data)
@@ -153,7 +151,7 @@ class DataNotifier(object):
     def add_callback(self, callback):
         """ Add callback (function that only receives the data upon
         submission as an argument). """
-        if self.data is None:
+        if self.data is _NULL:
             self.rcallbacks.append(callback)
         else:
             callback(self, self.data)
@@ -185,8 +183,7 @@ class DataNotifier(object):
     def inject(self, data):
         """ Submit data and ensure their callbacks are called in the main
         thread. """
-        self.injected = data
-        self.wakeup.send(b('a'))
+        self.socket_map.call_synchronized(lambda: self.submit(data))
     
     def wait(self, timeout=None):
         """ Block execution of current thread until the data is available.
@@ -208,19 +205,3 @@ class DataNotifier(object):
             target=cls._coroutine, args=(datanot, fun, args, kwargs)
         ).start()
         return datanot
-
-
-class _ThreadedDataHandler(asynchia.Handler):
-    """ Implementation detail. """
-    def __init__(self, transport, datanotifier):
-        asynchia.Handler.__init__(self, transport)
-        self.transport.set_readable(True)
-        
-        self.datanotifier = datanotifier
-    
-    def handle_read(self):
-        """ Implementation detail. """
-        self.transport.recv(1)
-        self.datanotifier.submit(self.datanotifier.injected)
-        # Not needed anymore.
-        self.transport.close()

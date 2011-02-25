@@ -22,9 +22,66 @@ import sys
 import errno
 import math
 import socket
+import threading
 import collections
 
 import asynchia.const
+
+class _LookupStackContextManager(object):
+    """ Implementation detail. """
+    def __init__(self, stack, item, value=None):
+        self.item = item
+        self.stack = stack
+        self.value = value
+    
+    def __enter__(self):
+        self.stack.push(self.item)
+        return self.value
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stack.pop()
+
+
+_NULL = object()
+class LookupStack(object):
+    """ Dictionary-like object where data can be pushed on and the previous
+    state can be returned by using pop. A context-manager that automatically
+    pops the value after the with-block is left. This can be combined with
+    thread-local data to provide context-dependant global data. """
+    def __init__(self, fallback=None):
+        if fallback is None:
+            fallback = {}
+        self.fallback = fallback
+        self.undo = collections.deque([])
+        self.map_ = {}
+    
+    # FIXME: Name.
+    def with_push(self, item, value=None):
+        """ Update object with the dictionary item and revert the push after
+        with-block is left. """
+        return _LookupStackContextManager(self, item, value)
+    
+    def push(self, item):
+        """ Update object with the dictionary item. """
+        self.undo.append(
+            [(key, self.map_.get(key, _NULL)) for key in item]
+        )
+        
+        self.map_.update(item)
+    
+    def pop(self):
+        """ Revert last push. """
+        for key, value in self.undo.pop():
+            if value is _NULL:
+                del self.map_[key]
+            else:
+                self.map_[key] = value
+    
+    def __getitem__(self, name):
+        if name in self.map_:
+            return self.map_[name]
+        return self.fallback[name]
+
 
 class GradualAverage(object):
     """ Memory-efficient average to which values may gradually be added
@@ -95,7 +152,7 @@ class LimitedAverage(object):
 
 class IDPool(object):
     """
-    Pool that returns unique identifiers.
+    Pool that returns unique identifiers in a thread-safe way.
     
     Identifierers obtained using the get method are guaranteed to not be
     returned by it again until they are released using the release method.
@@ -115,23 +172,33 @@ class IDPool(object):
     def __init__(self):
         self.max_id = -1
         self.free_ids = []
+        
+        self._lock = threading.Lock()
     
     def get(self):
         """ Return a new integer that is unique in this pool until
         it is released. """
-        if self.free_ids:
-            return self.free_ids.pop()
-        else:
-            self.max_id += 1
-            return self.max_id
+        self._lock.acquire()
+        try:
+            if self.free_ids:
+                return self.free_ids.pop()
+            else:
+                self.max_id += 1
+                return self.max_id
+        finally:
+            self._lock.release()
     
     def release(self, id_):
         """ Release the id. It can now be returned by get again.
         
         Will reset the IDPool if the last id in use is released. """
-        self.free_ids.append(id_)
-        if len(self.free_ids) == self.max_id + 1:
-            self.reset()
+        self._lock.acquire()
+        try:
+            self.free_ids.append(id_)
+            if len(self.free_ids) == self.max_id + 1:
+                self.reset()
+        finally:
+            self._lock.release()
     
     def reset(self):
         """ Reset the state of the IDPool. This should only be called when
@@ -223,6 +290,9 @@ def goodsize(maxsize):
 def is_closed(sock):
     """ Find out whether a socked is closed or not.
     Does only work on non-blocking sockets! """
+    if sock.type != socket.SOCK_STREAM:
+        raise ValueError("Socket is not stream socket.")
+    
     try:
         rcv = sock.recv(1, socket.MSG_PEEK)
     except socket.error, err:
@@ -234,6 +304,24 @@ def is_closed(sock):
             raise
     else:
         return not rcv
+
+
+def is_unconnected(sock):
+    """ Find out whether a socket has not yet been connected.
+    Does only work on non-blocking sockets! """
+    if sock.type != socket.SOCK_STREAM:
+        raise ValueError("Socket is not stream socket.")
+    
+    try:
+        sock.recv(0)
+    except socket.error, err:
+        if err.args[0] == errno.ENOTCONN:
+            return True
+        elif err.args[0] in asynchia.const.trylater:
+            return False
+        else:
+            raise
+    return False
 
 
 if sys.version_info >= (3, 0):

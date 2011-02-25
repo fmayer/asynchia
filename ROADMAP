@@ -11,7 +11,7 @@
 0.2.0
 =====
 [ ] SSL Transport.
-[ ] Timer.
+[x] Timer.
 [ ] Comprehensive IPv6 support.
 [ ] Use forthcoming facilities in asynchia core.
 

@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+
 try:
     # If we got setuptools, use it so we get the nice develop cmd.
     from setuptools import setup
@@ -25,8 +27,11 @@ except:
     from distutils.core import setup
 
 
-VERSION = '0.1.1'
+VERSION = '0.1.3'
 
+extra = {}
+if sys.version_info >= (3, 0):
+    extra['use_2to3'] = True
 
 setup(
     name='asynchia',
@@ -38,5 +43,6 @@ setup(
     keywords='async asynchronous network',
     license='LGPL',
     zip_safe=True,
-    packages=['asynchia'],
+    packages=['asynchia', 'asynchia.test'],
+    **extra
 )

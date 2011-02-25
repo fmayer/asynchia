@@ -36,6 +36,7 @@ of the other three.
 import select
 import socket
 import errno
+import time
 
 import asynchia
 from asynchia.util import socketpair, b, EMPTY_BYTES, is_closed
@@ -70,11 +71,19 @@ class ControlSocketSocketMap(asynchia.SocketMap):
         """ Call this in the socket-map when you have found out that there is
         data to read on the controlreceiver. """
         # Read the "s" that started the interrupt
-        self.controlreceiver.recv(1)
-        # Send the "i" that signals the interrupt succeeded.
-        self.controlreceiver.send(b('i'))
-        # Read the "e" that will end the interrupt.
-        self.controlreceiver.recv(1)
+        recv = self.controlreceiver.recv(1)
+        if recv == b('s'):
+            # Send the "i" that signals the interrupt succeeded.
+            self.controlreceiver.send(b('i'))
+            # Read the "e" that will end the interrupt.
+            self.controlreceiver.recv(1)
+        elif recv == b('b'):
+            return
+        else:
+            raise ValueError
+    
+    def wakeup(self):
+        self.controlsender.send(b('b'))
 
 
 class FragileSocketMap(ControlSocketSocketMap):
@@ -124,7 +133,6 @@ class RobustSocketMap(ControlSocketSocketMap):
             self.controlreceiver.send(b('i'))
             self.needresp = False
         super(RobustSocketMap, self).close()
-        
 
 
 class RockSolidSocketMap(ControlSocketSocketMap):
@@ -146,18 +154,22 @@ class RockSolidSocketMap(ControlSocketSocketMap):
 
 class SelectSocketMap(FragileSocketMap):
     """ Decide which sockets have I/O to do using select.select. """
+    available = True
+    
     def __init__(self, notifier=None):
         FragileSocketMap.__init__(self, notifier)
-        self.writers = []
-        self.socket_list = []
+        self.writers = set()
+        self.socket_list = set()
         
-        self.socket_list.append(self.controlreceiver)
+        self.socket_list.add(self.controlreceiver)
+        
+        self.constructed()
     
     def add_transport(self, handler):
         """ See SocketMap.add_transport. """
         if handler in self.socket_list:
             raise ValueError("Handler %r already in socket map!" % handler)
-        self.socket_list.append(handler)
+        self.socket_list.add(handler)
         if handler.readable:
             self.add_reader(handler)
         if handler.writeable:
@@ -176,7 +188,7 @@ class SelectSocketMap(FragileSocketMap):
     
     def add_writer(self, handler):
         """ See SocketMap.add_writer. """
-        self.writers.append(handler)
+        self.writers.add(handler)
     
     def del_writer(self, handler):
         """ See SocketMap.del_writer. """
@@ -190,10 +202,12 @@ class SelectSocketMap(FragileSocketMap):
         """ See SocketMap.del_reader. """
         pass
     
-    def poll(self, timeout):
+    def poll(self, otimeout):
         """ Poll for I/O. """
         if self.closed:
             raise asynchia.SocketMapClosedError
+        
+        timeout = self._get_timeout(otimeout)
         
         interrupted = False
         
@@ -224,27 +238,33 @@ class SelectSocketMap(FragileSocketMap):
         
         if interrupted:
             self.do_interrupt()
+        
+        self._run_timers()
     
     def close(self):
         """ See SocketMap.close """
-        for handler in self.socket_list[1:]:
+        for handler in self.socket_list ^ set([self.controlreceiver]):
             self.notifier.cleanup_obj(handler)
         
-        self.writers = []
-        self.socket_list = []
+        self.writers = set()
+        self.socket_list = set()
         
         super(SelectSocketMap, self).close()
     
     def is_empty(self):
-        return bool(self.socket_list)
+        return not bool(self.socket_list)
 
 
 class PollSocketMap(RobustSocketMap):
     """ Decide which sockets have I/O to do using select.poll. 
     
-    Do not refer to this class without explicitely checking for its existance
-    first, it may not exist on some platforms (it is known not to on Windows).
+    Do not refer to this class without explicitely checking whether its
+    functionality is available on your operation system by checking
+    the `available` class-member, it may not exist on some platforms
+    (it is known not to on Windows).
     """
+    available = hasattr(select, 'poll')
+    
     def __init__(self, notifier=None):
         RobustSocketMap.__init__(self, notifier)
         self.socket_list = {}
@@ -252,6 +272,8 @@ class PollSocketMap(RobustSocketMap):
         
         self.controlfd = self.controlreceiver.fileno()
         self.poller.register(self.controlfd, select.POLLIN | select.POLLPRI)
+        
+        self.constructed()
     
     def add_transport(self, handler):
         """ See SocketMap.add_transport. """
@@ -274,6 +296,8 @@ class PollSocketMap(RobustSocketMap):
             raise asynchia.SocketMapClosedError
         
         interrupted = False
+        
+        timeout = self._get_timeout(timeout)
         
         # Stupidest API ever. epoll accepts a float in seconds whereas
         # poll accepts an int in millseconds.
@@ -311,6 +335,7 @@ class PollSocketMap(RobustSocketMap):
                 self.notifier.close_obj(obj)
         if interrupted:
             self.do_interrupt()
+        self._run_timers()
     
     def handler_changed(self, handler):
         """ Update flags for handler. """
@@ -345,16 +370,19 @@ class PollSocketMap(RobustSocketMap):
         super(PollSocketMap, self).close()
     
     def is_empty(self):
-        return bool(self.socket_list)
+        return not bool(self.socket_list)
 
 
 class EPollSocketMap(RockSolidSocketMap):
     """ Decide which sockets have I/O to do using select.epoll. 
     
-    Do not refer to this class without explicitely checking for its existance
-    first, it may not exist on some platforms (it is known not to on Windows
-    and BSD).
+    Do not refer to this class without explicitely checking whether its
+    functionality is available on your operation system by checking
+    the `available` class-member, it may not exist on some platforms
+    (it is known not to on Windows and BSD).
     """
+    available = hasattr(select, 'epoll')
+    
     def __init__(self, notifier=None):
         RockSolidSocketMap.__init__(self, notifier)
         self.socket_list = {}
@@ -362,6 +390,8 @@ class EPollSocketMap(RockSolidSocketMap):
         
         self.controlfd = self.controlreceiver.fileno()
         self.poller.register(self.controlfd, select.EPOLLIN | select.EPOLLPRI)
+        
+        self.constructed()
     
     def add_transport(self, handler):
         """ See SocketMap.add_transport. """
@@ -382,6 +412,9 @@ class EPollSocketMap(RockSolidSocketMap):
         """ Poll for I/O. """
         if self.closed:
             raise asynchia.SocketMapClosedError
+        
+        
+        timeout = self._get_timeout(timeout)
         
         # While select.poll is alright with None, select.epoll expects
         # -1 for no timeout,
@@ -416,6 +449,7 @@ class EPollSocketMap(RockSolidSocketMap):
                 self.notifier.close_obj(obj)
         if interrupted:
             self.do_interrupt()
+        self._run_timers()
     
     def handler_changed(self, handler):
         """ Update flags for handler. """
@@ -446,7 +480,7 @@ class EPollSocketMap(RockSolidSocketMap):
         super(EPollSocketMap, self).close()
     
     def is_empty(self):
-        return bool(self.socket_list)
+        return not bool(self.socket_list)
 
 
 # It is possible to only get hangup events by applying the hack presented
@@ -460,9 +494,13 @@ class EPollSocketMap(RockSolidSocketMap):
 class KQueueSocketMap(RockSolidSocketMap):
     """ Decide which sockets have I/O to do using select.kqueue. 
     
-    Do not refer to this class without explicitely checking for its existance
-    first, it may not exist on some platforms (it only exists on BSD).
+    Do not refer to this class without explicitely checking whether its
+    functionality is available on your operation system by checking
+    the `available` class-member, it may not exist on some platforms
+    (it only exists on BSD).
     """
+    available = hasattr(select, 'kqueue')
+    
     def __init__(self, nevents=100, notifier=None):
         RockSolidSocketMap.__init__(self, notifier)
         self.socket_list = {}
@@ -476,6 +514,8 @@ class KQueueSocketMap(RockSolidSocketMap):
                            select.KQ_FILTER_READ,
                            select.KQ_EV_ADD)], 0
         )
+        
+        self.constructed()
     
     def add_transport(self, handler):
         """ See SocketMap.add_transport. """
@@ -569,22 +609,10 @@ class KQueueSocketMap(RockSolidSocketMap):
         super(KQueueSocketMap, self).close()
     
     def is_empty(self):
-        return bool(self.socket_list)
+        return not bool(self.socket_list)
 
 
-DefaultSocketMap = SelectSocketMap
-
-if hasattr(select, 'poll'):
-    DefaultSocketMap = PollSocketMap
-else:
-    del PollSocketMap
-
-if hasattr(select, 'epoll'):
-    DefaultSocketMap = EPollSocketMap
-else:
-    del EPollSocketMap
-
-if hasattr(select, 'kqueue'):
-    DefaultSocketMap = KQueueSocketMap
-else:
-    del KQueueSocketMap
+order = [SelectSocketMap, PollSocketMap, EPollSocketMap, KQueueSocketMap]
+for mp in order:
+    if mp.available:
+        DefaultSocketMap = mp

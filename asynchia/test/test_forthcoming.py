@@ -33,8 +33,8 @@ def dnr_inject(self, map_):
     main_thread = threading.currentThread()
     
     def in_thread(noti, container):
+        container.main_thread = threading.currentThread() == main_thread
         noti.inject("foobar")
-        container.mainthread = threading.currentThread() == main_thread
     
     def mkfun(container):
         def _fun(data):
@@ -54,7 +54,7 @@ def dnr_inject(self, map_):
     while not container.run and time.time() < s + 10:
         mo.poll(abs(10 - (time.time() - s)))
     self.assertEquals(container.run, True)
-    self.assertEquals(container.mainthread, False)
+    self.assertEquals(container.main_thread, False)
     
 
 def dnr_databack_beforedata(self, map_):
@@ -129,14 +129,14 @@ def _genfun(map_, test):
     return _fun
 
 maps = \
-     (getattr(asynchia.maps, name) for name in
+     (map_ for map_ in
       [
-          'SelectSocketMap',
-          'PollSocketMap',
-          'EPollSocketMap',
-          'KQueueSocketMap',
+          asynchia.maps.SelectSocketMap,
+          asynchia.maps.PollSocketMap,
+          asynchia.maps.EPollSocketMap,
+          asynchia.maps.KQueueSocketMap,
       ]
-      if hasattr(asynchia.maps, name)
+      if map_.available
       )
 
 tests = [
