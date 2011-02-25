@@ -33,15 +33,6 @@ from asynchia.const import trylater, connection_lost, inprogress
 
 __version__ = '0.1.3'
 
-class CallSynchronized(object):
-    def __init__(self, handler, sock):
-        self.sock = sock
-        self.handler = handler
-    
-    def call(self, fun):
-        self.handler.funs.put(fun)
-        self.sock.send(b('a'))
-
 
 class SocketMapClosedError(Exception):
     pass
@@ -77,16 +68,10 @@ class SocketMap(object):
         self.timers = []
     
     def constructed(self):
-        wakeup, other = socketpair()
-        self.callsync = CallSynchronized(
-            _CallSynchronizedHandler(
-                SocketTransport(self, other)
-                ),
-            wakeup
-        )
+        pass
     
     def call_synchronized(self, fun):
-        self.callsync.call(fun)
+        self.execute_in(0, fun)
     
     def poll(self, timeout=None):
         raise NotImplementedError
@@ -154,9 +139,31 @@ class SocketMap(object):
     
     def execute_in(self, sec, fun):
         bisect.insort(self.timers, (time.time() + sec, fun))
+        self.wakeup()
     
     def execute_at(self, epoch, fun):
         bisect.insort(self.timers, (epoch, fun))
+        self.wakeup()
+    
+    def wakeup(self):
+        raise NotImplementedError
+    
+    def _get_timeout(self, itimeout):
+        while True:
+            if self.timers:
+                timeout = min(itimeout, self.timers[0][0] - time.time())
+                if timeout < 0:
+                    self._run_timers()
+                else:
+                    return timeout
+            else:
+                return itimeout
+        return timeout
+    
+    def _run_timers(self):
+        now = time.time()
+        while self.timers and self.timers[-1][0] < now:
+            self.timers.pop(0)[1]()
 
 
 class Notifier(object):
@@ -718,22 +725,5 @@ class Server(AcceptHandler):
         finally:
             self.transport.close()
 
-
-class _CallSynchronizedHandler(Handler):
-    """ Implementation detail. """
-    def __init__(self, transport, per_run=1):
-        Handler.__init__(self, transport)
-        self.transport.set_readable(True)
-        
-        self.funs = queue.Queue()
-        self.per_run = per_run
-    
-    def handle_read(self):
-        """ Implementation detail. """
-        for _ in self.transport.recv(self.per_run):
-            try:
-                self.funs.get_nowait()()
-            except queue.Empty:
-                break
 
 defaultsocket_factory = socket.socket
