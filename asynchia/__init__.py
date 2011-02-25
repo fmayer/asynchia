@@ -154,9 +154,11 @@ class SocketMap(object):
         now = time.time()
         if self.timers:
             ttimeout = self.timers[0][0] - now
-            timeout = min(timeout, ttimeout)
             if ttimeout < 0:
                 self._run_timers()
+            
+            if self.timers:
+                timeout = min(timeout, self.timers[0][0] - now)
         return timeout
     
     def _run_timers(self):

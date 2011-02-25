@@ -202,12 +202,12 @@ class SelectSocketMap(FragileSocketMap):
         """ See SocketMap.del_reader. """
         pass
     
-    def poll(self, timeout):
+    def poll(self, otimeout):
         """ Poll for I/O. """
         if self.closed:
             raise asynchia.SocketMapClosedError
         
-        timeout = self._get_timeout(timeout)
+        timeout = self._get_timeout(otimeout)
         
         interrupted = False
         
