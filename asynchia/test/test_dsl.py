@@ -231,7 +231,7 @@ class TestDSL(unittest.TestCase):
         net32 = db.L() + LFLSE(-1)
 
         pair = net16 & net32
-        pair.produce(((5, 'hello'), (5, 'world')))
+        pair.produce(((5, b('hello')), (5, b('world'))))
 
 
 if __name__ == '__main__':
