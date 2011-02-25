@@ -533,7 +533,7 @@ class KQueueSocketMap(RockSolidSocketMap):
     def add_reader(self, handler, hint=None):
         """ See SocketMap.add_reader. """
         if hint is None:
-            hint = 0
+            hint = 1
         
         self.queue.control(
             [
