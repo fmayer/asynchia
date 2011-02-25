@@ -533,24 +533,17 @@ class KQueueSocketMap(RockSolidSocketMap):
     def add_reader(self, handler, hint=None):
         """ See SocketMap.add_reader. """
         if hint is None:
-            self.queue.control(
-                [
-                    select.kevent(
-                        handler, select.KQ_FILTER_READ, select.KQ_EV_ADD
-                    )
-                    ],
-                0
-            )
-        else:
-            self.queue.control(
-                [
-                    select.kevent(
-                        handler, select.KQ_FILTER_READ, select.KQ_EV_ADD,
-                        select.KQ_NOTE_LOWAT, hint
-                    )
-                    ],
-                0
-            )
+            hint = 0
+        
+        self.queue.control(
+            [
+                select.kevent(
+                    handler, select.KQ_FILTER_READ, select.KQ_EV_ADD,
+                    select.KQ_NOTE_LOWAT, hint
+                )
+                ],
+            0
+        )
     
     def del_reader(self, handler):
         """ See SocketMap.del_reader. """
