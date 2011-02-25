@@ -148,16 +148,13 @@ class SocketMap(object):
     def wakeup(self):
         raise NotImplementedError
     
-    def _get_timeout(self, itimeout):
-        while True:
-            if self.timers:
-                timeout = min(itimeout, self.timers[0][0] - time.time())
-                if timeout < 0:
-                    self._run_timers()
-                else:
-                    return timeout
-            else:
-                return itimeout
+    def _get_timeout(self, timeout):
+        now = time.time()
+        if self.timers:
+            ttimeout = self.timers[0][0] - now
+            timeout = min(timeout, ttimeout)
+            if ttimeout < 0:
+                self._run_timers()
         return timeout
     
     def _run_timers(self):
