@@ -24,10 +24,12 @@ import os
 
 from itertools import chain
 
-PATH = os.path.abspath(os.path.dirname(__file__))
+from asynchia.test import (
+    test_core, test_dsl, test_ee, test_util, test_forthcoming, test_defaults
+)
+
 MODULES = [
-    'test_core', 'test_dsl', 'test_ee', 'test_util', 'test_forthcoming',
-    'test_defaults'
+    test_core, test_dsl, test_ee, test_util, test_forthcoming, test_defaults
 ]
 
 
@@ -49,8 +51,7 @@ def run_all(test_runner=None, but=None):
         if elem.strip() in MODULES:
             MODULES.remove(elem)
     
-    mod = map(__import__, MODULES)
-    test_cases = chain(*[unittest.findTestCases(mod) for mod in mod])
+    test_cases = chain(*[unittest.findTestCases(mod) for mod in MODULES])
     suite = unittest.TestSuite(test_cases)
     result = test_runner.run(suite)
     return result
