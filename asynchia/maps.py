@@ -72,18 +72,18 @@ class ControlSocketSocketMap(asynchia.SocketMap):
         data to read on the controlreceiver. """
         # Read the "s" that started the interrupt
         recv = self.controlreceiver.recv(1)
-        if recv == 's':
+        if recv == b('s'):
             # Send the "i" that signals the interrupt succeeded.
             self.controlreceiver.send(b('i'))
             # Read the "e" that will end the interrupt.
             self.controlreceiver.recv(1)
-        elif recv == 'b':
+        elif recv == b('b'):
             return
         else:
             raise ValueError
     
     def wakeup(self):
-        self.controlsender.send('b')
+        self.controlsender.send(b('b'))
 
 
 class FragileSocketMap(ControlSocketSocketMap):
