@@ -20,6 +20,7 @@
 # in the standard library.
 
 import ssl
+import _ssl
 
 import asynchia
 
@@ -35,9 +36,9 @@ class SSLSocketTransport(asynchia.SocketTransport):
         self.ssl_version = ssl_version
         self.ca_certs = ca_certs
         
-        asynchia.SocketTransport.__init__(self, socket_map, sock, handler)
-        
         self.shook_hands = False
+        
+        asynchia.SocketTransport.__init__(self, socket_map, sock, handler)
         
         self.savedwrite = self.writeable
         self.savedread = self.readable
@@ -70,31 +71,37 @@ class SSLSocketTransport(asynchia.SocketTransport):
         asynchia.SocketTransport.set_socket(self, sock)
     
     def _do_handshake(self):
+        print 'la'
         try:
             # Reset read- and writeability.
-            self.set_readable(False)
-            self.set_writeable(False)
+            self.set_readable(False, True)
+            self.set_writeable(False, True)
             
             self.socket.do_handshake()
         
         except ssl.SSLError, err:
             if err.args[0] == ssl.SSL_ERROR_WANT_READ:
-                self.set_readable(True)
+                self.set_readable(True, True)
             elif err.args[0] == ssl.SSL_ERROR_WANT_WRITE:
-                self.set_writeable(True)
+                self.set_writeable(True, True)
             else:
                 raise
         
-        else:
+        else:       
             self.shook_hands = True
             self.set_writeable(self.savedwrite)
             self.set_readable(self.savedread)
-    
-    def handle_connect(self):
-        if self.shook_hands:
+            
             asynchia.SocketTransport.handle_connect(self)
+    
+    def handle_connect(self):        
+        self.socket._sslobj = _ssl.sslwrap(self.socket._sock, False, self.socket.keyfile, self.socket.certfile,
+                            self.socket.cert_reqs, self.socket.ssl_version,
+                            self.socket.ca_certs)
         
+        self.socket.getpeername()
         self._do_handshake()
+        
     
     def handle_write(self):
         if self.shook_hands:
@@ -117,13 +124,15 @@ if __name__ == '__main__':
     import asynchia.maps
     
     class Hand(asynchia.Handler):
+        def handle_connect(self):
+            print 'yay'
         def handle_read(self):
             sys.stdout.write(self.transport.recv(20))
     
     sm = asynchia.maps.DefaultSocketMap()
     ssltr = SSLSocketTransport(sm)
     print ssltr.socket
-    ssltr.connect(('google.at', 443))
+    ssltr.connect(('github.com', 443))
         
     Hand(ssltr)
     

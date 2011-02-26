@@ -370,6 +370,8 @@ class SocketTransport(Transport):
             self.socket_map.del_transport(self)
         
         sock.setblocking(0)
+        self.socket = sock
+        
         if is_unconnected(sock):
             await = True
             self.connected = False
@@ -380,7 +382,6 @@ class SocketTransport(Transport):
             # will be called or not if we wouldn't call it here.
             self.handle_connect()
         
-        self.socket = sock
         self.socket_map.add_transport(self)
         if await:
             self.await_connect()
