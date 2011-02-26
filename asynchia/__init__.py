@@ -162,7 +162,7 @@ class SocketMap(object):
     
     def _run_timers(self):
         now = time.time()
-        while self.timers and self.timers[-1][0] < now:
+        while self.timers and self.timers[-1][0] <= now:
             self.timers.pop(0)[1]()
 
 
