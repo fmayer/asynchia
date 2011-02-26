@@ -153,7 +153,7 @@ class SocketMap(object):
         now = time.time()
         if self.timers:
             ttimeout = self.timers[0][0] - now
-            if ttimeout < 0:
+            if ttimeout <= 0:
                 self._run_timers()
             
             if self.timers:
