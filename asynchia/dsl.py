@@ -427,6 +427,14 @@ def LFLSE(ind, fun=(lambda x: x.value)):
     return FixedLenExpr(lookback(ind, fun), StringExpr())
 
 
+def FLNE(glen):
+    return FixedLenExpr(glen, NullExpr())
+
+#: Lookback fixed-length string-expression
+def LFLNE(ind, fun=(lambda x: x.value)):
+    return FixedLenExpr(lookback(ind, fun), NullExpr())
+
+
 FRMT_CHARS = ('x', 'c', 'b', 'B', '?', 'h', 'H', 'i', 'I', 'l',
               'L', 'q', 'Q', 'f', 'd', 's', 'p', 'P')
 s = Container()
