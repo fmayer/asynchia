@@ -25,11 +25,13 @@ import os
 from itertools import chain
 
 from asynchia.test import (
-    test_core, test_dsl, test_ee, test_util, test_forthcoming, test_defaults
+    test_core, test_dsl, test_ee, test_util, test_forthcoming, test_defaults,
+    test_defer
 )
 
 MODULES = [
-    test_core, test_dsl, test_ee, test_util, test_forthcoming, test_defaults
+    test_core, test_dsl, test_ee, test_util, test_forthcoming, test_defaults,
+    test_defer
 ]
 
 
