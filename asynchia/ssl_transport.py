@@ -23,6 +23,7 @@ import ssl
 import _ssl
 
 import asynchia
+from asynchia.util import is_closed
 
 
 class SSLSocketTransport(asynchia.SocketTransport):
@@ -117,6 +118,9 @@ class SSLSocketTransport(asynchia.SocketTransport):
     
     writeable = property(get_writeable, set_writeable)
     readable = property(get_readable, set_readable)
+    
+    def is_closed(self):
+        return is_closed(self.socket._sock)
 
 
 if __name__ == '__main__':

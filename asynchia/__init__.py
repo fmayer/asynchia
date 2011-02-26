@@ -29,7 +29,7 @@ import traceback
 
 import bisect
 from asynchia.util import (
-    EMPTY_BYTES, is_unconnected, socketpair, b, LookupStack
+    EMPTY_BYTES, is_unconnected, socketpair, b, LookupStack, is_closed
 )
 from asynchia.const import trylater, connection_lost, inprogress
 
@@ -593,6 +593,9 @@ class SocketTransport(Transport):
                 self.handle_connect_failed(err)
             except Exception:
                 self.handle_error()
+    
+    def is_closed(self):
+        return is_closed(self.socket)
 
 
 class SendallTrait(object):
