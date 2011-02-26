@@ -36,6 +36,7 @@ of the other three.
 import select
 import socket
 import errno
+import time
 
 import asynchia
 from asynchia.util import socketpair, b, EMPTY_BYTES, is_closed
@@ -70,11 +71,19 @@ class ControlSocketSocketMap(asynchia.SocketMap):
         """ Call this in the socket-map when you have found out that there is
         data to read on the controlreceiver. """
         # Read the "s" that started the interrupt
-        self.controlreceiver.recv(1)
-        # Send the "i" that signals the interrupt succeeded.
-        self.controlreceiver.send(b('i'))
-        # Read the "e" that will end the interrupt.
-        self.controlreceiver.recv(1)
+        recv = self.controlreceiver.recv(1)
+        if recv == b('s'):
+            # Send the "i" that signals the interrupt succeeded.
+            self.controlreceiver.send(b('i'))
+            # Read the "e" that will end the interrupt.
+            self.controlreceiver.recv(1)
+        elif recv == b('b'):
+            return
+        else:
+            raise ValueError
+    
+    def wakeup(self):
+        self.controlsender.send(b('b'))
 
 
 class FragileSocketMap(ControlSocketSocketMap):
@@ -124,7 +133,6 @@ class RobustSocketMap(ControlSocketSocketMap):
             self.controlreceiver.send(b('i'))
             self.needresp = False
         super(RobustSocketMap, self).close()
-        
 
 
 class RockSolidSocketMap(ControlSocketSocketMap):
@@ -150,16 +158,18 @@ class SelectSocketMap(FragileSocketMap):
     
     def __init__(self, notifier=None):
         FragileSocketMap.__init__(self, notifier)
-        self.writers = []
-        self.socket_list = []
+        self.writers = set()
+        self.socket_list = set()
         
-        self.socket_list.append(self.controlreceiver)
+        self.socket_list.add(self.controlreceiver)
+        
+        self.constructed()
     
     def add_transport(self, handler):
         """ See SocketMap.add_transport. """
         if handler in self.socket_list:
             raise ValueError("Handler %r already in socket map!" % handler)
-        self.socket_list.append(handler)
+        self.socket_list.add(handler)
         if handler.readable:
             self.add_reader(handler)
         if handler.writeable:
@@ -178,7 +188,7 @@ class SelectSocketMap(FragileSocketMap):
     
     def add_writer(self, handler):
         """ See SocketMap.add_writer. """
-        self.writers.append(handler)
+        self.writers.add(handler)
     
     def del_writer(self, handler):
         """ See SocketMap.del_writer. """
@@ -192,10 +202,12 @@ class SelectSocketMap(FragileSocketMap):
         """ See SocketMap.del_reader. """
         pass
     
-    def poll(self, timeout):
+    def poll(self, otimeout):
         """ Poll for I/O. """
         if self.closed:
             raise asynchia.SocketMapClosedError
+        
+        timeout = self._get_timeout(otimeout)
         
         interrupted = False
         
@@ -226,14 +238,16 @@ class SelectSocketMap(FragileSocketMap):
         
         if interrupted:
             self.do_interrupt()
+        
+        self._run_timers()
     
     def close(self):
         """ See SocketMap.close """
-        for handler in self.socket_list[1:]:
+        for handler in self.socket_list ^ set([self.controlreceiver]):
             self.notifier.cleanup_obj(handler)
         
-        self.writers = []
-        self.socket_list = []
+        self.writers = set()
+        self.socket_list = set()
         
         super(SelectSocketMap, self).close()
     
@@ -258,6 +272,8 @@ class PollSocketMap(RobustSocketMap):
         
         self.controlfd = self.controlreceiver.fileno()
         self.poller.register(self.controlfd, select.POLLIN | select.POLLPRI)
+        
+        self.constructed()
     
     def add_transport(self, handler):
         """ See SocketMap.add_transport. """
@@ -280,6 +296,8 @@ class PollSocketMap(RobustSocketMap):
             raise asynchia.SocketMapClosedError
         
         interrupted = False
+        
+        timeout = self._get_timeout(timeout)
         
         # Stupidest API ever. epoll accepts a float in seconds whereas
         # poll accepts an int in millseconds.
@@ -317,6 +335,7 @@ class PollSocketMap(RobustSocketMap):
                 self.notifier.close_obj(obj)
         if interrupted:
             self.do_interrupt()
+        self._run_timers()
     
     def handler_changed(self, handler):
         """ Update flags for handler. """
@@ -371,6 +390,8 @@ class EPollSocketMap(RockSolidSocketMap):
         
         self.controlfd = self.controlreceiver.fileno()
         self.poller.register(self.controlfd, select.EPOLLIN | select.EPOLLPRI)
+        
+        self.constructed()
     
     def add_transport(self, handler):
         """ See SocketMap.add_transport. """
@@ -391,6 +412,9 @@ class EPollSocketMap(RockSolidSocketMap):
         """ Poll for I/O. """
         if self.closed:
             raise asynchia.SocketMapClosedError
+        
+        
+        timeout = self._get_timeout(timeout)
         
         # While select.poll is alright with None, select.epoll expects
         # -1 for no timeout,
@@ -425,6 +449,7 @@ class EPollSocketMap(RockSolidSocketMap):
                 self.notifier.close_obj(obj)
         if interrupted:
             self.do_interrupt()
+        self._run_timers()
     
     def handler_changed(self, handler):
         """ Update flags for handler. """
@@ -489,6 +514,8 @@ class KQueueSocketMap(RockSolidSocketMap):
                            select.KQ_FILTER_READ,
                            select.KQ_EV_ADD)], 0
         )
+        
+        self.constructed()
     
     def add_transport(self, handler):
         """ See SocketMap.add_transport. """

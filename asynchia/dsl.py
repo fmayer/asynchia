@@ -155,6 +155,8 @@ class Expr(object):
     def __add__(self, other):
         return ExprAdd([self, other])
     
+    __and__ = __add__
+    
     def __mul__(self, other):
         return ExprMul(self, other)
     
@@ -249,6 +251,9 @@ class ExprAdd(Expr):
     
     def __add__(self, other):
         return ExprAdd(self.exprs + [other])
+    
+    def __and__(self, other):
+        return ExprAdd([self, other])
     
     # For the sake of completeness, not that it would matter in many cases.
     def __iadd__(self, other):

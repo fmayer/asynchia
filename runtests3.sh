@@ -32,7 +32,7 @@ printhelp() {
 SCRIPTDIR=`dirname "$0"`
 LOGFILE="$SCRIPTDIR/runtests.log"
 SETUP="$SCRIPTDIR/setup.py"
-PYTHON=`which python`
+PYTHON=`which python3`
 
 while getopts p:l:h option
 do
@@ -51,7 +51,7 @@ done
 
 rm -rf "$SCRIPTDIR"/tmpenv;
 mkdir "$SCRIPTDIR"/tmpenv;
-$PYTHON "$SCRIPTDIR"/ext/virtualenv.py\
+$PYTHON "$SCRIPTDIR"/ext/virtualenv3.py\
    --no-site-packages -p "$PYTHON" "$SCRIPTDIR"/tmpenv;
 
 INTR="$SCRIPTDIR"/tmpenv/bin/python
