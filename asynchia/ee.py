@@ -301,6 +301,12 @@ class Collector(object):
         return CollectorQueue([self, other])
 
 
+class NullCollector(Collector):
+    def add_data(self, prot, nbytes):
+        Collector.add_data(self, prot, nbytes)
+        prot.recv(nbytes)
+
+
 class StringCollector(Collector):
     """ Store data received from the socket in a string. """
     def __init__(self, onclose=None):

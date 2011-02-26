@@ -343,6 +343,15 @@ class StringExpr(Expr):
         return asynchia.ee.StringInput(value)
 
 
+class NullExpr(Expr):
+    def __call__(self, state, onclose=None):
+        return asynchia.ee.NullCollector(onclose)
+    
+    @staticmethod
+    def produce(value):
+        return asynchia.ee.StringInput(b(''))
+
+
 class FixedLenExpr(Expr):
     """ Restrict the length of the expression contained to the value retuned
     by calling glen upon construction of the collector for said expression.
