@@ -27,7 +27,7 @@ except:
     from distutils.core import setup
 
 
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 
 extra = {}
 if sys.version_info >= (3, 0):
@@ -43,6 +43,6 @@ setup(
     keywords='async asynchronous network',
     license='LGPL',
     zip_safe=True,
-    packages=['asynchia'],
+    packages=['asynchia', 'asynchia.test'],
     **extra
 )
