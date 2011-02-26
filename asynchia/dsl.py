@@ -155,6 +155,8 @@ class Expr(object):
     def __add__(self, other):
         return ExprAdd([self, other])
     
+    __and__ = __add__
+    
     def __mul__(self, other):
         return ExprMul(self, other)
     
@@ -250,6 +252,9 @@ class ExprAdd(Expr):
     def __add__(self, other):
         return ExprAdd(self.exprs + [other])
     
+    def __and__(self, other):
+        return ExprAdd([self, other])
+    
     # For the sake of completeness, not that it would matter in many cases.
     def __iadd__(self, other):
         self.exprs.append(other)
@@ -338,6 +343,15 @@ class StringExpr(Expr):
         return asynchia.ee.StringInput(value)
 
 
+class NullExpr(Expr):
+    def __call__(self, state, onclose=None):
+        return asynchia.ee.NullCollector(onclose)
+    
+    @staticmethod
+    def produce(value):
+        return asynchia.ee.StringInput(b(''))
+
+
 class FixedLenExpr(Expr):
     """ Restrict the length of the expression contained to the value retuned
     by calling glen upon construction of the collector for said expression.
@@ -411,6 +425,14 @@ def FLSE(glen):
 #: Lookback fixed-length string-expression
 def LFLSE(ind, fun=(lambda x: x.value)):
     return FixedLenExpr(lookback(ind, fun), StringExpr())
+
+
+def FLNE(glen):
+    return FixedLenExpr(glen, NullExpr())
+
+#: Lookback fixed-length string-expression
+def LFLNE(ind, fun=(lambda x: x.value)):
+    return FixedLenExpr(lookback(ind, fun), NullExpr())
 
 
 FRMT_CHARS = ('x', 'c', 'b', 'B', '?', 'h', 'H', 'i', 'I', 'l',

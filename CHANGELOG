@@ -29,3 +29,14 @@
 * Add benchmark suite.
 * Migrate API docs to use sphinx.
 * Bugfix in testsuite.
+
+0.2.0
+=====
+* Introduce asynchia.defaults. It can be used to set a global socket-map or to
+  set a thread-global socket-map. It can be used with context-managers to auto-
+  matically reset the thread-global value to the previous state if the context
+  manager block is left. See examples/glob_example.py for an example.
+* Introduce SocketMap.call_in and SocketMap.call_at.
+* Improve test-run facilites.
+* Add Transport.is_closed.
+* Add asynchia.ssl_transport.
