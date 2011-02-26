@@ -282,5 +282,6 @@ class TestEE(unittest.TestCase):
         until_done(lambda: c.add_data(m, 2))
         self.assertEqual(c.value, (14, 25))
 
+
 if __name__ == '__main__':
     unittest.main()

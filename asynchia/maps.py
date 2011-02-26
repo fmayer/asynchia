@@ -225,7 +225,7 @@ class SelectSocketMap(FragileSocketMap):
             if obj != self.controlreceiver:
                 # This seems to be the only way to find hangup-events with
                 # select.
-                if obj.connected and is_closed(obj.socket):
+                if obj.connected and obj.is_closed():
                     self.notifier.close_obj(obj)
                 else:
                     self.notifier.read_obj(obj)
@@ -323,7 +323,7 @@ class PollSocketMap(RobustSocketMap):
             except KeyError:
                 continue
             if flags & (select.POLLIN | select.POLLPRI):
-                if obj.connected and is_closed(obj.socket):
+                if obj.connected and obj.is_closed():
                     self.notifier.close_obj(obj)
                 else:
                     self.notifier.read_obj(obj)
@@ -437,7 +437,7 @@ class EPollSocketMap(RockSolidSocketMap):
                 continue
             obj = self.socket_list[fileno]
             if flags & (select.EPOLLIN | select.EPOLLPRI):
-                if obj.connected and is_closed(obj.socket):
+                if obj.connected and obj.is_closed():
                     self.notifier.close_obj(obj)
                 else:
                     self.notifier.read_obj(obj)
