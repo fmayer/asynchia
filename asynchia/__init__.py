@@ -74,6 +74,7 @@ class SocketMap(object):
     
     def call_synchronized(self, fun):
         self.call_in(0, fun)
+        self.wakeup()
     
     def poll(self, timeout=None):
         raise NotImplementedError
@@ -141,11 +142,9 @@ class SocketMap(object):
     
     def call_in(self, sec, fun):
         bisect.insort(self.timers, (time.time() + sec, fun))
-        self.wakeup()
     
     def call_at(self, epoch, fun):
         bisect.insort(self.timers, (epoch, fun))
-        self.wakeup()
     
     def wakeup(self):
         raise NotImplementedError
