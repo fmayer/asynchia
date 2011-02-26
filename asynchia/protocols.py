@@ -20,7 +20,7 @@
 
 import asynchia
 from asynchia.util import EMPTY_BYTES
-from asynchia.buffer import BufferQ
+from asynchia.buffer import BufferQ, NaiveBuffer
 
 class LineHandler(asynchia.Handler):
     """ Use this for line-based protocols. """
@@ -28,7 +28,7 @@ class LineHandler(asynchia.Handler):
     buffer_size = 4096
     def __init__(self, transport=None):
         asynchia.Handler.__init__(self, transport)
-        self.read_buffer = BufferQ(self.buffer_size)
+        self.read_buffer = NaiveBuffer()
         if not self.transport.readable:
             self.transport.set_readable(True)
     

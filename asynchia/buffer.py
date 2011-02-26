@@ -34,12 +34,20 @@ class NaiveBuffer(object):
     def put(self, data):
         self.buf += data
     
+    def add_data(self, tnsp, nbytes):
+        rcv = tnsp.recv(nbytes)
+        self.buf += rcv
+        return False, rcv
+    
     def splitfront(self, at):
-        pos = self.buf.find(at)
-        if pos == -1:
-            return None
-        
-        return self.read(pos + len(at))
+        split = self.buf.split(1)
+        self.buf = split[-1]
+        return split[:-1]
+    
+    def splitall(self, at):
+        split = self.buf.split()
+        self.buf = split[-1]
+        return split[:-1]
 
 
 class ByteArrayBuffer(object):
