@@ -96,9 +96,11 @@ class SSLSocketTransport(asynchia.SocketTransport):
             asynchia.SocketTransport.handle_connect(self)
     
     def handle_connect(self):        
-        self.socket._sslobj = _ssl.sslwrap(self.socket._sock, False, self.socket.keyfile, self.socket.certfile,
-                            self.socket.cert_reqs, self.socket.ssl_version,
-                            self.socket.ca_certs)
+        self.socket._sslobj = _ssl.sslwrap(
+            self.socket._sock, False, self.socket.keyfile, self.socket.certfile,
+            self.socket.cert_reqs, self.socket.ssl_version,
+            self.socket.ca_certs
+        )
         
         self.socket.getpeername()
         self._do_handshake()
