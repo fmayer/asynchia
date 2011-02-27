@@ -181,7 +181,7 @@ class ExprCollectorQueue(asynchia.ee.Collector):
         
         self.coll = None
     
-    def __add__(self, other):
+    def __iadd__(self, other):
         self.exprs.append(other)
         return self
     
