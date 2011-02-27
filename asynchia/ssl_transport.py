@@ -72,7 +72,6 @@ class SSLSocketTransport(asynchia.SocketTransport):
         asynchia.SocketTransport.set_socket(self, sock)
     
     def _do_handshake(self):
-        print 'la'
         try:
             # Reset read- and writeability.
             self.set_readable(False, True)
