@@ -274,6 +274,17 @@ class Collector(object):
         self.inited = self.closed = False
         self.onclose = onclose
     
+    def add_str(self, string):
+        n = len(string)
+        mock = MockHandler(string)
+        while True:
+            done, nrecv = self.add_data(mock, n)
+            n -= nrecv
+            
+            if not nrecv or n <= 0:
+                break
+        return done, mock.inbuf
+    
     def add_data(self, prot, nbytes):
         """ Override to read at most nbytes from prot and store them in the
         collector. """
