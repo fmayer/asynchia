@@ -92,10 +92,6 @@ def dnr_interrupt(self, map_):
         mo.poll(abs(TIMEOUT - (time.time() - s)))
     self.assertEqual(container['done'], True)
 
-
-cf_done = False
-cf_thr = None
-
         
 def std(mo, hand):
     mo.start_interrupt(True)
