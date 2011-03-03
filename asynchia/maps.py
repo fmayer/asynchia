@@ -84,6 +84,11 @@ class ControlSocketSocketMap(asynchia.SocketMap):
     
     def wakeup(self):
         self.controlsender.send(b('b'))
+    
+    def close(self):
+        super(ControlSocketSocketMap, self).close()
+        self.controlsender.close()
+        self.controlreceiver.close()
 
 
 class FragileSocketMap(ControlSocketSocketMap):
