@@ -25,7 +25,7 @@ class LineHandler(asynchia.Handler):
     """ Use this for line-based protocols. """
     delimiter = None
     buffer_size = 4096
-    def __init__(self, transport):
+    def __init__(self, transport=None):
         asynchia.Handler.__init__(self, transport)
         self.read_buffer = EMPTY_BYTES
         if not self.transport.readable:

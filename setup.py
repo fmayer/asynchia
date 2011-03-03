@@ -43,6 +43,6 @@ setup(
     keywords='async asynchronous network',
     license='LGPL',
     zip_safe=True,
-    packages=['asynchia'],
+    packages=['asynchia', 'asynchia.test'],
     **extra
 )

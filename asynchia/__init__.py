@@ -19,25 +19,21 @@
 """ asynchia is a minimalist asynchronous networking library. """
 
 import os
+import time
 import errno
 import socket
+import threading
 import Queue as queue
 
 import traceback
 
-from asynchia.util import EMPTY_BYTES, is_unconnected, socketpair, b
+import bisect
+from asynchia.util import (
+    EMPTY_BYTES, is_unconnected, socketpair, b, LookupStack, is_closed
+)
 from asynchia.const import trylater, connection_lost, inprogress
 
 __version__ = '0.1.3'
-
-class CallSynchronized(object):
-    def __init__(self, handler, sock):
-        self.sock = sock
-        self.handler = handler
-    
-    def call(self, fun):
-        self.handler.funs.put(fun)
-        self.sock.send(b('a'))
 
 
 class SocketMapClosedError(Exception):
@@ -70,18 +66,15 @@ class SocketMap(object):
             notifier = Notifier()
         self.notifier = notifier
         self.closed = False
+        
+        self.timers = []
     
     def constructed(self):
-        wakeup, other = socketpair()
-        self.callsync = CallSynchronized(
-            _CallSynchronizedHandler(
-                SocketTransport(self, other)
-                ),
-            wakeup
-        )
+        pass
     
     def call_synchronized(self, fun):
-        self.callsync.call(fun)
+        self.call_in(0, fun)
+        self.wakeup()
     
     def poll(self, timeout=None):
         raise NotImplementedError
@@ -146,6 +139,31 @@ class SocketMap(object):
     
     def is_empty(self):
         raise NotImplementedError
+    
+    def call_in(self, sec, fun):
+        bisect.insort(self.timers, (time.time() + sec, fun))
+    
+    def call_at(self, epoch, fun):
+        bisect.insort(self.timers, (epoch, fun))
+    
+    def wakeup(self):
+        raise NotImplementedError
+    
+    def _get_timeout(self, timeout):
+        now = time.time()
+        if self.timers:
+            ttimeout = self.timers[0][0] - now
+            if ttimeout <= 0:
+                self._run_timers()
+            
+            if self.timers:
+                timeout = min(timeout, self.timers[0][0] - now)
+        return timeout
+    
+    def _run_timers(self):
+        now = time.time()
+        while self.timers and self.timers[-1][0] <= now:
+            self.timers.pop(0)[1]()
 
 
 class Notifier(object):
@@ -308,12 +326,14 @@ class Transport(object):
 
 class SocketTransport(Transport):
     """ A transport that uses a socket to send and receive data. """
-    def __init__(self, socket_map, sock=None, handler=None):
+    def __init__(self, socket_map=None, sock=None, handler=None):
         super(SocketTransport, self).__init__(handler)
         # Make no assumptions on what we want to do with the handler.
         # The user will need to explicitely make it read- or writeable.
         if sock is None:
-            sock = defaultsocket_factory()
+            sock = defaults['factory']()
+        if socket_map is None:
+            socket_map = defaults['socket_map']
         self._readable = False
         self._writeable = False
         
@@ -353,6 +373,8 @@ class SocketTransport(Transport):
             self.socket_map.del_transport(self)
         
         sock.setblocking(0)
+        self.socket = sock
+        
         if is_unconnected(sock):
             await = True
             self.connected = False
@@ -363,7 +385,6 @@ class SocketTransport(Transport):
             # will be called or not if we wouldn't call it here.
             self.handle_connect()
         
-        self.socket = sock
         self.socket_map.add_transport(self)
         if await:
             self.await_connect()
@@ -581,6 +602,9 @@ class SocketTransport(Transport):
                 self.handle_connect_failed(err)
             except Exception:
                 self.handle_error()
+    
+    def is_closed(self):
+        return is_closed(self.socket)
 
 
 class SendallTrait(object):
@@ -633,7 +657,10 @@ class SendallTrait(object):
 class Handler(object):
     """ Handle a socket object. Call this objects handle_* methods upon I/O """
     # Dummy handlers.
-    def __init__(self, transport):
+    def __init__(self, transport=None):
+        if transport is None:
+            transport = defaults['transport'](defaults['socket_map'])
+        
         self.transport = transport
         
         self.transport.handler = self
@@ -718,21 +745,48 @@ class Server(AcceptHandler):
             self.transport.close()
 
 
-class _CallSynchronizedHandler(Handler):
-    """ Implementation detail. """
-    def __init__(self, transport, per_run=1):
-        Handler.__init__(self, transport)
-        self.transport.set_readable(True)
-        
-        self.funs = queue.Queue()
-        self.per_run = per_run
-    
-    def handle_read(self):
-        """ Implementation detail. """
-        for _ in self.transport.recv(self.per_run):
-            try:
-                self.funs.get_nowait()()
-            except queue.Empty:
-                break
 
-defaultsocket_factory = socket.socket
+LAST = object()
+class DefaultStack(object):
+    def __init__(self, local):
+        self.local = local
+        self.global_state = {
+            'factory': socket.socket,
+            'socket_map': None,
+            'transport': SocketTransport,
+        }
+    
+    @property
+    def state(self):
+        if not hasattr(self.local, 'state'):
+            self.local.state = LookupStack(self.global_state)
+        return self.local.state
+    
+    
+    def __getitem__(self, name):
+        return self.state[name]
+    
+    def __setitem__(self, name, value):
+        self.global_state[name] = name
+    
+    def with_(socket_map=LAST, transport=LAST, factory=LAST):
+        dct = {}
+        if socket_map is not LAST:
+            dct['socket_map'] = socket_map
+        if transport is not LAST:
+            dct['transport'] = transport
+        if factory is not LAST:
+            dct['factory'] = factory
+        return self.state.with_push(dct)
+    
+    def with_socket_map(self, socket_map):
+        return self.state.with_push({'socket_map': socket_map}, socket_map)
+    
+    def with_transport(self, transport):
+        return self.state.with_push({'transport': transport}, transport)
+    
+    def with_factory(self, factory):
+        return self.state.with_push({'factory': factory}, factory)
+
+
+defaults = DefaultStack(threading.local())

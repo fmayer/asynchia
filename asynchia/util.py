@@ -27,6 +27,62 @@ import collections
 
 import asynchia.const
 
+class _LookupStackContextManager(object):
+    """ Implementation detail. """
+    def __init__(self, stack, item, value=None):
+        self.item = item
+        self.stack = stack
+        self.value = value
+    
+    def __enter__(self):
+        self.stack.push(self.item)
+        return self.value
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stack.pop()
+
+
+_NULL = object()
+class LookupStack(object):
+    """ Dictionary-like object where data can be pushed on and the previous
+    state can be returned by using pop. A context-manager that automatically
+    pops the value after the with-block is left. This can be combined with
+    thread-local data to provide context-dependant global data. """
+    def __init__(self, fallback=None):
+        if fallback is None:
+            fallback = {}
+        self.fallback = fallback
+        self.undo = collections.deque([])
+        self.map_ = {}
+    
+    # FIXME: Name.
+    def with_push(self, item, value=None):
+        """ Update object with the dictionary item and revert the push after
+        with-block is left. """
+        return _LookupStackContextManager(self, item, value)
+    
+    def push(self, item):
+        """ Update object with the dictionary item. """
+        self.undo.append(
+            [(key, self.map_.get(key, _NULL)) for key in item]
+        )
+        
+        self.map_.update(item)
+    
+    def pop(self):
+        """ Revert last push. """
+        for key, value in self.undo.pop():
+            if value is _NULL:
+                del self.map_[key]
+            else:
+                self.map_[key] = value
+    
+    def __getitem__(self, name):
+        if name in self.map_:
+            return self.map_[name]
+        return self.fallback[name]
+
+
 class GradualAverage(object):
     """ Memory-efficient average to which values may gradually be added
     over time. Its value can be accessed via the avg member. """

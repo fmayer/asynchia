@@ -30,13 +30,23 @@ def get_named_tempfile(delete):
     try:
         return tempfile.NamedTemporaryFile(delete=delete)
     except TypeError:
-        f = tempfile.NamedTemporaryFile()
-        if not delete and os.name != "nt":
-            def close():
-                f.close_called = True
-                f.file.close()
-            f.close = close
-        return f
+        if os.name == "nt":
+            dir_ = tempfile.gettempdir()
+            flags = tempfile._bin_openflags
+            if delete:
+                flags |= os.O_TEMPORARY
+
+            (fd, name) = tempfile._mkstemp_inner(dir_, "tmp", "", flags)
+            f = os.fdopen(fd, "w+b", -1)
+            return tempfile._TemporaryFileWrapper(f, name)
+        else:
+            f = tempfile.NamedTemporaryFile()
+            if not delete:
+                def close():
+                    f.close_called = True
+                    f.file.close()
+                f.close = close
+            return f
 
 
 def del_strcoll(size):
@@ -271,6 +281,7 @@ class TestEE(unittest.TestCase):
         m = asynchia.ee.MockHandler(s.pack(14, 25))
         until_done(lambda: c.add_data(m, 2))
         self.assertEqual(c.value, (14, 25))
+
 
 if __name__ == '__main__':
     unittest.main()

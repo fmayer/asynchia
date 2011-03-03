@@ -274,6 +274,17 @@ class Collector(object):
         self.inited = self.closed = False
         self.onclose = onclose
     
+    def add_str(self, string):
+        n = len(string)
+        mock = MockHandler(string)
+        while True:
+            done, nrecv = self.add_data(mock, n)
+            n -= nrecv
+            
+            if not nrecv or n <= 0:
+                break
+        return done, mock.inbuf
+    
     def add_data(self, prot, nbytes):
         """ Override to read at most nbytes from prot and store them in the
         collector. """
@@ -299,6 +310,12 @@ class Collector(object):
     
     def __add__(self, other):
         return CollectorQueue([self, other])
+
+
+class NullCollector(Collector):
+    def add_data(self, prot, nbytes):
+        Collector.add_data(self, prot, nbytes)
+        prot.recv(nbytes)
 
 
 class StringCollector(Collector):
@@ -602,11 +619,12 @@ class SingleStructValueCollector(StructCollector):
     @property
     def value(self):
         return self.intvalue[0]
-    
+
+
 class Handler(asynchia.Handler):
     """ asynchia handler that adds all received data to a collector,
     and reads outgoing data from an Input. """
-    def __init__(self, transport, collector=None,
+    def __init__(self, transport=None, collector=None,
                  buffer_size=9046):
         asynchia.Handler.__init__(self, transport)
         
