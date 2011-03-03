@@ -459,16 +459,24 @@ class TestCore(unittest.TestCase):
     
     
     def test_pingpong(self):
+        container = {'done': False}
+        def read():
+            self.assertEqual(hb.transport.recv(3), b('Foo'))
+            container['done'] = True
         mo = asynchia.maps.DefaultSocketMap()
-        a, b = asynchia.util.socketpair()
+        a, c = asynchia.util.socketpair()
         ha = asynchia.Handler(asynchia.SocketTransport(mo, a))
-        hb = asynchia.Handler(asynchia.SocketTransport(mo, b))
+        hb = asynchia.Handler(asynchia.SocketTransport(mo, c))
         
         ha.transport.set_writeable(True)
         hb.transport.set_readable(True)
         
-        ha.handle_write = lambda: ha.send(b("Foo"))
-        hb.handle_read = lambda: self.assertEqual(hb.recv(3), b('Foo'))
+        ha.handle_write = lambda: ha.transport.send(b("Foo"))
+        hb.handle_read = read
+        s = time.time()
+        while not container['done'] and time.time() < s + TIMEOUT:
+            mo.poll(abs(TIMEOUT - (time.time() - s)))
+        self.assertEqual(container['done'], True)
     
     if hasattr(socket, 'socketpair'):
         test_pingpong2 = _override_socketpair(test_pingpong)

@@ -122,8 +122,6 @@ class Runner(object):
         
         for benchmark in self.benchmarks:
             benchmark.set_up()
-        
-        for benchmark in self.benchmarks:
             benchmark.execute(self.callback)
     
     def wait(self):
