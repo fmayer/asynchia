@@ -404,7 +404,6 @@ class ConditionCollector(Collector):
         self.predicate_coll = False
     
     def add_data(self, prot, nbytes):
-        """ Write at most nbytes data from prot to fd. """
         Collector.add_data(self, prot, nbytes)
         if self.predicate.closed:
             if self.predicate.value:
@@ -421,6 +420,44 @@ class ConditionCollector(Collector):
     @property
     def value(self):
         return self.collector.value
+
+
+class WhileCollector(Collector):
+    def __init__(self, predicatefactory, collectorfactory, onclose=None):
+        Collector.__init__(self, onclose)
+        
+        self.predicatefactory = predicatefactory
+        self.collectorfactory = collectorfactory
+        
+        self.condition = ConditionCollector(
+            self.predicatefactory(),
+            self.collectorfactory()
+        )
+        
+        self.intvalue = []
+        
+    def add_data(self, prot, nbytes):
+        Collector.add_data(self, prot, nbytes)
+        if self.condition is None:
+            return True, 0
+        
+        done, nrecv = self.condition.add_data(prot, nbytes)
+        if done:
+            if self.condition.predicate.value:
+                self.intvalue.append(self.condition.collector)
+                self.condition = ConditionCollector(
+                    self.predicatefactory(),
+                    self.collectorfactory()
+                )
+                done = False
+            else:
+                self.close()
+                self.condition = None
+        return done, nrecv
+    
+    @property
+    def value(self):
+        return self.intvalue
 
 
 class DelimitedCollector(Collector):
