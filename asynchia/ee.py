@@ -369,6 +369,60 @@ class FileCollector(Collector):
         return self.intvalue
 
 
+class PredicateCollector(Collector):
+    def __init__(self, collector, predicate=(lambda x: bool(x)), onclose=None):
+        Collector.__init__(self, onclose)
+        
+        self.predicate = predicate
+        self.collector = collector
+        
+        self.intvalue = None
+    
+    def add_data(self, prot, nbytes):
+        """ Write at most nbytes data from prot to fd. """
+        Collector.add_data(self, prot, nbytes)
+        
+        done, nrecv = self.collector.add_data(prot, nbytes)
+        if done:
+            self.intvalue = self.predicate(self.collector.value)
+            done = not self.intvalue
+            self.close()
+        return done, nrecv
+    
+    @property
+    def value(self):
+        return self.intvalue
+
+
+class ConditionCollector(Collector):
+    def __init__(self, predicate, collector, onclose=None):
+        Collector.__init__(self, onclose)
+        
+        self.predicate = predicate
+        self.collector = collector
+        
+        self.predicate_coll = False
+    
+    def add_data(self, prot, nbytes):
+        """ Write at most nbytes data from prot to fd. """
+        Collector.add_data(self, prot, nbytes)
+        if self.predicate.closed:
+            if self.predicate.value:
+                done, nrecv = self.collector.add_data(prot, nbytes)
+                if done:
+                    self.close()
+                return done, nrecv
+            else:
+                self.close()
+                return True, 0
+        else:
+            return self.predicate.add_data(prot, nbytes)
+    
+    @property
+    def value(self):
+        return self.collector.value
+
+
 class DelimitedCollector(Collector):
     """ Collect up to size bytes in collector and raise CollectorFull
     afterwards. """
