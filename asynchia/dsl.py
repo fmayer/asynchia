@@ -370,6 +370,51 @@ class FixedLenExpr(Expr):
         return self.expr.produce(value)
 
 
+class WhileExpr(Expr):
+    def __init__(self, cond, expr):
+        Expr.__init__(self)
+        self.cond = cond
+        self.expr = expr
+    
+    def __call__(self, state, onclose=None):
+        return asynchia.ee.WhileCollector(
+            lambda: self.cond(state, onclose),
+            lambda: self.expr(state, onclose)
+        )
+    
+    @staticmethod
+    def produce(value):
+        return asynchia.ee.StringInput(value)
+
+
+class PredicateExpr(Expr):
+    def __init__(self, expr, condition):
+        self.expr = expr
+        self.condition = condition
+    
+    def __call__(self, state, onclose=None):
+        return asynchia.ee.PredicateCollector(
+            self.expr(state),
+            self.condition
+        )
+
+    
+class ConditionExpr(Expr):
+    def __init__(self, lookback, condition, expr):
+        self.lookback = lookback
+        self.condition = condition
+        self.expr = expr
+    
+    def __call__(self, state, onclose=None):
+        return asynchia.ee.ConditionCollector(
+            asynchia.ee.PredicateCollector(
+                self.lookback(state),
+                self.condition
+            ),
+            self.expr(state, onclose)
+        )
+
+
 def lookback(ind, fun=(lambda x: x.value)):
     """ Can be passed to expressions that expect a lookback.
     ind can either be a string, thus referring to the result of the expression
@@ -417,6 +462,9 @@ SE = StringExpr
 BE = BinaryExpr
 SBE = SingleBinaryExpr
 FE = FileExpr
+
+while_ = WhileExpr
+pred = PredicateExpr
 
 
 def FLSE(glen):
