@@ -795,3 +795,20 @@ class MockHandler(object):
         """ Write data to outbuf. """
         self.outbuf += data
         return len(data)
+
+
+class BufferedPeekHandler(object):
+    def __init__(self, handler):
+        self.handler = handler
+        self.buffer_ = ""
+    
+    def peek(self, nbytes):
+        if len(self.buffer_) < nbytes:
+            self.buffer_ += self.handler.recv(nbytes - len(self.buffer_))
+        return buffer_[:nbytes]
+    
+    def recv(self, nbytes):
+        buffer_ = self.buffer_[:nbytes]
+        self.buffer_ = self.buffer_[nbytes:]
+        
+        return buffer_ + self.handler.recv(nbytes - len(buffer_))
