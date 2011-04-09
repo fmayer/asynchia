@@ -1,7 +1,7 @@
 # -*- coding: us-ascii -*-
 
 # asynchia.qtmap - SocketMap for Qt
-# Copyright (C) 2008 Florian Mayer
+# Copyright (C) 2008 Florian Mayer <florian.mayer@bitsrc.org>
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

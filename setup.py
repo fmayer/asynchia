@@ -2,7 +2,7 @@
 # -*- coding: us-ascii -*-
 
 # asynchia - asynchronous networking library
-# Copyright (C) 2009 Florian Mayer
+# Copyright (C) 2009 Florian Mayer <florian.mayer@bitsrc.org>
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -38,7 +38,7 @@ setup(
     version=VERSION,
     description='asynchia is a minimalistic asynchronous networking library.',
     author='Florian Mayer',
-    author_email='flormayer@aim.com',
+    author_email='florian.mayer@bitsrc.org',
     url='http://bitbucket.org/segfaulthunter/asynchia-mainline',
     keywords='async asynchronous network',
     license='LGPL',
