@@ -372,7 +372,15 @@ class SocketTransport(Transport):
         self.socket = sock
         
         if is_unconnected(sock):
-            await = True
+            try:
+                sock.getpeername()
+            except socket.error, err:
+                if err.args[0] == errno.ENOTCONN:
+                    await = False
+                else:
+                    raise
+            else:
+                await = True
             self.connected = False
         else:
             self.connected = True
@@ -380,9 +388,9 @@ class SocketTransport(Transport):
             # .connect called on it, we couldn't tell whether handle_connect
             # will be called or not if we wouldn't call it here.
             self.handle_connect()
-        
-        self.socket_map.add_transport(self)
-        if await:
+        if self.connected:
+            self.socket_map.add_transport(self)
+        elif await:
             self.await_connect()
     
     def get_readable(self):
@@ -397,10 +405,11 @@ class SocketTransport(Transport):
             return
         
         self._readable = value
-        if value:
-            self.socket_map.add_reader(self)
-        else:
-            self.socket_map.del_reader(self)
+        if self.connected:
+            if value:
+                self.socket_map.add_reader(self)
+            else:
+                self.socket_map.del_reader(self)
     
     def get_writeable(self):
         """ Check whether handler wants to write data. """
@@ -419,7 +428,7 @@ class SocketTransport(Transport):
         #   a) Already in the writers list if we want to add it to it.
         #   b) Needs to remain in the writers list if we wanted to
         #      remove it.
-        if not self.awaiting_connect:
+        if not self.awaiting_connect and self.connected:
             if value:
                 self.socket_map.add_writer(self)
             else:
@@ -436,6 +445,7 @@ class SocketTransport(Transport):
         # If we are already writeable, the handler is already in the
         # socket-map's writers.
         self.awaiting_connect = True
+        self.socket_map.add_transport(self)
         if not self.writeable:
             self.socket_map.add_writer(self)
     
@@ -459,6 +469,8 @@ class SocketTransport(Transport):
     
     def listen(self, num):
         """ Listen for a maximum of num connections. """
+        self.socket_map.add_transport(self)
+        self.connected = True
         if not self.readable:
             self.set_readable(True)
         return self.socket.listen(num)
