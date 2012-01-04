@@ -805,7 +805,7 @@ class BufferedPeekHandler(object):
     def peek(self, nbytes):
         if len(self.buffer_) < nbytes:
             self.buffer_ += self.handler.recv(nbytes - len(self.buffer_))
-        return buffer_[:nbytes]
+        return self.buffer_[:nbytes]
     
     def recv(self, nbytes):
         buffer_ = self.buffer_[:nbytes]
