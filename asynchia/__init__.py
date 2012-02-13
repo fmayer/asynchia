@@ -649,7 +649,7 @@ class SendallTrait(object):
         
             if self.handler is not None and self.writeable:
                 super(SendallTrait, self).handle_write()
-        else:
+        if self.__buf:
             sent = super(SendallTrait, self).send(self.__buf)
             self.__buf = self.__buf[sent:]
     
