@@ -13,15 +13,21 @@ asynchia's biggest strength is at the same time its biggest weakness: one the on
 ## I'm in! How do I install it?
 If you have pip available on your system, asynchia can conveniently be installed because it is available in the pypi (make sure you have the required permissions on the system; in case you are installing the package into a global directory you will probably need to execute the command in a root-shell or prepend it with sudo, depending on your system configuration).
 ### Install asynchia with pip
-`$ pip install asynchia`
+```
+$ pip install asynchia
+```
 
 The same holds true for easy_installed (component of setuptools) – the permission note for the pip way also applies here.
 ### Install asynchia with easy_install
-`$ easy_install asynchia`
+```
+$ easy_install asynchia
+```
 
 If none of these options work for you, just grab the source tarball and execute the following command.
 ### Manual install
-`~/asynchia-0.2.0/ $ python setup.py install`
+```
+~/asynchia-0.2.0/ $ python setup.py install
+```
 
 ## Where can I find documentation?
 Check out the [documentation](http://segfaulthunter.github.io/asynchia/docs/), but please be aware that some fundamental things are scheduled to change by 0.2.
