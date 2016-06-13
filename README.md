@@ -24,10 +24,10 @@ If none of these options work for you, just grab the source tarball and execute 
 `~/asynchia-0.2.0/ $ python setup.py install`
 
 ## Where can I find documentation?
-Check out the documentation, but please be aware that some fundamental things are scheduled to change by 0.2.
+Check out the [documentation](http://segfaulthunter.github.io/asynchia/docs/), but please be aware that some fundamental things are scheduled to change by 0.2.
 
 ## Can I have the source-code?
-Yes, of course! You can find tarballs for the official releases at GitHub, or check out the git repository over there.
+Yes, of course! You can find tarballs for the official releases at [GitHub](https://github.com/segfaulthunter/asynchia/downloads), or check out the [git repository](https://github.com/segfaulthunter/asynchia) over there.
 
 ## Where can I reach you?
 Visit us in #asynchia on irc.freenode.net, contact the maintainer via XMPP at segfaulthunter (AT) jabber (DOT) ccc (DOT) de, or send an email to flormayer (AT) aim (DOT) com.
