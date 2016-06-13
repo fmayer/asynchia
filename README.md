@@ -36,7 +36,7 @@ Check out the [documentation](http://segfaulthunter.github.io/asynchia/docs/), b
 Yes, of course! You can find tarballs for the official releases at [GitHub](https://github.com/segfaulthunter/asynchia/downloads), or check out the [git repository](https://github.com/segfaulthunter/asynchia) over there.
 
 ## Where can I reach you?
-Visit us in #asynchia on irc.freenode.net, contact the maintainer via XMPP at segfaulthunter (AT) jabber (DOT) ccc (DOT) de, or send an email to flormayer (AT) aim (DOT) com.
+Visit us in #asynchia on irc.freenode.net, contact the maintainer via XMPP at segfaulthunter (AT) jabber (DOT) ccc (DOT) de, or send an email to florian.mayer (AT) bitsrc (DOT) org.
 
 ## Why are all the headings questions?
 I don't know.
